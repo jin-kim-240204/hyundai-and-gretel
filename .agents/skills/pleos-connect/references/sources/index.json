@@ -1,0 +1,933 @@
+[
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/getting-started",
+    "title": "Pleos Connect 앱 개발 시작하기",
+    "file": "eb1428718f0c.md",
+    "chars": 5150,
+    "sha256": "c81a4f4e15a29cadac475a108f2ab796a20479444d5194b389206520bb73aa82"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/create-my-project",
+    "title": "프로젝트 생성 및 SDK 사용 신청",
+    "file": "81d445e8e7a1.md",
+    "chars": 2788,
+    "sha256": "144dbb65f42fdb41a1b2b39eb3e98aac1e8cf6fb834fb4d38fc17843646d555b"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/getting-started/application-development/setup-connect-sdk-emulator",
+    "title": "Pleos Connect Emulator 설치 및 실행",
+    "file": "447cb4d9b001.md",
+    "chars": 4436,
+    "sha256": "6f501441832e0a76d4924c20d920d30c95c8f08b60afb63f6878230fa4b46332"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/intro",
+    "title": "Pleos Connect 앱 설계 가이드",
+    "file": "c47156996b04.md",
+    "chars": 1725,
+    "sha256": "89e4ab39ea66ca591c888420601789ec82ab913d90afd405233c92fb543d69eb"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/intro",
+    "title": "Pleos Connect 앱 개발 가이드",
+    "file": "fd4d11d849c5.md",
+    "chars": 2125,
+    "sha256": "77a9997483c2e7e1a7541473af03c05fafc9ddf1070c6df8ac8b065b3abc23bc"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-test-guide/form-factor-test-guide",
+    "title": "폼 팩터 테스트 가이드",
+    "file": "92bfdd154e9d.md",
+    "chars": 3520,
+    "sha256": "4aa8337bf97c906214d8c4afbc7646fa55b907e57d75806d9984fc69b3badfb3"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-registration-guide/app-tagging-guide",
+    "title": "앱 태그 표기 가이드",
+    "file": "573bf49c10bd.md",
+    "chars": 848,
+    "sha256": "c2443ae00d5283e4d6d456586ed1d8afc67f65a753a2d4acbb6a56b253dffed9"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/tutorial/vehicle-sdk-sample-app",
+    "title": "Vehicle SDK Sample App 사용 가이드",
+    "file": "343cfbabfb79.md",
+    "chars": 13803,
+    "sha256": "e3213dd3b9d3016c719454bcf8a59d3922472f618e3ba551bdae6e8c1e98f2da"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/release-note/emulator-release-note",
+    "title": "Pleos Connect Emulator 정식 릴리즈",
+    "file": "6879b212991e.md",
+    "chars": 842,
+    "sha256": "b9f521d778e2f93bfa9c2d113c2d97340cbef1c4579aa2a3be32daff4208ed9a"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/project-setup",
+    "title": "Importing Vehicle SDK",
+    "file": "25c9fa8b4f9f.md",
+    "chars": 962,
+    "sha256": "428b1c9fc541571841f96814afd5065f1e82f075a462b45c27e4d621a5ab9f49"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/vehicle-permission",
+    "title": "Declaring permission",
+    "file": "4803b04e4b28.md",
+    "chars": 2339,
+    "sha256": "bd933b00b03910b672404f63509fbf7e2379e13296f9ec60322e36475ab24cfc"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos",
+    "title": "Overview",
+    "file": "5fc5d6d203d6.md",
+    "chars": 1835,
+    "sha256": "c7ce585338c46953f682cf70e2fe74ae6d2295b5bac91d4e7ea85d2c0aa2343f"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/check-capability",
+    "title": "Capability",
+    "file": "988646a72e67.md",
+    "chars": 2897,
+    "sha256": "cc2c9f7bb69190cf700a4f7debc0018b5ecb816d24f9798bb01c02144c8e7d07"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/get-property",
+    "title": "Get",
+    "file": "5a7f23474152.md",
+    "chars": 1455,
+    "sha256": "076df7e8f49489eb2d27e8feaf7804589bc11092a33aedf4f0cc2f61e199afa4"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-test-guide/virtual-console-guide",
+    "title": "Pleos Connect Virtual Console 사용 가이드",
+    "file": "2b2cac6d6fea.md",
+    "chars": 4176,
+    "sha256": "f61bbb807dd3565b06816923cd41e5e7a2c80a56ac05965a9e3c82dc2e9855ad"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/distribute/app-submission-guide",
+    "title": "앱 심사 제출",
+    "file": "036572f580ac.md",
+    "chars": 5056,
+    "sha256": "3914be29c9f32264bf963f753601aeb7ddb30da7ee34968fac346c438e46c1ae"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/distribute/app-review-guide",
+    "title": "App Review Guidelines",
+    "file": "c455775b964b.md",
+    "chars": 2859,
+    "sha256": "7a966dec893307ad4326030aea1a614b6be8fdfd965a1f55ecab7b9bb603d8ae"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/getting-started/application-development/configure-pleos-connect-emulator",
+    "title": "Pleos Connect Emulator 설정",
+    "file": "532942c7b49f.md",
+    "chars": 2158,
+    "sha256": "5134683f2afdda04e0f3c548089b0c163f01d85dabfdfb9e1eecfa3304da75a1"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/getting-started/application-development/use-vehicle-emulator",
+    "title": "Pleos Connect Virtual Console 셋업 가이드",
+    "file": "3240d46da07b.md",
+    "chars": 2941,
+    "sha256": "eddffc5172870591ea3323fc0683c7149671b8cac69d8eda7932d8f8be4b9642"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/driver-distraction-guideline",
+    "title": "주행 안전을 고려한 설계",
+    "file": "3790286d55ee.md",
+    "chars": 8289,
+    "sha256": "5d5a5f1e718368a0c0917f708078b815de76b367f6fc1990dd85682ffdf7e026"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/driving-restiction-policy",
+    "title": "지역별 주행 규제 정책",
+    "file": "6386c5462132.md",
+    "chars": 3002,
+    "sha256": "6d7a752ddc392e3ab71cafccefb9d439c57b9c5d39af8266eb857dff555dff65"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/app-category",
+    "title": "앱 카테고리",
+    "file": "12839eb0a523.md",
+    "chars": 1533,
+    "sha256": "5697f2adaacf721752c5e5cc3b77cc512d686ce4606d81b53f8b950a9c895a04"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/app-structure-screen-model",
+    "title": "앱 구조 및 동작 모델",
+    "file": "e68476b79d1c.md",
+    "chars": 2328,
+    "sha256": "583dc6e80f7db6180f6af427ffef24c75a7551b451a99f4294c55566900e1cf4"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/platform-api-architecture",
+    "title": "하드웨어 접근 정책",
+    "file": "c954277e376f.md",
+    "chars": 1085,
+    "sha256": "45f7ad6672d4133ee3182011ec99d7e3a5646300ef2424cea726fd9c0af0f3f9"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/pleos-connect-sdk-api",
+    "title": "SDK API 정책",
+    "file": "44f8864cb3d1.md",
+    "chars": 1384,
+    "sha256": "2c7da29b679c042d50a8c694b78c9a50f022f1a02e77ae395033c436ea326924"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/api-compatibility-availability",
+    "title": "API 호환성 및 가용성",
+    "file": "5e45302cb838.md",
+    "chars": 1299,
+    "sha256": "f2280fad7f296b5c9266c844670f62054c70f1f3324441fb821fd767e11ff801"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/security-privacy",
+    "title": "보안 및 개인정보 보호를 고려한 설계",
+    "file": "72a5d7ab4ebb.md",
+    "chars": 706,
+    "sha256": "a3df75fd63ff767aa56dab3133160176c38cf91636bc70e996ee146b39768f6f"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/performance-resource-mgmt",
+    "title": "성능 및 리소스 효율을 고려한 설계",
+    "file": "0ee9d3c6e22c.md",
+    "chars": 1014,
+    "sha256": "a5845b1b886d036f4b112231416bd833e0b172f72248aad8c758c4cb78c5d33d"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/Introduction/intro",
+    "title": "Pleos Connect UI Design Guide",
+    "file": "9c1fe6a8475c.md",
+    "chars": 28963,
+    "sha256": "1f0e78a2e53125e0c0afc3d94f60c4f9f37c1c93c1e36c634ad5ebc056cad350"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/audio-focus-development-guide/audio-focus-development",
+    "title": "오디오 포커스 개발 가이드",
+    "file": "f04338dec3b6.md",
+    "chars": 6162,
+    "sha256": "015fe247b63575946f519d301bb7a22dee24a559f6e015b131ef0db702b240e8"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide",
+    "title": "주행 규제 개발 가이드",
+    "file": "9faba42791f0.md",
+    "chars": 2004,
+    "sha256": "a74b9cdf6813d278e7845873ab53e55610a54655be4e84cd5a92c5f8359e5d8d"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/ccp-rotary-controller-development",
+    "title": "CCP 개발 가이드",
+    "file": "05666ca0cce1.md",
+    "chars": 12509,
+    "sha256": "b0d1dac73d455656137376318b18b0a2858961b512e026c3b285e1679680b055"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/navigation-app-development-guide",
+    "title": "Maps/Navigation 앱 개발 가이드",
+    "file": "820be88f38c7.md",
+    "chars": 3121,
+    "sha256": "cfdafed19374fa09bf427f31e89c4bdb4dd990cac3466154f5d2ca8c2ced9625"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/music-audio-app-developement-guide",
+    "title": "Music/Audio 앱 개발 가이드",
+    "file": "9a6c20b33060.md",
+    "chars": 6947,
+    "sha256": "1b52045618c9ca77a4dfa4c674e8ca39a857c43af9c51035d7a090e8e61f9e3b"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/voice-guidance-preroll-silence-guide",
+    "title": "TTS / 음성 안내 선행 묵음 적용 가이드",
+    "file": "2cbe51f12c43.md",
+    "chars": 1155,
+    "sha256": "0da96cf6d90683b9b81885522d46d94bdfd4894fad356472aae175c72d58190e"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/ime-window-resize-handling-guide",
+    "title": "IME 동작에 따른 window resize 처리 가이드",
+    "file": "bdcaf8b918a4.md",
+    "chars": 1669,
+    "sha256": "1c3d70dc73134378340c104c4a29ada2b708fdabba99a81e9ac0a12fe82e9dc5"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/vehicle-app-faq",
+    "title": "FAQ - 앱 실행 환경 및 플랫폼 리소스",
+    "file": "9152494f81c7.md",
+    "chars": 3441,
+    "sha256": "46a1363bf77436e4373c78dc59f8c0571b9b65518170a1d493714f6fd11251d1"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-integration-guide/guide/core-concepts",
+    "title": "Gleo Interface",
+    "file": "fa1de2cb7c79.md",
+    "chars": 838,
+    "sha256": "ced5d793ca2bab978a04a40d47e12db304574afc3233698c57c04a6b68533781"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/audio-focus-development-guide/suspend-mode-audio-focus",
+    "title": "Suspend 모드 - 오디오 포커스 개발 가이드",
+    "file": "a243773e232d.md",
+    "chars": 4527,
+    "sha256": "dd55c0c0b919d469f0a609cc47c5f255f764e40b8a0f01f221075baefb5107d7"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/adb-command-reference-guide",
+    "title": "FAQ - 디버깅을 위한 주요 ADB Command 활용법",
+    "file": "2ac36a28bccc.md",
+    "chars": 4151,
+    "sha256": "21fc11d3b1de51bbed69f6ed2ead61d1c2ba3a8c9030d9d2177d6e1e6486d920"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/widgets",
+    "title": "Widgets",
+    "file": "f6d7ee1e83b3.md",
+    "chars": 706,
+    "sha256": "737a577aafdd5ec30f1c5d083bec40b79314aa3fbe4c07931b0c76ee89bc67ac"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-integration-guide/use-cases/radio-app",
+    "title": "How to Integrate Radio App with Gleo AI",
+    "file": "feb3b11ca0c1.md",
+    "chars": 5152,
+    "sha256": "a78301ec4d86715b9b7b0f866c26a05b0268438857dcefa505b2bbd38fd753e1"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-registration-guide/app-update-guide",
+    "title": "앱 업데이트 가이드",
+    "file": "72fdd2632396.md",
+    "chars": 1388,
+    "sha256": "5f03311da71f98cd4801400edcb3dccbd75e20ce5617365bc4df7c003a12a085"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-registration-guide/app-version-management-policy",
+    "title": "앱 버전 관리 정책",
+    "file": "8e7a71c4198b.md",
+    "chars": 333,
+    "sha256": "03524a84501a1f8d73dad17e2131909ab559ea636225ef4524870c0671b8bfd1"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-registration-guide/app-security-guide",
+    "title": "앱 보안 가이드",
+    "file": "27ac8605961f.md",
+    "chars": 7474,
+    "sha256": "ba5da32b2a101866d462839bed680cada478b7cfc36c4637781e8a8dcb89ad4b"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/obtain-domain-object",
+    "title": "Obtaining a domain object",
+    "file": "58459acb306b.md",
+    "chars": 2356,
+    "sha256": "1aa1c40dabaf1867a7abdaabd1ffad9c2d4142b32133c33f12b32ca70abd19c9"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/callback",
+    "title": "Callback",
+    "file": "59bfb7b425fc.md",
+    "chars": 1541,
+    "sha256": "e885178b8757ae6c54d3e60a001a0f9f2728abc372dc40ae160b4211d4e78a7c"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/entry",
+    "title": "Vehicle",
+    "file": "0275d8c1f72b.md",
+    "chars": 78,
+    "sha256": "688855987cf5658f30c80928a58d5bdb38fe4b7170df7664583dbb465baf3eaf"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/intro",
+    "title": "Introduction",
+    "file": "bb9d36ea5de1.md",
+    "chars": 4565,
+    "sha256": "988134c3492e2379c365ab1f13fe78f25db678ac4bb509ae2c60348b879546bb"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/release-note/sdk-release-note",
+    "title": "Pleos Connect SDK 릴리즈 노트",
+    "file": "d89c0e9fd9da.md",
+    "chars": 5619,
+    "sha256": "c648de36a7bc8950397f552c964b1280b5819d8033e704ddfbaaf43b5f2e64bb"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/release-note/playground-release-note",
+    "title": "Pleos Playground",
+    "file": "14f007a8e7a1.md",
+    "chars": 2218,
+    "sha256": "e6f48e0d451994b4e987dd51e93cf35128b8fdd0daf94b2d6ee6a5c3e67c3e99"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/vehicle-error-code",
+    "title": "Error code",
+    "file": "72c0ca9590f6.md",
+    "chars": 2480,
+    "sha256": "bf0cacbf26d935cbb223460e2728af42caf8102f6b8c551aead0f63c0f3bb41d"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/intro",
+    "title": "Introduction",
+    "file": "5e6a9456f51c.md",
+    "chars": 3400,
+    "sha256": "7f818cb4d1eff24f014292104e6bc5d8c11c72a6c6a376540128848209f5ac90"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/intro",
+    "title": "Introduction",
+    "file": "cdaaba80cb83.md",
+    "chars": 3933,
+    "sha256": "cfa1ad3efd68c4159b3e50e22d5f3ed8c16be7acebc3c6ad7b117beb35a94ed5"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/intro",
+    "title": "Introduction",
+    "file": "bda57103e47c.md",
+    "chars": 4079,
+    "sha256": "223d84115d2d16f280e7bed4aba691417a43bf13b38c3ab3ba2368e4440c0530"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/intro",
+    "title": "Introduction",
+    "file": "7958f7bd87c7.md",
+    "chars": 3946,
+    "sha256": "fabd1cdde9c6e35078ce28f6669a32baf9f893e22f24dc083fc2c41e8e4feee8"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/distribute/app-review-guide/review-functionality-performance-stability",
+    "title": "앱 기능 및 성능 안정성",
+    "file": "92b6c689bf7f.md",
+    "chars": 2871,
+    "sha256": "86def0d714baf97975f038f87dc721c891728ee94fc65da71de5902d88259b08"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/set-property",
+    "title": "Set",
+    "file": "55b831074ebf.md",
+    "chars": 921,
+    "sha256": "ef369761c87aecb76a974595ff5adc6c837570396a556ec34529e4fe0313be34"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/distribute/app-review-guide/review-content-safety",
+    "title": "콘텐츠 안전성",
+    "file": "8c0c3eb8c426.md",
+    "chars": 3609,
+    "sha256": "ae4b21b71d7de50a168eeb4589a9661fe51e2d131b100bf2c4667c0f23abb211"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/distribute/app-review-guide/review-driver-distraction-elements",
+    "title": "운전자 주의 분산 요소 최소화 설계",
+    "file": "84d98c64854c.md",
+    "chars": 1622,
+    "sha256": "af0f8c96afc4149127c702601cdb16ffd2730b7a2b90765d01dfb87b77bc350d"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/distribute/app-review-guide/review-app-registration-info",
+    "title": "Pleos App Market 등록정보",
+    "file": "54d5176dbdab.md",
+    "chars": 3048,
+    "sha256": "6d44464f1b62ed4a4c9abf1af7609ac0c1a80ab2f6edebe67793c4bae72461c6"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/distribute/app-review-guide/review-user-privacy-security",
+    "title": "사용자 개인정보 및 보안",
+    "file": "4036191ed19c.md",
+    "chars": 2857,
+    "sha256": "a63b2df3760b25c9858185a0700aa4be35981ce3dafefaa0e6138876ed920fea"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/actions/basic-button",
+    "title": "Basic button",
+    "file": "d771e574367a.md",
+    "chars": 1124,
+    "sha256": "f9f24fe9a45015b9e81cf61ca720efc903cba58a2d07bf31d77ce3d4bfcb4047"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/getting-started/layout",
+    "title": "Display Layout",
+    "file": "e12e49cc3efc.md",
+    "chars": 1575,
+    "sha256": "d78b8111ee593658cee80585827e7a57b1dc99661e085221af411ed2ef81fe28"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/foundations/colors",
+    "title": "Colors",
+    "file": "94caa75424dd.md",
+    "chars": 3348,
+    "sha256": "da803805625e8c9a83673d0e298176534d7fc0a507d614c3523749800bb23f8e"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/foundations/typography",
+    "title": "Typography",
+    "file": "728dd6fe8092.md",
+    "chars": 1088,
+    "sha256": "2fd98ba79b0eb98608686d2575c5cd4b6ddfdb306ecee3e34c7a3ddbca6851b4"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/foundations/contents-creation/iconography",
+    "title": "Iconography",
+    "file": "6b1b8763468a.md",
+    "chars": 623,
+    "sha256": "dfc2a522605bee67430fd6fd64ca86a72d5014fb8de4213b17855cc0b415df5f"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-integration-guide/guide/app-capability",
+    "title": "App Schema Writing Guide",
+    "file": "24357cf5e59a.md",
+    "chars": 4860,
+    "sha256": "ca33407801444e45c32fc5e433ffa94ff52d2becafaea832b31b65de00401d96"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-integration-guide/guide/action_callback",
+    "title": "Callback Schema Writing Guide",
+    "file": "c6fc94252d66.md",
+    "chars": 3885,
+    "sha256": "1d701c428ef3a8118242cc85a6a04f80fecd6a3ad61ace70a3ec31aa702a859c"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-integration-guide/guide/examples",
+    "title": "Code Details with Examples",
+    "file": "f1d260bfb503.md",
+    "chars": 4165,
+    "sha256": "ada579bd06b76132d0e79fb8c143b927fd1de035037e22565345bb99a81a47a7"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/app-integration-guide/guide/deliver-schema",
+    "title": "Delivering the Schema to Gleo",
+    "file": "2bec764daf11.md",
+    "chars": 1350,
+    "sha256": "6f12e687dc5e530b12b68354fb292f3d2e4aa2690ddcdc1dbf065b296143e543"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/bar",
+    "title": "Bar",
+    "file": "d4c47f9da934.md",
+    "chars": 23999,
+    "sha256": "6ea93a3db650821c79d219249b0dabafc2b269f143ffea4b0a61ddfa64f1a858"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/controllers",
+    "title": "Controllers",
+    "file": "838970dd55c0.md",
+    "chars": 62060,
+    "sha256": "34c25f2b6b63cedd7e09e16a18d0fc07909bd2e74559ddfd90cadb90410a98ed"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/indicator",
+    "title": "Indicator",
+    "file": "3d98414b6b1b.md",
+    "chars": 8160,
+    "sha256": "505548c03b2e84de324e94dd66dbdd9b7070984c1c629d49812d4861309bd5a4"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/dropdown",
+    "title": "Dropdown",
+    "file": "e41c9160c662.md",
+    "chars": 1150,
+    "sha256": "8abfadca6f63cb931bb12199f5a3d18a996275ce950e6161791615e35fc4896c"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/fields/text-field",
+    "title": "Text Field",
+    "file": "29846452a3b1.md",
+    "chars": 1363,
+    "sha256": "2e4b7d4233162fd7a1b8f2ccf74300c82631504b794839def742c1a327386d50"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/page-navigation",
+    "title": "Page Navigation",
+    "file": "f7ba01dc6bf7.md",
+    "chars": 1169,
+    "sha256": "f45153096a9cfd07226f8af48fa959d10d1e04bf50a9fac48a55b1106e796b56"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/popups/system-popup",
+    "title": "System Popup",
+    "file": "904663536d42.md",
+    "chars": 1140,
+    "sha256": "03c7c7a9eef28c7f569f65dd9d49c55fb7eb003e3b41c1ebac17a5bb28f91071"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/segmented-menu",
+    "title": "Tabs",
+    "file": "1a7e20d720b5.md",
+    "chars": 25323,
+    "sha256": "79d5c8b481f6271b798bcb2ce254414e248ba637a289f520f7aa844634ab4267"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/selections/checkbox",
+    "title": "Checkbox",
+    "file": "415db3fa3335.md",
+    "chars": 11253,
+    "sha256": "f6cd185967138e8a2f14383f94fd72ae798273d5ad99132bc0e2144e8669cda6"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/spinner",
+    "title": "Spinner",
+    "file": "21c0609478f5.md",
+    "chars": 650,
+    "sha256": "783fe6c8072a53a2f013042e1c1d92f99ba3d4f7afa15297f25d110b24d6c0fd"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/notification/system-notification",
+    "title": "System Notification",
+    "file": "81bf181a80ab.md",
+    "chars": 959,
+    "sha256": "b7b9841e745b91bc3d9aa348a6abfed82b521efe4b44b531fda60c2a8c6441aa"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/toast",
+    "title": "Toast",
+    "file": "6dc7581ce9f8.md",
+    "chars": 582,
+    "sha256": "f1fef6ef7425977b4ffcb3d23db1702022f827ea235f572bc5f17a0933d86f7e"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/importing-sdk",
+    "title": "Importing NaviHelper SDK",
+    "file": "b3307454c474.md",
+    "chars": 940,
+    "sha256": "29dc26c8c4051b170b5bf8441f27b94f0a5cccc38ce41f8bf11a0d41bac70bf3"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/entry",
+    "title": "NaviHelper",
+    "file": "96f230febb30.md",
+    "chars": 84,
+    "sha256": "fce74fdd6d171cfbe8f5be2be080a312122d61536a2d33e991efcb72ea96fc05"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/route-with-waypoints",
+    "title": "Route requests with waypoints",
+    "file": "e04e960473aa.md",
+    "chars": 2665,
+    "sha256": "66fa83ec28b725f4f1d44828fd65b28ce1a91a029149ec0106b109ad57d1d254"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/declaring-permissions",
+    "title": "Declaring permissions",
+    "file": "52f238047cde.md",
+    "chars": 1089,
+    "sha256": "805c60884d92200bd0b22d17cfcfcc4ccde7b5391c9549a6acf0a3e4f966ac06"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/initialization-and-release",
+    "title": "Initialization",
+    "file": "b1bbb75d460e.md",
+    "chars": 1603,
+    "sha256": "0062833838b22143bf7b67bb64216bdf9054b98988fe7eadbc3f517422a45381"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/event-listeners",
+    "title": "Event listeners",
+    "file": "d1111393a349.md",
+    "chars": 2139,
+    "sha256": "04c38dc24660291d70d62b401ec51f442630d15ef00c212735ac97b769f575ce"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/destinations",
+    "title": "Destinations",
+    "file": "c47c45a56ba9.md",
+    "chars": 1927,
+    "sha256": "8e6653ff643ee8906fc4da4fa21db2537c8153359dc69f5ab011a107274bcdb2"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/routes",
+    "title": "Routes",
+    "file": "7e05e4b5778e.md",
+    "chars": 2675,
+    "sha256": "7e86fe637a006b118a50416beee0c1a1e52b285b37d31b698e1e745acf37f9d1"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/waypoint-settings",
+    "title": "Waypoints",
+    "file": "63f200dca24b.md",
+    "chars": 2244,
+    "sha256": "140c8d9acc7f08a5033d8f5c33117e3102d7c4793f1fde404053cb6b09c6b3cf"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/NaviHelper/error-handling",
+    "title": "Error handling",
+    "file": "f4090221bb81.md",
+    "chars": 1484,
+    "sha256": "ee759288f1f99066e6f88379669c659582fc59230078f2bf86a7b0b56d0079c8"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/importing-sdk",
+    "title": "Importing TextToSpeech SDK",
+    "file": "caeada44e9ec.md",
+    "chars": 1147,
+    "sha256": "ec4dc3e20b4703078fcac264eff67079b4f087211525781176b3db929704214b"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/entry",
+    "title": "TextToSpeech",
+    "file": "fc6da5af6fda.md",
+    "chars": 88,
+    "sha256": "41787ef471edf3d9159599549762b6492e1bb00a4dc9839ea4fa48d2a5df868d"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/declaring-permissions",
+    "title": "Declaring permissions",
+    "file": "fac75a3790c3.md",
+    "chars": 809,
+    "sha256": "624b65e968883ab045d542d0c6421d348bc3aee492933560fc961f31dde40611"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/initialization-and-release",
+    "title": "Initialization",
+    "file": "5ec59d586502.md",
+    "chars": 1605,
+    "sha256": "b65166115ae36f4e3e8171c6594a80d7bd352f7b501015d4aeefab67296795b1"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/event-listeners",
+    "title": "Event listeners",
+    "file": "426eee956b29.md",
+    "chars": 1510,
+    "sha256": "9cceda01a9365296f588af05bae22aa7d22ea880333f750f042c45114786e542"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/set-locale",
+    "title": "Set locale",
+    "file": "ed4df99eb4d2.md",
+    "chars": 800,
+    "sha256": "8e31cd3741f530be1c1b215be53c86be73fa7b00887c3fb05780be406fb921ae"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/app-registration",
+    "title": "App registration",
+    "file": "d44a8e787a9e.md",
+    "chars": 1124,
+    "sha256": "5ff0d9191e5f8ce8e5a5b8953f340a45f28ef1cf9cd924c58c2e541db39f3d17"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/start-and-stop",
+    "title": "Start and stop synthesis",
+    "file": "abf8dfd20e18.md",
+    "chars": 904,
+    "sha256": "d22f1096e53e71da64c33d69f462e30588c625b64778aba2c3a900c90c7f4a21"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/error-code",
+    "title": "Error code",
+    "file": "72916a4c511a.md",
+    "chars": 1856,
+    "sha256": "759bf805735b3e391133985599d89f0985c1441dfb0a0190f125659c7e72a68e"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/importing-sdk",
+    "title": "Importing SpeechToText SDK",
+    "file": "745407a1fe11.md",
+    "chars": 1147,
+    "sha256": "6a7ae6b8fe22d2730f95b44167696e1c4b5707928bf7df19a64954b19d51956a"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/entry",
+    "title": "SpeechToText",
+    "file": "8575197ae647.md",
+    "chars": 88,
+    "sha256": "1a000b2db531a09f990554f55b58474f29633ef05964da4202528027897a415b"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/declaring-permissions",
+    "title": "Declaring permissions",
+    "file": "188e57c33534.md",
+    "chars": 821,
+    "sha256": "c74012236a3925b618c620af38966b2d227685e41579e204dfc791f8eb6e3d21"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/initialization-and-release",
+    "title": "Initialization",
+    "file": "b16b71e23e9c.md",
+    "chars": 1523,
+    "sha256": "3f88c95f48b224ee0532586a6afd9dafff036945ee82bb9d5c2f974b57db06f8"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/result-listeners",
+    "title": "Event listeners",
+    "file": "0b5cc97d008c.md",
+    "chars": 2134,
+    "sha256": "71aaa86f8cf0535a65f2749c05986132d084a3949a3d9571d0fba16541d68279"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/app-registration",
+    "title": "App registration",
+    "file": "b4f5cbffe14d.md",
+    "chars": 1124,
+    "sha256": "691870738f3ae2eacdb0875ec2bf4b152b1a31d1bad7b731fdc5a4b313ffd677"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/start-and-stop",
+    "title": "Start and stop recognition",
+    "file": "d00d13d57f81.md",
+    "chars": 686,
+    "sha256": "9388f10619eb102b3e2eb9b6e98f799b73165c623dc715d0483e55056530bca4"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/sending-audio-data",
+    "title": "Sending audio data",
+    "file": "1ad67f32e536.md",
+    "chars": 1800,
+    "sha256": "bf475c78e61757eab90137147948ecf7b7d8e81ff56cac6ea473ee0629f98e64"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/error-code",
+    "title": "Error code",
+    "file": "809ba26a98e9.md",
+    "chars": 1866,
+    "sha256": "96e055ddac3dbc73749d58fbb6c8283db1ebba63008e2d5dd992650bf4f315c7"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/project-setup",
+    "title": "Importing FusedLocation SDK",
+    "file": "c5e08a80ebfd.md",
+    "chars": 1011,
+    "sha256": "16dbf50301a7aa1a9a99f053a28ef8db54c65a83b079610fb1c3084f894b7038"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/entry",
+    "title": "FusedLocation",
+    "file": "cd796d5b32a9.md",
+    "chars": 90,
+    "sha256": "c658552733bff82c2ae0481bafa52607997f3751e3c8723943020e5751293d7b"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/declaring-permissions",
+    "title": "Declaring permission",
+    "file": "402de45b9f3d.md",
+    "chars": 1293,
+    "sha256": "de4bb1df2f71c3c7f4abe7d6d708375f37051780f0f2aeabd415f999addd4376"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/location-data-access",
+    "title": "위치 데이터 접근",
+    "file": "9844e9eaad3c.md",
+    "chars": 999,
+    "sha256": "597ca1571013f7879507f21f58ab47147775759f37d7132bb72cadc19b85d808"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/initialization-and-release",
+    "title": "Initialization / Release",
+    "file": "1ba06876919b.md",
+    "chars": 1924,
+    "sha256": "a721899f754f383e98f472fdd5bd93c6d23d6c815f78c9d3266c672dbae4bfd4"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/error-handling",
+    "title": "오류 처리",
+    "file": "ba9b83fc86f6.md",
+    "chars": 558,
+    "sha256": "b9c5dee3c0581f7f94ac3e007d0719b7664717e441575aaf9d3173b28456e82a"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/actions/toggle-button",
+    "title": "Toggle button",
+    "file": "d6fd191b8a7c.md",
+    "chars": 1044,
+    "sha256": "1add4da5e0f799c947c50e26478de493a8f276812f7b128987afa84f97ea4304"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/actions/text-button",
+    "title": "Text button",
+    "file": "67ff5005aba7.md",
+    "chars": 948,
+    "sha256": "4a230ef5f277d429d048bca2758aeecedd52df48d1bb8b905c3331dd36e63d75"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/actions/icon-button",
+    "title": "Icon button",
+    "file": "3a266a228ea1.md",
+    "chars": 10159,
+    "sha256": "6884e1ac685616c072746b1cc444b8da4b3d0637add9364f12d2d41d7952cf14"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/actions/keypad",
+    "title": "Keypad",
+    "file": "5bef4667c7e9.md",
+    "chars": 13903,
+    "sha256": "8017595344df9c3964b38854f335fb72e4f07e11a4344c4a99e7f6d5bf645fed"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/foundations/shadow",
+    "title": "Shadow",
+    "file": "8233dc2b1ed3.md",
+    "chars": 869,
+    "sha256": "c06bcff5c1902919c8fb12a5cb31d7ce1daf16e16ef89f213cb3794be129861d"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/status-bar",
+    "title": "Status bar",
+    "file": "8f2a3a4fbb3a.md",
+    "chars": 2212,
+    "sha256": "a693373824f93fca1dfaf7fd95499b9fa9e8b25b6288ffd351128e1defb0ea74"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/gnb",
+    "title": "Global Navigation Bar(GNB)",
+    "file": "8637573482d0.md",
+    "chars": 16720,
+    "sha256": "32c205a9474851b0dd7868bbb9471c6b5b960f9d67769683788faeb41c2f3c2b"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/app-library",
+    "title": "App library",
+    "file": "c2c2136933a7.md",
+    "chars": 1467,
+    "sha256": "227424dc8c8ad9c7898bcd4cee99772d2d17b3291abfaad2a51e66c6096e65ad"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/getting-started/window",
+    "title": "Window Policy",
+    "file": "189d894e8124.md",
+    "chars": 2666,
+    "sha256": "ec0335d543c367e8d97fae69defd275e6ab6bbe6669773abffc06741419035d0"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/foundations/contents-creation/app-icon",
+    "title": "App Icon",
+    "file": "2c5b57755781.md",
+    "chars": 1253,
+    "sha256": "e5b291dfc9a953865a2df3d30f2cf1fa5eae10af651c6292c03605de48fce40f"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/foundations/animation",
+    "title": "Animation",
+    "file": "2f2d71cec627.md",
+    "chars": 475,
+    "sha256": "88153c9cb24ef9af4d1de7da54b8bbcaae5620f4396e7f2a0e87d94835230da1"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/fields/number-field",
+    "title": "Number Field",
+    "file": "dfdc414bb94d.md",
+    "chars": 13360,
+    "sha256": "04e7a1b3686b5624b509134b85bf45c33073b89c4ca0959966be6f3c0dfa5472"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/popups/toast-popup",
+    "title": "Toast Popup",
+    "file": "34deb0998114.md",
+    "chars": 551,
+    "sha256": "ebb422c3e76ec9061fbb7fa673701fe4533ba552c390d31754a798d3a8baa47a"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/selections/radio",
+    "title": "Radio button",
+    "file": "fad6f80b05d8.md",
+    "chars": 7720,
+    "sha256": "16be23498560128d4c3c8058d27efe4dd6a8ab81a3bae33946e0fc13b3023a52"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/connect/guide/docs-design/components/selections/switches",
+    "title": "Switch",
+    "file": "295187a4a772.md",
+    "chars": 13560,
+    "sha256": "32ac81163065e9031702716c0ee01e1caa5d514c61134dea120e7855ed10b1bc"
+  },
+  {
+    "url": "https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/SpeechToText/set-locale",
+    "title": "Set locale",
+    "file": "22635490a566.md",
+    "chars": 801,
+    "sha256": "6798df9b03885e8986ca25f9b07cf31220c67651d2d650a574c10dc6012dd192"
+  }
+]

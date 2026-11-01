@@ -1,0 +1,292 @@
+[
+  {
+    "id": "ENV-01",
+    "kind": "official",
+    "summary": "Kotlin/minSdk 28 이상 및 Pleos 환경 요구사항 확인",
+    "documents": [
+      "eb1428718f0c",
+      "447cb4d9b001",
+      "532942c7b49f"
+    ],
+    "verification": "정적 검사 + AVD/실행 확인"
+  },
+  {
+    "id": "ENV-02",
+    "kind": "project",
+    "summary": "사용자가 선택한 Automotive 일반 Activity 구조 유지",
+    "documents": [
+      "eb1428718f0c"
+    ],
+    "verification": "Manifest/의존성/Activity 검사"
+  },
+  {
+    "id": "ENV-03",
+    "kind": "official",
+    "summary": "SDK 저장소·버전·사용 신청 구분",
+    "documents": [
+      "81d445e8e7a1",
+      "25c9fa8b4f9f",
+      "d89c0e9fd9da"
+    ],
+    "verification": "Gradle resolve + 승인 증거"
+  },
+  {
+    "id": "SAF-01",
+    "kind": "official",
+    "summary": "지역/카테고리/CarUxRestrictions 상태에 맞는 제한",
+    "documents": [
+      "3790286d55ee",
+      "6386c5462132",
+      "12839eb0a523",
+      "9faba42791f0"
+    ],
+    "verification": "상태 변경/규제 모드 테스트"
+  },
+  {
+    "id": "SAF-02",
+    "kind": "official",
+    "summary": "규제 중 영상 재개·과도한 애니메이션 등 방지",
+    "documents": [
+      "3790286d55ee",
+      "84d98c64854c"
+    ],
+    "verification": "상태 전이 및 화면 검토"
+  },
+  {
+    "id": "VEH-01",
+    "kind": "official",
+    "summary": "함수별 조회/제어 권한 및 최소 선언",
+    "documents": [
+      "4803b04e4b28",
+      "44f8864cb3d1"
+    ],
+    "verification": "심볼 @RequiresPermission + Manifest + 거절 테스트"
+  },
+  {
+    "id": "VEH-02",
+    "kind": "official",
+    "summary": "Capability 접근종류·area·허용값·null 처리",
+    "documents": [
+      "988646a72e67",
+      "5a7f23474152",
+      "55b831074ebf",
+      "5e45302cb838"
+    ],
+    "verification": "지원/미지원/범위경계 테스트"
+  },
+  {
+    "id": "VEH-03",
+    "kind": "official",
+    "summary": "초기화/해제/콜백 및 에러 처리",
+    "documents": [
+      "bb9d36ea5de1",
+      "58459acb306b",
+      "59bfb7b425fc",
+      "72c0ca9590f6"
+    ],
+    "verification": "연결 끊김/재연결/생명주기 테스트"
+  },
+  {
+    "id": "VEH-04",
+    "kind": "official",
+    "summary": "공개 SDK 및 하드웨어 접근 정책 준수",
+    "documents": [
+      "c954277e376f",
+      "44f8864cb3d1"
+    ],
+    "verification": "API 호출 경로 코드 검토"
+  },
+  {
+    "id": "WAKE-01",
+    "kind": "project",
+    "summary": "기상 예약의 suspend/종료/전원변경 신뢰성 검증",
+    "documents": [
+      "e68476b79d1c",
+      "a243773e232d",
+      "9152494f81c7"
+    ],
+    "verification": "예약/취소/중복/재시작/전원 시나리오"
+  },
+  {
+    "id": "WAKE-02",
+    "kind": "project",
+    "summary": "자동 좌석 동작조건·대상·동의·중단 설계",
+    "documents": [
+      "988646a72e67",
+      "55b831074ebf",
+      "9faba42791f0"
+    ],
+    "verification": "지원차량별 제어 및 중단 검증"
+  },
+  {
+    "id": "DES-01",
+    "kind": "official",
+    "summary": "대비·지연 피드백·짧은 인지·한손 조작",
+    "documents": [
+      "9c1fe6a8475c",
+      "3790286d55ee"
+    ],
+    "verification": "대비 측정/응답시간/조작 검토"
+  },
+  {
+    "id": "DES-02",
+    "kind": "official",
+    "summary": "언어별 텍스트 제한·실물 글자높이",
+    "documents": [
+      "9c1fe6a8475c",
+      "728dd6fe8092"
+    ],
+    "verification": "언어별 레이아웃/물리 크기 측정"
+  },
+  {
+    "id": "DES-03",
+    "kind": "official",
+    "summary": "색상과 주야간 모드 일관성",
+    "documents": [
+      "94caa75424dd",
+      "9c1fe6a8475c"
+    ],
+    "verification": "주간/야간 스크린샷"
+  },
+  {
+    "id": "DES-04",
+    "kind": "official",
+    "summary": "가로/세로/분할/해상도와 시스템 영역",
+    "documents": [
+      "e12e49cc3efc",
+      "189d894e8124",
+      "92bfdd154e9d"
+    ],
+    "verification": "폼팩터별 화면 증거"
+  },
+  {
+    "id": "DES-05",
+    "kind": "official",
+    "summary": "IME resize와 가려짐 복구",
+    "documents": [
+      "bdcaf8b918a4",
+      "189d894e8124"
+    ],
+    "verification": "키보드 열기/닫기 동작"
+  },
+  {
+    "id": "DES-06",
+    "kind": "official",
+    "summary": "사용 컴포넌트별 크기·간격·상태·도해",
+    "documents": [
+      "d771e574367a"
+    ],
+    "verification": "실제 사용 컴포넌트 문서 추가 + 상태별 UI 검토"
+  },
+  {
+    "id": "DES-07",
+    "kind": "official",
+    "summary": "아이콘과 앱 아이콘/모션 규격",
+    "documents": [
+      "6b1b8763468a",
+      "2c5b57755781",
+      "2f2d71cec627"
+    ],
+    "verification": "원본 도해/크기/모션 검토"
+  },
+  {
+    "id": "DES-08",
+    "kind": "official",
+    "summary": "알림/팝업/토스트 용도 및 방해 제한",
+    "documents": [
+      "81bf181a80ab",
+      "904663536d42",
+      "6dc7581ce9f8",
+      "34deb0998114"
+    ],
+    "verification": "노출시점/광고/방해 검토"
+  },
+  {
+    "id": "INPUT-01",
+    "kind": "official",
+    "summary": "설치 유형별 CCP 적용·포커스·터치 접근성",
+    "documents": [
+      "05666ca0cce1"
+    ],
+    "verification": "CCP/터치 실제 조작"
+  },
+  {
+    "id": "AUDIO-01",
+    "kind": "official",
+    "summary": "오디오 포커스 획득/상실/복구",
+    "documents": [
+      "f04338dec3b6"
+    ],
+    "verification": "타앱 오디오/안내와 충돌 테스트"
+  },
+  {
+    "id": "AUDIO-02",
+    "kind": "official",
+    "summary": "suspend 오디오 및 TTS 선행묵음",
+    "documents": [
+      "a243773e232d",
+      "2cbe51f12c43"
+    ],
+    "verification": "suspend/복귀 및 음성 시작 테스트"
+  },
+  {
+    "id": "PRIV-01",
+    "kind": "official",
+    "summary": "수집/동의/저장/전송/보안/최소권한",
+    "documents": [
+      "72a5d7ab4ebb",
+      "4036191ed19c",
+      "27ac8605961f"
+    ],
+    "verification": "데이터 흐름/권한/비밀정보 검토"
+  },
+  {
+    "id": "PERF-01",
+    "kind": "official",
+    "summary": "앱 종류와 상태별 CPU/RAM 및 리소스 효율",
+    "documents": [
+      "0ee9d3c6e22c"
+    ],
+    "verification": "상태별 프로파일링"
+  },
+  {
+    "id": "INT-01",
+    "kind": "official",
+    "summary": "Gleo 스키마/콜백/등록 일치",
+    "documents": [
+      "fa1de2cb7c79",
+      "24357cf5e59a",
+      "c6fc94252d66",
+      "f1d260bfb503",
+      "2bec764daf11"
+    ],
+    "verification": "스키마 및 실제 콜백 검증"
+  },
+  {
+    "id": "REL-01",
+    "kind": "official",
+    "summary": "태그/버전/보안/업데이트/제출 메타데이터",
+    "documents": [
+      "573bf49c10bd",
+      "8e7a71c4198b",
+      "27ac8605961f",
+      "72fdd2632396",
+      "036572f580ac"
+    ],
+    "verification": "제출 artifact와 등록정보 대조"
+  },
+  {
+    "id": "REL-02",
+    "kind": "official",
+    "summary": "기능안정성/콘텐츠/주의분산/등록정보/개인정보 심사",
+    "documents": [
+      "c455775b964b",
+      "92b6c689bf7f",
+      "8c0c3eb8c426",
+      "84d98c64854c",
+      "54d5176dbdab",
+      "4036191ed19c"
+    ],
+    "verification": "심사 항목별 증거 검토"
+  }
+]

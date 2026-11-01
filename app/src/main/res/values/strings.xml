@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">WAKE UP</string>
+    <string name="app_description">쾌적한 휴식과 기상을 도와주는 서비스</string>
+    <string name="sdk_not_checked">개발 환경 확인 전</string>
+    <string name="check_sdk">Vehicle SDK 연결 확인</string>
+    <string name="sdk_checking">지원 여부를 확인하고 있습니다.</string>
+    <string name="sdk_unsupported">이 환경에서는 도어 위치 조회를 지원하지 않습니다.</string>
+    <string name="sdk_no_value">조회가 완료됐으나 현재 값이 없습니다.</string>
+    <string name="sdk_read_success">도어 위치 조회 완료: %1$d</string>
+    <string name="sdk_failed">SDK 확인 실패: %1$s</string>
+</resources>

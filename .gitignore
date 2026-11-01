@@ -1,0 +1,49 @@
+# Android / Gradle build output
+.gradle/
+.kotlin/
+**/build/
+.externalNativeBuild/
+.cxx/
+captures/
+*.apk
+*.aab
+*.apks
+*.hprof
+
+# Machine-specific IDE / SDK configuration
+.idea/
+*.iml
+local.properties
+.DS_Store
+Thumbs.db
+
+# Environment variables and local overrides
+.env
+.env.*
+!.env.example
+!.env.sample
+*.local.properties
+*.local.json
+.claude/settings.local.json
+.context/
+
+# Signing keys and credentials
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+key.properties
+keystore.properties
+signing.properties
+credentials.json
+service-account*.json
+google-services.json
+
+# Logs, Python cache and temporary artifacts
+*.log
+__pycache__/
+*.py[cod]
+.venv/
+venv/
