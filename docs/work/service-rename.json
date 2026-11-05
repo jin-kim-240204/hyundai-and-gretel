@@ -1,0 +1,23 @@
+{
+  "task": "service-rename",
+  "selected_rules": [
+    "ENV-02"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "자동차 일반 Activity 구성 유지. 현재트리/스테이징 단독스냅샷 harness, assembleDebug, lintDebug PASS."
+    },
+    {
+      "id": "DOC-eb1428718f0c#프로젝트이름",
+      "status": "PASS",
+      "evidence": "rootProject.name/app_name을 hyundai-and-gretel로 변경, 테마 참조 동기화. 커밋후보 단독 빌드 PASS."
+    },
+    {
+      "id": "ENV-01",
+      "status": "NOT_TESTED",
+      "evidence": "앱 재설치/실화면 미검증. Studio는 이전 이동 전 경로를 열고 있어 MCP IDE빌드 미실행. 기존minSdk/SDK/패키지ID 유지."
+    }
+  ]
+}

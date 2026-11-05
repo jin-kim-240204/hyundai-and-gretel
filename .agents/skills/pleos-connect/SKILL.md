@@ -1,6 +1,6 @@
 ---
 name: pleos-connect
-description: WAKE UP의 Pleos Connect Android 구현·설계·리뷰에서 공식 규정과 검증 루프를 적용한다. 저장소 Android/Pleos 작업에 사용한다.
+description: hyundai-and-gretel의 Pleos Connect Android 구현·설계·리뷰에서 공식 규정과 검증 루프를 적용한다. 저장소 Android/Pleos 작업에 사용한다.
 ---
 # Pleos Connect 작업 루프
 

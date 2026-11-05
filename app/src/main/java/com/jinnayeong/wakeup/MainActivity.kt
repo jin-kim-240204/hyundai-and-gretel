@@ -13,32 +13,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.jinnayeong.wakeup.ui.theme.WAKEUPTheme
+import com.jinnayeong.wakeup.ui.theme.HyundaiAndGretelTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            WAKEUPTheme { WakeUpScreen() }
+            HyundaiAndGretelTheme { HyundaiAndGretelScreen() }
         }
     }
 }
 
 @Composable
-private fun WakeUpScreen() {
+private fun HyundaiAndGretelScreen() {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("WAKE UP", style = MaterialTheme.typography.headlineLarge)
-            Text("쾌적한 휴식과 기상을 도와주는 서비스")
+            Text("hyundai-and-gretel", style = MaterialTheme.typography.headlineLarge)
+            Text("Pleos Connect 차량용 앱")
         }
     }
 }
 
 @Preview(showBackground = true, widthDp = 1280, heightDp = 720)
 @Composable
-private fun WakeUpPreview() {
-    WAKEUPTheme { WakeUpScreen() }
+private fun HyundaiAndGretelPreview() {
+    HyundaiAndGretelTheme { HyundaiAndGretelScreen() }
 }

@@ -1,6 +1,6 @@
 ---
 name: pleos-verify
-description: WAKE UP 변경 완료 전 Pleos 규정 추적, 자동 검사, 실기기 증거와 실패 수정 루프를 수행한다. 구현 후 검증과 규정 리뷰에 사용한다.
+description: hyundai-and-gretel 변경 완료 전 Pleos 규정 추적, 자동 검사, 실기기 증거와 실패 수정 루프를 수행한다. 구현 후 검증과 규정 리뷰에 사용한다.
 ---
 # 완료 게이트
 

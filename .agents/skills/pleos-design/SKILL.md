@@ -1,6 +1,6 @@
 ---
 name: pleos-design
-description: WAKE UP 화면·Compose UI·디자인 리뷰에서 Pleos의 레이아웃, 대비, 타이포그래피, 입력 및 컴포넌트 규정을 적용한다.
+description: hyundai-and-gretel 화면·Compose UI·디자인 리뷰에서 Pleos의 레이아웃, 대비, 타이포그래피, 입력 및 컴포넌트 규정을 적용한다.
 ---
 # 화면 설계 및 검증
 
