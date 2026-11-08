@@ -9,6 +9,7 @@ description: hyundai-and-gretel의 Pleos Connect Android 구현·설계·리뷰�
 ## 작업별 로딩
 - 프로젝트/SDK/에뮬레이터: [환경 규칙](references/setup.md).
 - 차량 조회·제어·권한·생명주기: `../pleos-vehicle/SKILL.md`.
+- Compose 구조·상태·코루틴 리팩터링: `../android-compose-architecture/SKILL.md`.
 - 화면/인터랙션/디자인: `../pleos-design/SKILL.md`.
 - 모든 구현 완료 전, 리뷰·배포 준비: `../pleos-verify/SKILL.md`.
 - 음성/Gleo/내비/위치 등: 문서 지도에서 해당 SDK의 import → permission → initialization/release → events/error 페이지까지 선택한다. 기능을 쓰지 않으면 의존성/권한을 선제 추가하지 않는다.

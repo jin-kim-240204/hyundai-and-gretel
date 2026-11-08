@@ -3,42 +3,32 @@ package com.jinnayeong.wakeup
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jinnayeong.wakeup.seat.SeatScreen
+import com.jinnayeong.wakeup.seat.SeatViewModel
+import com.jinnayeong.wakeup.seat.PleosSeatSession
 import com.jinnayeong.wakeup.ui.theme.HyundaiAndGretelTheme
 
 class MainActivity : ComponentActivity() {
+    private val seatModel by viewModels<SeatViewModel> {
+        val context = applicationContext
+        viewModelFactory { initializer { SeatViewModel { PleosSeatSession(context) } } }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            HyundaiAndGretelTheme { HyundaiAndGretelScreen() }
+            LifecycleStartEffect(seatModel) {
+                seatModel.start()
+                onStopOrDispose { seatModel.stop() }
+            }
+            val state by seatModel.uiState.collectAsStateWithLifecycle()
+            HyundaiAndGretelTheme { SeatScreen(state, seatModel::move) }
         }
     }
-}
-
-@Composable
-private fun HyundaiAndGretelScreen() {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text("hyundai-and-gretel", style = MaterialTheme.typography.headlineLarge)
-            Text("Pleos Connect 차량용 앱")
-        }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 1280, heightDp = 720)
-@Composable
-private fun HyundaiAndGretelPreview() {
-    HyundaiAndGretelTheme { HyundaiAndGretelScreen() }
 }
