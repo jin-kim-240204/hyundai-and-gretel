@@ -6,7 +6,7 @@ android {
     namespace = "com.jinkim.hyundaiAndGretel"
     compileSdk = 35
     defaultConfig {
-        applicationId = "com.jinnayeong.wakeup"
+        applicationId = "com.jinkim.hyundaiAndGretel"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
