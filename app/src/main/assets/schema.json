@@ -1,0 +1,63 @@
+{
+  "packageName": "com.jinkim.hyundaiAndGretel",
+  "appDescription": "An app for preparing and sharing road condition reports with approaching drivers.",
+  "version": "1.0",
+  "actionCalls": [
+    {
+      "type": "function",
+      "function": {
+        "component": "service",
+        "name": "CREATE_ROAD_NOTE_DRAFT",
+        "description": "Prepare a road condition report draft without publishing it to other drivers.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The road condition observed by the user."
+            },
+            "locationMode": {
+              "type": "string",
+              "enum": [
+                "CURRENT_ROAD",
+                "NAMED_PLACE",
+                "NEEDS_CLARIFICATION",
+                "DEFERRED"
+              ],
+              "description": "The location handling intent: nearby current road for an immediate observation, an explicitly named place, an unclear location requiring clarification, or explicit deferral for later placement."
+            },
+            "placeQuery": {
+              "type": "string",
+              "description": "The explicitly named place and its spatial qualifiers for location lookup."
+            },
+            "directionMode": {
+              "type": "string",
+              "enum": [
+                "CURRENT_VEHICLE",
+                "USER_DESCRIPTION",
+                "UNKNOWN"
+              ],
+              "description": "The direction reference: the reporting vehicle's current travel direction, a direction explicitly described by the user, or an unknown direction."
+            },
+            "directionDescription": {
+              "type": "string",
+              "description": "The user's explicit description of the affected road's travel direction."
+            },
+            "utteranceRecordedAt": {
+              "type": "string",
+              "description": "The original report utterance start time captured by the speech system, in ISO 8601 UTC format, when available as measured metadata."
+            },
+            "draftId": {
+              "type": "string",
+              "description": "The app-issued identifier returned for an existing draft being continued."
+            }
+          },
+          "required": [
+            "content",
+            "locationMode"
+          ]
+        }
+      }
+    }
+  ]
+}
