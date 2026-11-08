@@ -1,0 +1,29 @@
+{
+  "task": "sprint-1-edith",
+  "selected_rules": ["DES-01", "DES-02", "DES-03", "DES-04", "DES-05", "DES-06", "DES-07", "DES-08", "PRIV-01", "SAF-01"],
+  "checks": [
+    {"id": "DES-01", "status": "NOT_TESTED", "evidence": "DraftScreen.kt:48-58,138-146: 짧은 안내와 전체 폭 버튼, busy 시 텍스트 피드백/조작 차단. 실제 한손 조작, 0.25초 응답/1~2초 인지, 동적 테마 대비 미측정. docs/work/sprint-1-edith.md 참조."},
+    {"id": "DES-02", "status": "NOT_TESTED", "evidence": "DraftScreen.kt:126-134: 본문 20sp/28sp, 단락 최대 3줄 말줄임. 실제 디스플레이의 5mm/3mm 및 18px, 언어별 화면 검토 미실행."},
+    {"id": "DES-03", "status": "NOT_TESTED", "evidence": "기존 MaterialTheme surface/onSurface, surfaceVariant/onSurfaceVariant, 기본 Button 색상 사용. DraftScreenPreviews.kt에 고정 주야간 테마가 있으나 렌더/동적 테마 화면 미확인."},
+    {"id": "DES-04", "status": "NOT_TESTED", "evidence": "DraftScreen.kt:42-46: safeDrawing inset, LazyColumn, 전체 폭 버튼. 360x800/1280x720/600x900 및 큰 글꼴 프리뷰 준비. Studio CUA 조회 timeout, 실제 Pleos 분할/회전/오버레이 검증과 해상도·밀도·윈도 증거 없음."},
+    {"id": "DES-05", "status": "N/A", "evidence": "입력 필드/키보드 호출 없음. 윈도 크기 변경은 DES-04에 별도 미검증으로 남김."},
+    {"id": "DES-06", "status": "NOT_TESTED", "evidence": "DraftAction은 Material Button pressed/disabled 동작 사용, !busy로 전 버튼 비활성. 80dp 높이/16dp 간격은 프로젝트 선택. 공식 SVG 수치 판독과 실터치 크기/상태 검증 미완료."},
+    {"id": "DES-07", "status": "N/A", "evidence": "새 아이콘/앱 아이콘/자동 모션 없음. 로딩은 정적인 상태 문구로 알림."},
+    {"id": "DES-08", "status": "N/A", "evidence": "알림/팝업/토스트 없음. 오류는 호출자가 준 짧은 비민감 문구를 화면 내 Text와 polite liveRegion으로 표시."},
+    {"id": "PRIV-01", "status": "NOT_TESTED", "evidence": "UI 소스에서 저장 항목/목적/기간/거부/철회 삭제/미공유를 고지하며 동의 버튼에서만 true 콜백. 실제 저장·삭제·철회 연결 및 운전자 격리/정책 공개/출시 적합성은 UI 단독 검증 범위 밖."},
+    {"id": "SAF-01", "status": "NOT_TESTED", "evidence": "UI에 DO 선언/차량 API/Activity 강제 실행 없음. 정차 후 확인 안내. 지역/카테고리/CarUxRestrictions/실차 주행 제한은 자비스 통합 및 실환경 증거 필요."},
+    {"id": "DOC-9c1fe6a8475c#단순조작", "status": "NOT_TESTED", "evidence": "공식 Introduction 기본 디자인 원칙(2026-11-08 재확인). DraftScreen.kt는 한 단계 버튼과 수동 목록 스크롤만 사용. 실제 한손 조작성/인지시간 미측정."},
+    {"id": "DOC-9c1fe6a8475c#지연피드백", "status": "NOT_TESTED", "evidence": "Introduction 즉시성: 0.25초 초과 지연은 응답 중 표시. DraftScreen.kt:59-62 busy 안내 및 DraftAction enabled=!busy 구현. Activity의 busy 전달 지연/이벤트 중복 실측 미완료."},
+    {"id": "DOC-9c1fe6a8475c#대비", "status": "NOT_TESTED", "evidence": "Introduction Color & Contrast: 4.5:1 이상. 기본 Material 테마를 사용한다는 이유로 준수 판정하지 않음. 주야간/disabled/pressed/동적 테마 렌더 색상 대비 측정 필요."},
+    {"id": "DOC-9c1fe6a8475c#텍스트제한", "status": "NOT_TESTED", "evidence": "Introduction Typography: 단락 3줄, 영어/일본어 길이 조건. DraftText/버튼은 최대 3줄 말줄임, 긴 내용 프리뷰 존재. 한국어에 영문 글자수를 환산하지 않음. 실제 폰트/언어별 표시 미검증."},
+    {"id": "DOC-728dd6fe8092#글자크기", "status": "NOT_TESTED", "evidence": "Typography Operation guideline 스냅샷: 중립 폰트, 12sp 권장/실제 18px 이상, 위계 구분. 기존 기본 폰트와 20sp 본문 사용. 실제 px/mm 측정 및 공식 최신성 미확인."},
+    {"id": "DOC-94caa75424dd#주야간", "status": "NOT_TESTED", "evidence": "Colors 스냅샷 및 Introduction 야간/주간. 기존 시스템 테마를 따르는 MaterialTheme 색상 쌍 사용. 주야간 화면 증거 없음."},
+    {"id": "DOC-e12e49cc3efc#가로세로", "status": "NOT_TESTED", "evidence": "Display Layout Application window: Landscape/Portrait 조절 및 상위 System UI 레이어. DraftScreen.kt:42-46 safeDrawing+가변 폭 세로 목록, 두 방향 프리뷰 준비. 실제 겹침/잘림/밀도 증거 없음."},
+    {"id": "DOC-189d894e8124#윈도변경", "status": "NOT_TESTED", "evidence": "Window Policy 스냅샷: Connect-S/W 크기·윈도 이동/분할 정책. 고정 해상도/방향 가정 없이 목록 구성. 실제 1:1/2:1/1:2 창 전환 검증 필요."},
+    {"id": "DOC-d771e574367a#버튼상태와도해", "status": "NOT_TESTED", "evidence": "공식 Basic button States/Properties(2026-11-08 재확인): pressed/disabled/loading 시 조작 불가. 기본 Material Button과 화면 busy 안내 사용. 원본 basic_size SVG 다운로드 성공, 웹 SVG 미지원/sips 변환 실패로 수치 판독 못함. 로딩 버튼 내 Loader 도해 및 위계/크기 적합성 미확인."},
+    {"id": "DOC-72a5d7ab4ebb#목적최소수집", "status": "PASS", "evidence": "Security/privacy 개인정보 최소 수집 절. DraftScreen.kt:70-77: 나중에 초안 확인 목적/저장 항목/기기 내 기간 고지. 이 순수 UI 파일은 Context/저장소/로그/네트워크를 참조하지 않음. 실제 저장 경계는 별도 담당."},
+    {"id": "DOC-4036191ed19c#명시적동의", "status": "NOT_TESTED", "evidence": "사용자 개인정보 활용/필수 동의 요구 스냅샷. DraftScreen.kt:67-80에서 항목/목적/기간/거부 가능/철회 삭제 고지, 허용 버튼만 onConsentChange(true), 거부는 false. 미동의 분기에서 목록 숨김. 실제 클릭/통합 테스트 및 공개 개인정보처리방침 증거 없음."},
+    {"id": "DOC-4036191ed19c#철회삭제", "status": "NOT_TESTED", "evidence": "사용자 데이터 무단 사용 절의 취소/삭제 요구. DraftScreen.kt:88-89 명시적인 전체 삭제 라벨과 false 콜백 구현. UI는 성공을 미리 표시하지 않음. 프라이데이 저장소/자비스 Activity 연결의 실패·삭제·재시작 실환경 증거 필요."},
+    {"id": "DOC-3790286d55ee#주행규제", "status": "NOT_TESTED", "evidence": "주행 규제 상태에 따른 앱 동작 절: CarUxRestrictions/지역/카테고리 기준 필요. UI는 정차 안내만 제공하며 DO 적합성 또는 주행 허용을 주장하지 않음. 실차/규제 모드 검토 필요."}
+  ]
+}

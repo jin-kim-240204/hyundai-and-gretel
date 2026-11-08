@@ -35,4 +35,29 @@ pleos-connect가 참조하는 `android-compose-architecture/SKILL.md`는 저장�
 
 ## 검증 및 남은 작업
 
-구현 전 기록. 예정: 표시 분기 단위 검사, `:app:testDebugUnitTest`, harness `--build`, Studio MCP build_project, JSON 규칙 검사. 프리뷰는 실행 증거로 간주하지 않는다.
+환경: macOS arm64, 기존 Gradle wrapper/compileSdk 35/minSdk 28, 작업 브랜치 `gm/feat-speech-to-text`. 실행 결과는 실행 시점 공유 작업 폴더 기준이며 타 담당 코드의 품질 완료 판정이 아니다.
+
+- PASS: 첫 구현의 `./gradlew :app:testDebugUnitTest --console=plain`. 표시 검사 3개 모두 성공 (`app/build/test-results/testDebugUnitTest/TEST-com.jinkim.hyundaiAndGretel.ui.drafts.DraftPresentationTest.xml`), 당시 전체 31개 실패/오류/skip 0. 현재 도로/차량 방향을 미확정으로 표시, 두 위치 상태와 네 모드, 사용자 표현 및 null/blank 보조정보 검증.
+- PASS: 첫 구현의 `python3 scripts/verify_harness.py --build` (assembleDebug/lintDebug 포함), Studio MCP `build_project` (isSuccess=true, problems=[]).
+- 환경 제한 및 조치: 최초 CLI 빌드는 Gradle 캐시 lock 접근이 샌드박스에서 거절되어 승인된 명령으로 재실행 후 통과했다. 공식 버튼 SVG도 DNS 제한 후 승인된 curl로 다운로드했다.
+- NOT_TESTED: 인앱 브라우저 host unavailable. SVG는 웹 도구가 image/svg+xml을 지원하지 않고 로컬 sips PNG 변환도 실패했다. 도해의 실제 수치/간격/위계는 판독하지 못했으므로 추측하지 않는다. 80dp 버튼 높이와 16dp 간격은 프로젝트 임시 선택이며 공식 도해 수치라고 주장하지 않는다. 원본: https://document.pleos.ai/assets/images/basic_size-033b09c8bbef4d1776a3f4c7c70a49d0.svg
+- NOT_TESTED: Studio에서 프리뷰 파일을 여는 것은 성공했으나 CUA 프리뷰 상태 조회가 30초 timeout/kernel reset. 화면 렌더/스크린샷 검토 증거 없음. 7종 프리뷰는 재현 준비물이며 실행 증거가 아니다.
+- 소스 검토: DraftScreen.kt의 consentGranted=false 분기는 목록을 구성하지 않는다. true는 허용 버튼에서만 전달한다. 모든 조작은 DraftAction의 enabled=!busy를 사용한다. UI 내부에 부수효과/저장/로그/성공 상태 변경은 없다. 실제 터치 이벤트의 중복 방지·삭제 대상 ID·철회 전후 화면은 통합 후 별도 확인 필요.
+- 검토 수정: 좁은 창/큰 글꼴에서 동의 고지 누락 가능성을 줄이기 위해 거부와 철회 문장을 별도 단락으로 나눴다. 실제 잘림/가독성, 동적 테마 대비 4.5:1, mm 글자 높이, 폼팩터/회전/시스템 오버레이 및 주행 규제는 NOT_TESTED.
+- 문구 수정 후 재검증 중 공유 폴더의 `roadnote/DraftFileStore.kt:110`에서 `ByteArrayInputStream` import 누락으로 CLI/Studio 빌드 실패를 관찰했다. 해당 파일은 프라이데이 소유이므로 수정하지 않았다. 이후 담당 변경으로 import가 생긴 것을 확인한 뒤 재실행하여 CLI harness `--build` 및 Studio 빌드 모두 PASS로 회복했다. 수정 없이 동일 실패를 반복 실행하지 않았다.
+- 공유 폴더 검사 중 `LocalDraftStoreTest.updatesPreserveOriginalTimesAndResolveAllModes` 실패도 관찰했다. 이후 담당 테스트의 NAMED_PLACE 입력에 placeQuery가 추가되고 저장 검사 XML이 성공으로 바뀐 것을 확인했다. 이디스는 타 담당 파일을 수정하지 않았다. UI 전용 명령 `./gradlew :app:testDebugUnitTest --tests com.jinkim.hyundaiAndGretel.ui.drafts.DraftPresentationTest --console=plain`은 최종 문구에서도 PASS(3개)다.
+- JSON 보고 검사: `python3 scripts/verify_harness.py --report docs/work/sprint-1-edith.json`은 형식·규칙 ID·문서 연결을 통과하고 exit=2. 이는 남겨둔 필수 NOT_TESTED를 올바르게 반영하는 결과다. UI 검증 완료/출시 적합으로 보고하지 않는다.
+- 최종 `./gradlew :app:testDebugUnitTest --console=plain` 재실행 PASS. 최종 코드의 harness `--build`, Studio build_project도 PASS. 최신 결과 XML의 개수는 동시 작업으로 늘어날 수 있으므로 이디스 고유 검사는 위 3개로 구분한다.
+
+## 자비스 인계
+
+- 공개 진입점은 계획의 `DraftScreen(consentGranted, drafts, busy, errorMessage, onConsentChange, onDelete, onRefresh)`와 동일하다.
+- 최초 로딩과 저장/삭제/철회/새로고침 시작 전에 busy=true, 성공 또는 오류 확정 후 false가 필요하다. 오류는 예외 원문/제보 내용/파일 경로가 없는 짧은 비민감 문구만 넘긴다. 실패 때 목록이나 동의를 성공값으로 먼저 바꾸지 않는다.
+- 삭제·철회 성공 후 저장소에서 목록과 동의를 다시 읽는다. Gleo 수신에서 Activity를 강제 실행하지 않는다. 순수 화면은 저장소·Receiver를 알지 못한다.
+- 위치·방향은 모두 표현/대기/미정이며 측정값이 아니다. 초안은 3줄 요약이며 전문 열람/지도/게시 기능은 없다.
+- 실제 동의→저장→삭제/철회, 재시작, 좁은/가로/분할/야간/큰 글꼴, 실제 터치/규제 증거가 필요하다. 개인정보처리방침, 같은 Android 사용자 내 운전자 격리, 출시 심사는 이 작업 범위 밖이다.
+
+## 커밋
+
+- `0c855f1` — 순수 Compose UI, 7종 프리뷰, 표시 로직 단위 검사, 초기 규칙/범위 기록. 경로 지정 `git commit --only`로 타인 staged 변경을 제외했다.
+- 후속 커밋 — 짧은 동의 문구와 최종 검증/인계 기록(JSON 포함). 완료 후 git 로그에서 확인 가능. push하지 않는다.

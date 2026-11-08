@@ -72,10 +72,11 @@ fun DraftScreen(
             if (!consentGranted) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        DraftText("나중에 초안을 확인할 수 있도록 기기에 저장할까요?")
+                        DraftText("초안을 나중에 확인하도록 저장합니다.")
                         DraftText("제보 내용·장소/방향 표현·시각을 저장합니다.")
-                        DraftText("최초 수신부터 최대 7일간 기기 내에 보관합니다.")
-                        DraftText("거부하면 저장하지 않습니다. 동의 철회 시 모든 초안을 삭제합니다.")
+                        DraftText("기기 내 최초 수신부터 최대 7일 보관합니다.")
+                        DraftText("거부하면 초안을 저장하지 않습니다.")
+                        DraftText("철회하면 모든 초안을 삭제합니다.")
                         DraftAction("동의하고 저장 허용", busy) { onConsentChange(true) }
                         DraftAction("동의하지 않음", busy) { onConsentChange(false) }
                         DraftAction("새로고침", busy, onRefresh)
