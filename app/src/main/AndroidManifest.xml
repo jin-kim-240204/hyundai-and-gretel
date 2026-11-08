@@ -9,10 +9,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HyundaiAndGretel">
-        <!-- External Gleo access stays disabled until caller and callback trust are verified. -->
+        <!-- Debug receives test Actions without persistence; release remains internal-only. -->
         <receiver
             android:name=".gleo.GleoActionReceiver"
-            android:exported="false">
+            android:exported="${gleoReceiverExported}">
             <intent-filter>
                 <action android:name="CREATE_ROAD_NOTE_DRAFT" />
             </intent-filter>

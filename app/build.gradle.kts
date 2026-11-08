@@ -11,12 +11,19 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        manifestPlaceholders["gleoReceiverExported"] = "false"
+        testInstrumentationRunner = "com.jinkim.hyundaiAndGretel.gleo.DraftIntegrationInstrumentation"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    buildFeatures { compose = true }
+    buildTypes {
+        getByName("debug") {
+            manifestPlaceholders["gleoReceiverExported"] = "true"
+        }
+    }
+    buildFeatures { compose = true; buildConfig = true }
 }
 dependencies {
     implementation("ai.pleos.playground:Vehicle:2.3.2")

@@ -8,6 +8,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.jinkim.hyundaiAndGretel.gleo.GleoProbe
+import com.jinkim.hyundaiAndGretel.gleo.GleoProbeScreen
 import com.jinkim.hyundaiAndGretel.roadnote.LocalDraftStore
 import com.jinkim.hyundaiAndGretel.roadnote.RoadNoteDraft
 import com.jinkim.hyundaiAndGretel.ui.drafts.DraftScreen
@@ -22,26 +24,31 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        drafts = ViewModelProvider(this)[DraftsViewModel::class.java]
+        if (!BuildConfig.DEBUG) drafts = ViewModelProvider(this)[DraftsViewModel::class.java]
         setContent {
-            val state = drafts.state.collectAsStateWithLifecycle().value
             HyundaiAndGretelTheme {
-                DraftScreen(
-                    consentGranted = state.consentGranted,
-                    drafts = state.drafts,
-                    busy = state.busy,
-                    errorMessage = state.errorMessage,
-                    onConsentChange = drafts::setConsent,
-                    onDelete = drafts::delete,
-                    onRefresh = drafts::refresh,
-                )
+                if (BuildConfig.DEBUG) {
+                    val events = GleoProbe.events.collectAsStateWithLifecycle().value
+                    GleoProbeScreen(events, GleoProbe::clear)
+                } else {
+                    val state = drafts.state.collectAsStateWithLifecycle().value
+                    DraftScreen(
+                        consentGranted = state.consentGranted,
+                        drafts = state.drafts,
+                        busy = state.busy,
+                        errorMessage = state.errorMessage,
+                        onConsentChange = drafts::setConsent,
+                        onDelete = drafts::delete,
+                        onRefresh = drafts::refresh,
+                    )
+                }
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        drafts.refresh()
+        if (::drafts.isInitialized) drafts.refresh()
     }
 }
 

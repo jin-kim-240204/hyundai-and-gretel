@@ -162,6 +162,28 @@ class GleoActionTest {
         }
     }
 
+    @Test fun debugProbeValidatesWithoutRequiringConsentOrCreatingSavedDraft() {
+        val response = previewGleoAction(validateGleoParameters(basic, now))
+        assertEquals(GleoStatus.SUCCESS, response.status)
+        assertEquals("PROBE_ONLY", response.reason)
+        assertNull(response.draftId)
+        assertTrue(response.message.contains("nothing was saved"))
+    }
+
+    @Test fun debugProbeAsksForUnclearLocationButDeferredEndsNormally() {
+        val unclear = previewGleoAction(validateGleoParameters(basic + ("locationMode" to "NEEDS_CLARIFICATION"), now))
+        val deferred = previewGleoAction(validateGleoParameters(basic + ("locationMode" to "DEFERRED"), now))
+        assertEquals(GleoStatus.ASKING, unclear.status)
+        assertEquals(GleoStatus.SUCCESS, deferred.status)
+        assertNull(deferred.missingField)
+    }
+
+    @Test fun debugProbeKeepsInvalidParameterFailures() {
+        val response = previewGleoAction(validateGleoParameters(basic + ("content" to 42), now))
+        assertEquals(GleoStatus.FAIL, response.status)
+        assertEquals("INVALID_INPUT", response.reason)
+    }
+
     private fun rejection(values: Map<String, Any?>) =
         (validateGleoParameters(values, now) as ParsedGleoAction.Rejected).response
 
