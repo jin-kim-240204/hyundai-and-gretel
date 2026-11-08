@@ -1,5 +1,7 @@
 # 주행 중 간결한 상태 UI
 
+> 현재성: 사용자 후속 요청으로 상태 감시·간결 UI·관련 테스트를 원복하고 DO 선언만 유지했다. 현재 상태는 [원복 기록](revert-driving-ui.md)을 따른다. 아래 결과는 당시 구현의 과거 증거다.
+
 2026-11-08. 사용자 요청: 주행 중 앱 사용 불가 화면 대신 UI 표시. pleos-connect/pleos-design/ponytail/pleos-verify 적용. 현재 MainActivity·GleoProbe·Manifest와 기존 주행 규제 기록을 확인했다.
 
 범위: MainActivity의 CarUxRestrictions 수신·수명주기, 주행/미확인 상태의 간결한 상태 UI, Activity DO 선언과 android.car 플랫폼 라이브러리, 관련 테스트/문서. 저장·음성 호출·Callback/로그 기능은 변경하지 않는다. 사용자 기존 Manifest 권한4줄은 커밋에서 제외한다.

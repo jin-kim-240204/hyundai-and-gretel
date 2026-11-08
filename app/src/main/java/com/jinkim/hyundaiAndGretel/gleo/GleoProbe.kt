@@ -33,7 +33,6 @@ data class GleoProbeEvent(
     val result: String = "수신 · 검증 중",
     val callback: String = "아직 없음",
     val elapsedMs: Long? = null,
-    val status: GleoStatus? = null,
 )
 
 object GleoProbe {
@@ -52,9 +51,9 @@ object GleoProbe {
         return id
     }
 
-    fun complete(id: Long, result: String, callback: String, elapsedMs: Long, status: GleoStatus? = null) {
+    fun complete(id: Long, result: String, callback: String, elapsedMs: Long) {
         if (!BuildConfig.DEBUG) return
-        state.update { items -> items.map { if (it.id == id) it.copy(result = result, callback = callback, elapsedMs = elapsedMs, status = status) else it } }
+        state.update { items -> items.map { if (it.id == id) it.copy(result = result, callback = callback, elapsedMs = elapsedMs) else it } }
         log(id, "RESULT", "$result elapsedMs=$elapsedMs")
         log(id, "CALLBACK_JSON", callback)
     }

@@ -5,7 +5,6 @@ plugins {
 android {
     namespace = "com.jinkim.hyundaiAndGretel"
     compileSdk = 35
-    useLibrary("android.car", false)
     defaultConfig {
         applicationId = "com.jinkim.hyundaiAndGretel"
         minSdk = 28
