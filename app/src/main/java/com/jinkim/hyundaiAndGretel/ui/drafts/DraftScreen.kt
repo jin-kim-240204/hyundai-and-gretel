@@ -74,7 +74,8 @@ fun DraftScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         DraftText("초안을 나중에 확인하도록 저장합니다.")
                         DraftText("제보 내용·장소/방향 표현·시각을 저장합니다.")
-                        DraftText("기기 내 최초 수신부터 최대 7일 보관합니다.")
+                        DraftText("초안은 최초 수신부터 7일간 유효합니다.")
+                        DraftText("만료된 초안은 앱 이용 시 삭제합니다.")
                         DraftText("거부하면 초안을 저장하지 않습니다.")
                         DraftText("철회하면 모든 초안을 삭제합니다.")
                         DraftAction("동의하고 저장 허용", busy) { onConsentChange(true) }
@@ -85,7 +86,7 @@ fun DraftScreen(
             } else {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        DraftText("최초 수신부터 최대 7일 보관 · ${drafts.size}개")
+                        DraftText("최초 수신부터 7일 유효 · ${drafts.size}개")
                         DraftAction("새로고침", busy, onRefresh)
                         DraftText("동의를 철회하면 모든 초안이 삭제됩니다.")
                         DraftAction("동의 철회 및 전체 삭제", busy) { onConsentChange(false) }
