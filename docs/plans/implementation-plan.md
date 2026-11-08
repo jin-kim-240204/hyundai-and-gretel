@@ -1,14 +1,14 @@
 # 도로 위험 쪽지 서비스 구현 계획
 
-수정: 2026-11-08. 상태: Sprint 1 구현 시작. 이번 요청으로 제시된 서비스 기획을 기준으로 한다. 이전 휴식·기상 기획은 적용하지 않는다.
+수정: 2026-11-08. 상태: Sprint 1 로컬 구현·자동 검증 완료, 실제 Gleo/Android 런타임 검증 미완료. 이번 요청으로 제시된 서비스 기획을 기준으로 한다. 이전 휴식·기상 기획은 적용하지 않는다.
 
 ## 목표와 개발 원칙
 
 지나간 도로의 위험·특수 상황을 음성으로 제보하고, 같은 도로를 따라 접근하는 다른 차량에 적시에 경고한다. 메인 시나리오는 목격 즉시 Gleo 호출·제보이며 초 단위 발화를 요구하지 않는다. 기본 내비게이션은 그대로 사용하고 앱은 정보 표시와 동승자 제보를 제공한다. 지도 임베딩·내비 위 오버레이 지원은 아직 확정하지 않는다.
 
-현재 코드는 ComponentActivity/Compose 초기 화면이며 Vehicle 2.3.2는 Gradle 의존성만 등록되어 있다. SDK 초기화/조회/제어, STT/TTS, Gleo 연동, 위치, 초안 저장, 서버, 서비스는 없다. Manifest에는 도어/창문 조회·제어 권한 4개와 allowBackup=false/adjustResize가 설정되어 있으나 런타임 기능 검증 증거는 아니다. Automotive 일반 Activity 구조는 유지한다.
+현재 코드는 ComponentActivity/Compose 동의·초안 목록/삭제 화면과 Gleo Schema/입력 검증/Callback 생성/내부 전용 Receiver를 포함한다. Android Keystore/AES-GCM으로 초안을 로컬 저장하고 최초 수신부터 7일 유효·앱 이용 시 만료 정리·철회 삭제를 지원한다. 사용자 우선순위에 따라 debug에서 외부 Gleo 테스트 수신·무저장 검증/Callback·실시간 JSON 관측을 활성화했다. release 수신은 내부 전용이며 실제 음성 연동은 사용자가 수동 검증한다. SDK 방향/위치·초안 지도 지정·서버 게시/공유는 미구현이다. Vehicle 2.3.2는 의존성만 등록되어 초기화/조회/제어하지 않는다. 기존 Manifest 도어/창문 조회·제어 권한 4개 변경은 사용자 작업으로 유지하고 자비스 커밋에 포함하지 않았다.
 
-사용자 지정 목표 식별자와 소스 package/namespace는 com.jinkim.hyundaiAndGretel이다. 현재 Gradle applicationId는 com.jinnayeong.wakeup로 남아 있으므로, 설치·Gleo 등록 전에 별도 변경으로 일치시켜야 한다. versionName=1.0/versionCode=1, compileSdk=35/minSdk=28/targetSdk=34는 현 설정과 일치한다.
+소스 package/namespace/applicationId는 com.jinkim.hyundaiAndGretel로 정합했다. versionName=1.0/versionCode=1, compileSdk=35/minSdk=28/targetSdk=34를 유지한다.
 
 기능을 먼저 연결하고 UI 완성은 마지막에 진행한다. 단, 동의·중단·오류·주행 중 입력 제한처럼 기능과 안전에 필요한 최소 UI는 각 단계에 포함한다. 아래 단계별 브랜치명은 제안이며 실제 브랜치는 생성하지 않았다.
 

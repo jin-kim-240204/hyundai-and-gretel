@@ -1,6 +1,6 @@
 # 이번 브랜치: Gleo 음성 명령 연동 설계
 
-수정·관련 공식 원문 재확인: 2026-11-08. 상태: 검토용 설계, 구현 전. 저장소 현황 대조: 2026-11-08.
+수정·관련 공식 원문 재확인: 2026-11-08. 상태: Sprint 1 로컬 구현 반영, 실제 Gleo 외부 연동 검증 전. 저장소 현황 대조: 2026-11-08.
 기존 STT → Gleo 설계를 대체한다. 앱이 STT/TTS SDK를 사용하지 않고 시스템 Gleo의 음성 입력·해석·응답을 활용하도록 사용자 요청에 따라 변경했다.
 
 ## 1. 결정과 범위
@@ -21,15 +21,15 @@
 - [S4 Intent/Callback 예제](https://document.pleos.ai/docs/pleos-only/app-integration-guide/guide/examples), Android Intent 변환 및 Callback: Android 전달 계약.
 - [S5 Schema 전달](https://document.pleos.ai/docs/pleos-only/app-integration-guide/guide/deliver-schema): 파일 경로, 필터, 검토·활성화·스캔 조건.
 
-현재 저장소는 ComponentActivity/Compose 시작 화면과 Vehicle 2.3.2 의존성 등록 상태다. 차량 SDK 초기화·차량 조회/제어, Gleo Schema/Receiver/Callback, 위치·초안 저장·서버는 구현되지 않았다. Manifest에는 도어/창문 조회·제어 권한 4개가 선언되어 있지만 기능 구현·런타임 승인 증거는 아니다. allowBackup=false와 adjustResize는 이미 설정되어 있으며 초안 저장 보호·UI 적합성 전체가 검증된 것은 아니다.
+현재 저장소는 ComponentActivity/Compose 동의·초안 목록/삭제 UI, Vehicle 2.3.2 의존성, Gleo Schema/파서/처리 엔진/Callback 및 내부 전용 Receiver, Keystore/AES-GCM 로컬 저장을 포함한다. 차량 SDK 초기화/조회/제어, 위치·서버 게시/공유는 미구현이다. 기존 Manifest 도어/창문 권한 4개는 선언 상태이며 차량 기능/런타임 승인 증거가 아니다. allowBackup=false와 adjustResize는 유지한다.
 
-패키지 예제는 사용자 지정 식별자 `com.jinkim.hyundaiAndGretel`로 통일한다. 소스 package/Gradle namespace도 이 값이다. **현재 app/build.gradle.kts의 applicationId는 아직 `com.jinnayeong.wakeup`이므로 아래 예제와 설치 앱 식별자가 불일치한다.** 실제 Gleo 등록·설치 전 applicationId를 목표 식별자에 맞추는 별도 설정 변경이 필요하다. 이번 문서 수정에서는 설치 앱 식별자·기존 앱 데이터에 영향을 주는 Gradle 설정을 변경하지 않았다.
+소스 package/Gradle namespace/applicationId와 패키지 예제는 모두 `com.jinkim.hyundaiAndGretel`로 정합했다. versionName=1.0이다. release Receiver는 exported=false다. 현재 debug는 사용자 요청에 따라 외부 Gleo 테스트 Action을 받아 저장 없이 검증/Callback만 수행하고, 설치 확인한 ai.umos.ambientai로 응답을 제한한다. Action 발신자 인증과 실제 Gleo 수신/음성 E2E는 미검증이다. debug 화면과 GleoProbe logcat에서 최근 입력·출력을 확인한다. 실제 Manifest는 빌드 타입 placeholder로 debug=true/release=false를 분리한다. 아래 exported=true XML은 외부 테스트 수신 형식의 예시다. 실제 구현/담당·확인 범위는 [Sprint 1 명세](sprint-1-gleo-drafts.md)와 [자비스 기록](../work/sprint-1-jarvis.md)을 따른다.
 
 공식 의무와 프로젝트 설계안을 구분한다. 아래 `CREATE_ROAD_NOTE_DRAFT`, 필드명, 입력 제한, 앱 내부 함수 시그니처는 프로젝트가 정한 제안이다. Gleo가 제공하는 SDK 클래스나 등록된 공식 도로 제보 API가 아니다.
 
 ## 3. App Schema 초안
 
-구현할 때 `app/src/main/assets/schema.json`에 둔다. 지금은 문서의 예시만 작성한다.
+Sprint 1에서 `app/src/main/assets/schema.json`에 구현했다. 아래 예시와 필드 계약을 일치시킨다.
 
 ```json
 {
@@ -87,7 +87,7 @@
 
 | 항목 | 구성 이유 |
 |---|---|
-| packageName / version | 사용자 지정 목표 packageName과 현재 versionName=1.0 사용. namespace는 일치하지만 applicationId는 미반영이므로 등록 전 정합 필요. 마켓 등록 버전은 미검증 |
+| packageName / version | namespace/applicationId와 일치하는 com.jinkim.hyundaiAndGretel 및 versionName=1.0 사용. 마켓 등록 버전은 미검증 |
 | 함수 한 개 | 이번 브랜치에 필요한 초안 생성만 노출. 공식 최대 3개를 채우기 위한 기능은 만들지 않음 |
 | CREATE_ROAD_NOTE_DRAFT | 대문자·밑줄 규칙을 지키고 게시와 초안을 명확히 구분 |
 | component=service | UI를 열지 않는 명령 수신. 공식적으로 이 값은 startService가 아니라 sendBroadcast를 뜻함 |
@@ -190,7 +190,7 @@ locationMode는 사용자 표현을 앱 처리 분기로 바꾸는 프로젝트 
     android:name=".gleo.GleoActionReceiver"
     android:exported="true">
     <intent-filter>
-        <action android:name="CREATE_ROAD_NOTE_DRAFT" />
+        <action android:name="com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE_DRAFT" />
     </intent-filter>
 </receiver>
 ```
@@ -198,6 +198,9 @@ locationMode는 사용자 표현을 앱 처리 분기로 바꾸는 프로젝트 
 이 XML은 설계 예시이며 발신자 인증 설정이 확정된 최종 Manifest가 아니다. 외부 Gleo가 호출할 수 있어야 하므로 exported 수신점이 필요하지만 action filter나 대상 패키지 지정만으로 발신자가 인증되지는 않는다. 공식 제공 권한·서명/발신자 검증 수단을 확인하고 적용한다. 미확인 상태를 안전한 수신점으로 판정하지 않는다. 후속 게시·차량 제어까지 이 수신점의 신뢰를 확대하지 않는다.
 
 ### 문서 불일치와 파싱 원칙
+
+실기기 로그에서 Gleo는 Android Action에 패키지명을 붙여 `com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE_DRAFT`로 전송했다. Manifest/Receiver는 이 관측 형식을 사용하고 Schema/Callback 함수명은 기본 이름을 유지한다. [단계별 로그 확인](gleo-debugging.md)을 참고한다.
+
 
 S4 본문은 파라미터를 개별 extra로 넣는다고 설명하지만 코드 예시는 문자열 extra `ACTION_PARAM` 안의 JSON을 읽는다. 송신 예시는 바깥 따옴표도 혼재한다. 이번 설계는 수신 코드 예시의 `ACTION_PARAM` JSON 객체 문자열을 기준안으로 잡되, 구현 첫 단계에서 실제 Gleo Intent의 타입·키·인코딩을 확인한다.
 
@@ -336,12 +339,12 @@ S3의 Gleo 취소 기한은 7초다. 프로젝트 내부 목표는 수신 후 �
 ## 8. 등록·구현 순서와 영향 범위
 
 1. 실제 Gleo 가용성·Schema 검토/활성화·Intent 형식·발신자 인증·Callback 대상 제한과 후속 draftId 전달을 확인한다.
-2. assets/schema.json·Manifest Action 필터·Receiver·로컬 초안 저장/응답을 최소 구현한다. 일반 ComponentActivity/Compose는 유지한다. applicationId는 사용자 지정 목표 식별자 com.jinkim.hyundaiAndGretel과 일치시키는 별도 변경이 선행되어야 한다. service는 sendBroadcast 경로이며 상주 Service를 뜻하지 않는다.
+2. assets/schema.json·Manifest Action 필터·Receiver·로컬 초안 저장/응답을 최소 구현한다. 일반 ComponentActivity/Compose를 유지하고 applicationId를 com.jinkim.hyundaiAndGretel과 일치시켰다. service는 sendBroadcast 경로이며 상주 Service를 뜻하지 않는다.
 3. 초안 목록·삭제·위치 지정 진입을 제공하고 앱 재시작 후 복구를 확인한다. 실제 지도 선택 UI는 위치 단계에서 연결한다. 주행 중 지도 조작 가능 여부를 별도 Pleos 디자인/규제 검토 없이 허용하지 않는다.
 4. Schema 승인·실제 스캔/갱신과 음성 → Action → 저장 → Callback → 음성 안내를 확인한다. 파일 생성/ADB 설치만으로 활성화 완료를 주장하지 않는다.
 5. 다음 단계에서 현도로 주변 구역/지명 검색·UI 배치·서버 게시·수신 필터를 연결한다.
 
-예정 파일은 assets/schema.json, AndroidManifest.xml, gleo/GleoActionReceiver.kt와 최소 초안 저장/응답 코드, MainActivity.kt의 초안 UI, 핵심 검증 테스트다. 저장은 기존 의존성과 플랫폼 기능을 확인한 뒤 최소 수단을 고른다. STT/TTS·녹음·별도 LLM·불필요한 SDK는 추가하지 않는다. 현재 이 문서의 계약만 변경했으며 코드/설정은 구현 전이다.
+예정 파일은 assets/schema.json, AndroidManifest.xml, gleo/GleoActionReceiver.kt와 최소 초안 저장/응답 코드, MainActivity.kt의 초안 UI, 핵심 검증 테스트다. 저장은 기존 의존성과 플랫폼 기능을 확인한 뒤 최소 수단을 고른다. STT/TTS·녹음·별도 LLM·불필요한 SDK는 추가하지 않는다. Sprint 1의 로컬 구현을 연결했으며 실제 외부 Gleo 활성화·위치/게시·실환경 검증은 미완료다.
 
 ## 9. 설계 피드백과 주의점
 
@@ -357,7 +360,7 @@ S3의 Gleo 취소 기한은 7초다. 프로젝트 내부 목표는 수신 후 �
 
 | 검증 | 기대 결과 | 현재 |
 |---|---|---|
-| 앱 식별자 | namespace/소스 package/설치 applicationId/Schema 일치 | FAIL: Gradle applicationId가 이전 값으로 남아 있음 |
+| 앱 식별자 | namespace/소스 package/applicationId/Schema 일치 | PASS: 소스/설정 정합, 설치 실행은 NOT_TESTED |
 | Schema/Action/Callback 예시 | 필드·모드 조건·함수명 일치, data 내부 JSON 배열 | 문서 자동 검사 |
 | 자연어 분기 | 방금/10초 전 → CURRENT_ROAD, 지명 → NAMED_PLACE, 아까만 → 질문, 모름 → DEFERRED | NOT_TESTED: 실기기 |
 | 문맥·충돌 | 아까+지명은 장소 우선, 불명/장시간 과거를 임의로 현위치화하지 않음 | NOT_TESTED |

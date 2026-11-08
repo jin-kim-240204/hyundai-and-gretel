@@ -2,6 +2,14 @@
 
 2026-11-08. 현재 브랜치 `gm/feat-speech-to-text`에서 작업한다. 브랜치명은 과거 이름이며 STT SDK를 구현한다는 뜻이 아니다. 사용자가 지정한 3명은 **자비스(이 세션, 메인테이너/조율자), 프라이데이, 이디스**다. 다른 AI는 사용자가 별도 세션에서 호출한다. 각 담당자는 이 문서와 AGENTS.md, pleos-connect 스킬에서 시작한다.
 
+## 현재 사용자 우선순위: 음성 호출·JSON 관측
+
+사용자 후속 결정으로 현재 수동 검증 목표는 **음성 → Gleo 함수 선택 → 전달 파라미터 → Callback**이다. debug 빌드는 저장 동의/로컬 저장을 거치지 않고 검증 결과만 응답하며 관측 화면을 바로 표시한다. 외부 Action 수신은 debug에서만 열고 실제 설치 확인된 ai.umos.ambientai에 Callback을 제한한다. 발신자가 인증되었다고 주장하지 않으며 draft/차량/게시 기능을 실행하지 않는다. release 수신점은 내부 전용이다.
+
+[실시간 로그와 장애 단계 확인 방법](gleo-debugging.md)을 먼저 참고한다. 최근 10건의 관측은 메모리에만 남는다. 사용자 요청으로 debug `GleoProbe` logcat에 Action/키·타입/입력 JSON/결과/Callback JSON·전송 요청 시간을 기록한다. `adb logcat -s GleoProbe:D '*:S'`로 확인한다. 전송 요청 성공과 Gleo 실제 수신/음성 응답 성공을 구분한다. 사용자가 직접 음성 테스트하며 에이전트가 합성 Action/음성 호출을 자동 실행하지 않는다.
+
+아래 저장/UI 스프린트 범위는 이미 구현된 기반 기능이며 현재 테스트의 선행조건으로 강제하지 않는다.
+
 ## 스프린트 구성
 
 | 스프린트 | 산출물 | 완료 기준 |
@@ -77,10 +85,10 @@ interface DraftStore {
 - 진입점은 `class LocalDraftStore(context: Context, now: () -> Instant = Instant::now) : DraftStore`. 내부 Context는 applicationContext로 유지한다. 메서드는 IO dispatcher에서 실행하고 같은 프로세스의 여러 인스턴스에서도 동시 갱신 유실을 막는다. 별도 Android process는 사용하지 않는다.
 - 앱 전용 `noBackupFilesDir`에 최소 파일로 저장하고 원자적으로 교체한다. 표준 플랫폼 저장 기능을 우선하며 Room 등 새 의존성은 추가하지 않는다. 내용/위치/시각을 로그에 남기지 않는다.
 - 동의 기본값 false. save 자체에서도 동의를 확인한다. 사용자가 UI에서 명시적으로 허용한 뒤만 저장한다. false로 철회할 때 초안 전부 삭제 후 철회 완료를 확정한다. 실패를 성공으로 위장하지 않는다.
-- 이번 개발 브랜치의 보유기간은 **최초 receivedAt부터 7일**(프로젝트 선택). list/save 시 만료를 제외하고 정리한다. UI 고지에 같은 기간을 쓴다. 최대 100개, 초과 시 자동으로 기존 초안을 버리지 말고 저장 실패를 반환한다.
+- 이번 개발 브랜치의 보유기간은 **최초 receivedAt부터 7일**(프로젝트 선택). list/save 시 만료를 제외하고 정리한다. 앱 미실행 중 정확한 시점의 물리 삭제 작업은 없으므로 UI에는 “7일 유효, 만료 시 앱 이용 때 삭제”로 고지한다. 최대 100개, 초과 시 자동으로 기존 초안을 버리지 말고 저장 실패를 반환한다.
 - 신규 ID는 UUID. input.draftId가 있으면 해당 로컬 Android 사용자 컨텍스트의 미만료 초안만 갱신한다. 없는/만료 ID는 `IllegalArgumentException`. 갱신은 원본 receivedAt/utteranceRecordedAt을 보존하고 updatedAt만 현재 시각으로 바꾼다. ID 변경/자동 신규 생성 금지.
-- save 결과의 input.draftId는 실제 id로 통일한다. state는 locationMode에서 결정한다. list는 receivedAt 내림차순. clear는 내용만 비우고 동의는 유지한다. setConsent(false)는 내용 삭제와 동의 철회다.
-- 저장 실패/손상은 IOException 등으로 호출자에게 전달하고, 손상 파일을 빈 목록으로 조용히 덮어쓰지 않는다. 거절/미동의는 IllegalStateException. 새 암호화/계정 시스템은 만들지 않는다. Android 사용자별 앱 샌드박스 범위이며 동일 Android 사용자를 공유하는 운전자 간 분리는 제공하지 않으므로 출시 전 별도 해결한다.
+- save 결과의 input.draftId는 실제 id로 통일한다. state는 locationMode에서 결정하되 NAMED_PLACE의 placeQuery 누락 또는 USER_DESCRIPTION의 directionDescription 누락은 AWAITING_LOCATION으로 둔다. list는 receivedAt 내림차순. clear는 내용만 비우고 동의는 유지한다. setConsent(false)는 내용 삭제와 동의 철회다.
+- 저장 실패/손상은 IOException 등으로 호출자에게 전달하고, 손상 파일을 빈 목록으로 조용히 덮어쓰지 않는다. 거절/미동의는 IllegalStateException. 별도 암호화 라이브러리/사용자 정의 암호/계정 시스템은 만들지 않는다. 공식 보안 의무에 따라 Android Keystore의 AES-GCM으로 저장 본문과 임시 파일을 암호화하고 키는 파일에 저장하지 않는다. JVM 테스트는 cipher 입출력 함수를 주입할 수 있으나 실제 LocalDraftStore의 암호화 해제 기본값을 두지 않는다. Android 사용자별 앱 샌드박스 범위이며 동일 Android 사용자를 공유하는 운전자 간 분리는 제공하지 않으므로 출시 전 별도 해결한다.
 - 핵심 테스트: 재생성 후 복구, 원자 저장 실패에서 기존 데이터 유지, 갱신 원시각 보존, 없는 ID, 7일 경계, 동의 기본/철회 삭제, 동시 저장/삭제, 손상/용량 한도. 테스트 실행 환경/방법을 기록한다.
 
 ### 이디스 상세 명세
@@ -110,7 +118,7 @@ fun DraftScreen(
 - 위 공통 타입을 우선 제공하고 Schema를 assets/schema.json으로 옮긴다. 제거된 위치 설명 필드는 재도입하지 않는다.
 - 파서는 JSONObject 경계 뒤 순수 Kotlin 검증 함수를 두어 단위 테스트한다. 잘못된 타입/한도/enum·공백·모드 충돌·시각 형식/미래값을 검증한다. 방향 기본값은 CURRENT_ROAD→CURRENT_VEHICLE, 나머지 UNKNOWN. 필수 content/locationMode 누락은 asking, 선택값 누락은 허용한다.
 - 지명/방향 누락으로 질문해야 하는 경우 유효 내용은 저장한다. Callback status와 저장 성공을 분리하고 DEFERRED는 추가 질문을 하지 않는다. Callback은 최소 ID/상태/미게시만 포함한다.
-- 실제 Gleo 발신자 인증/수신 대상 패키지/권한은 공급자 계약 확인 전 확정하지 않는다. 외부에 무방비 exported Receiver를 열지 않는다. 초기 Receiver는 **exported=false**인 내부 수신점으로만 연결하며 실제 Gleo 외부 호출은 NOT_TESTED/미활성으로 남긴다. schema 파일 존재와 외부 연동 활성화를 구분한다. 실제 보안 계약 확보 후 자비스만 외부 수신/대상 제한을 변경한다.
+- 실제 Gleo 발신자 인증/수신 대상 패키지/권한은 공급자 계약 확인 전 확정하지 않는다. 외부에 무방비 exported Receiver를 열지 않는다. release Receiver는 **exported=false**로 유지한다. 사용자 요청의 debug 관측 빌드에서만 exported=true로 테스트 입력을 받고 저장·차량·게시 작업을 하지 않는다. 실제 Gleo 호출은 사용자가 직접 검증한다. schema 파일 존재와 외부 연동 활성화를 구분한다. 실제 보안 계약 확보 후 자비스만 외부 수신/대상 제한을 변경한다.
 - 실제 시각 제공 계약이 없으므로 utteranceRecordedAt을 LLM 문자열만 보고 신뢰하지 않는다. 형식 검증 후라도 앱 경계에서 검증되지 않은 시각은 채택하지 않고 receivedAt만 기록한다. SDK 방향값은 Sprint 2이며 임의 각도/현재 위치를 생성하지 않는다.
 - 프라이데이 저장소와 이디스 UI가 준비되면 MainActivity·Receiver·처리 엔진을 연결한다. `goAsync`/IO·응답 1회/5초 내부 목표·저장 실패/미동의 처리를 검증한다. 시스템 Gleo는 7초 취소이며 앱 내부 시간만으로 준수를 판정하지 않는다.
 
