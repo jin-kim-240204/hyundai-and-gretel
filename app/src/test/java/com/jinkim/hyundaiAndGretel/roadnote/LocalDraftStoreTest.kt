@@ -45,6 +45,7 @@ class LocalDraftStoreTest {
         clock = clock.plusSeconds(100)
         LocationMode.entries.forEach { mode ->
             val updated = store.save(input(mode).copy(draftId = original.id,
+                placeQuery = if (mode == LocationMode.NAMED_PLACE) "뱅뱅사거리" else null,
                 utteranceRecordedAt = clock), clock)
             assertEquals(original.id, updated.id)
             assertEquals(original.id, updated.input.draftId)

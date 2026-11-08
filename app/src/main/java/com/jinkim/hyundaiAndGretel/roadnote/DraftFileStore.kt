@@ -1,5 +1,6 @@
 package com.jinkim.hyundaiAndGretel.roadnote
 
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -19,6 +20,8 @@ import kotlinx.coroutines.withContext
 internal class DraftFileStore(
     private val file: File,
     private val now: () -> Instant = Instant::now,
+    private val encode: (ByteArray) -> ByteArray = { it },
+    private val decode: (ByteArray) -> ByteArray = { it },
     private val replace: (File, File) -> Unit = { source, target ->
         Files.move(source.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE,
             StandardCopyOption.REPLACE_EXISTING)
@@ -56,10 +59,10 @@ internal class DraftFileStore(
                     else input.utteranceRecordedAt),
             receivedAt = firstReceived,
             updatedAt = current,
-            state = when (input.locationMode) {
-                LocationMode.CURRENT_ROAD, LocationMode.NAMED_PLACE -> DraftState.PENDING_LOCATION
-                LocationMode.NEEDS_CLARIFICATION, LocationMode.DEFERRED -> DraftState.AWAITING_LOCATION
-            },
+            state = if (input.locationMode in setOf(LocationMode.NEEDS_CLARIFICATION, LocationMode.DEFERRED) ||
+                (input.locationMode == LocationMode.NAMED_PLACE && input.placeQuery.isNullOrBlank()) ||
+                (input.directionMode == DirectionMode.USER_DESCRIPTION && input.directionDescription.isNullOrBlank())
+            ) DraftState.AWAITING_LOCATION else DraftState.PENDING_LOCATION,
         )
         write(active.copy(drafts = active.drafts.filterNot { it.id == id } + draft))
         draft
@@ -104,7 +107,8 @@ internal class DraftFileStore(
             return Snapshot(false, emptyList())
         }
         try {
-            DataInputStream(file.inputStream().buffered()).use { data ->
+            if (file.length() > 2_000_000) throw IOException("Local draft store is too large")
+            DataInputStream(ByteArrayInputStream(decode(file.readBytes()))).use { data ->
                 if (data.readInt() != VERSION) throw IOException("Unsupported local draft format")
                 val consent = data.readBoolean()
                 val count = data.readInt()
@@ -163,7 +167,7 @@ internal class DraftFileStore(
         val temp = File(file.parentFile, "${file.name}.tmp")
         try {
             FileOutputStream(temp).use { output ->
-                output.write(bytes)
+                output.write(encode(bytes))
                 output.fd.sync()
             }
             replace(temp, file)
