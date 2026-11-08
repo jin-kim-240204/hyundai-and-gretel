@@ -27,3 +27,20 @@
 자동 검사: :app:testDebugUnitTest PASS (저장 핵심 9개, 기존 다른 담당 테스트도 함께 통과), Studio MCP build_project PASS(isSuccess=true, problems=[]), harness 정적 PASS. 첫 실행에서 JUnit 테스트 하나의 반환형이 예외 객체로 추론되어 initializationError 발생; Unit 반환형으로 수정하고 재실행 PASS.
 
 동작 증거는 app/src/test/java/com/jinkim/hyundaiAndGretel/roadnote/LocalDraftStoreTest.kt 및 app/build/test-results/testDebugUnitTest/TEST-com.jinkim.hyundaiAndGretel.roadnote.LocalDraftStoreTest.xml. Android 프로세스 재시작/실기기 파일시스템/사용자 격리는 별도 검증 필요(NOT_TESTED).
+
+
+## 최종 검증 및 인계
+- 구현 커밋: `9fc027c` (저장소 + 핵심 테스트). 후속 변경: 종료 직전 남은 `.tmp`를 다음 read에서 삭제하여 미확정 동의/내용을 채택하지 않음. 자동 검사 통과 후 이 보완 및 최종 기록은 별도 커밋.
+- 최종 `:app:testDebugUnitTest`: PASS. 저장소 10개, Gleo 18개, UI presentation 3개 = 31개, failures=0. JVM/macOS에서 실제 임시 디렉터리와 ATOMIC_MOVE를 사용. 테스트에서 원자 교체 직전 IOException을 주입하여 기존 파일/동의 유지 및 임시 파일 정리를 확인했다.
+- `python3 scripts/verify_harness.py --build`: PASS, assembleDebug/lintDebug 성공. `Studio MCP build_project`: PASS, isSuccess=true, problems=[]. `git diff --check`: PASS.
+- `adb devices`: 연결 기기 0개. Android 실파일시스템 원자 교체/강제 종료 후 프로세스 재시작/Android 사용자별 격리는 NOT_TESTED. noBackupFilesDir 경로는 LocalDraftStore.kt:8 코드 검토만 완료. 기기에서 동의→저장→force-stop→재실행→조회→철회→재실행, 별도 Android 사용자 조회 없음 확인 필요.
+- 자동 테스트에서 store 재생성 복구는 확인했지만 실제 앱 프로세스 재시작을 대체하지 않는다. ATOMIC_MOVE 미지원/파일 쓰기 실패는 IOException으로 호출자에게 전달하며 비원자 교체로 fallback하지 않는다.
+- list/save 시 최초 수신 + 7일 이상인 항목을 제거한다. 앱이 실행되지 않는 동안 만료 시각에 맞춘 물리 삭제는 제공하지 않는다. 100개 한도에서 기존 초안을 자동 축출하지 않는다. DataOutputStream UTF 필드 한도 초과는 IOException이며 기존 파일을 보존한다. 현재 입력 파서 한도 내 데이터는 해당 한도보다 작다.
+- 손상 파일은 list/save/setConsent(true)/clear가 예외를 전달하며 기존 데이터를 유지한다. 명시적 setConsent(false)는 내용 읽기 없이 빈 목록/false로 교체해 손상 데이터도 철회 가능하다.
+- 자비스 인계: MainActivity/처리 엔진에서 `LocalDraftStore(context)`를 DraftStore로 연결하고 실패/미동의를 처리. 추가 의존성/Gradle/Manifest 변경 요청 없음. 이디스 UI의 명시 동의/고지 및 통합 동작은 이 담당 결과에 포함하지 않는다.
+- 저장 구현은 완료. 전체 검증/출시 적합성은 미완료: 암호화 요구 FAIL, 동일 Android 사용자를 공유하는 운전자 분리 및 Android runtime 증거 NOT_TESTED. 보고서 검사는 이 제한을 의도대로 실패 상태(exit 1)로 유지한다.
+
+## 동시 통합 변경 발견 및 커밋 경계
+최종 커밋 준비 중 자비스가 조율 메모(자비스 기록의 후속 통합 절)에 따라 LocalDraftStore/DraftFileStore에 Keystore 암호화·누락 지명 상태 변경을 작성 중인 것을 확인했다. 이 변경은 프라이데이 커밋에 포함하지 않는다. DraftFileStore는 인덱스에 프라이데이의 임시 파일 정리 hunk만 남겼고 작업 파일의 자비스 변경은 보존했다. 프라이데이 결과/JSON은 `9fc027c`와 임시 파일 보완까지 검증한 시점 기준이며, 자비스 후속 암호화의 적합성/테스트 결과를 판정하지 않는다. 계획의 암호화 제외 문구가 조율 메모에서 Keystore 필수로 정정되었으며, 이 의무 해결과 최종 보고서 갱신은 이미 자비스가 진행 중인 통합 변경에서 확인해야 한다.
+
+자비스 확인 사항: DraftFileStore의 ByteArrayInputStream import는 이번 프라이데이 최초 구현에서 사용하지 않아 제거했다. 후속 decode 경로에서 사용하면 import 추가 필요. LocalDraftStoreTest의 NAMED_PLACE fixture는 최초 계약에 따라 placeQuery가 없는 값으로 PENDING_LOCATION을 기대하므로 수정된 누락 지명 정책에 맞춰 fixture/검증 변경 필요. 두 사항 모두 프라이데이 변경에 섞거나 타인 작업을 되돌리지 않았다.

@@ -96,6 +96,9 @@ internal class DraftFileStore(
     }
 
     private fun read(): Snapshot {
+        // A process may die before rename; only the committed file is authoritative.
+        val temp = File(file.parentFile, "${file.name}.tmp")
+        if (temp.exists() && !temp.delete()) throw IOException("Cannot remove draft temporary file")
         if (!Files.exists(file.toPath())) {
             if (!Files.notExists(file.toPath())) throw IOException("Cannot access local draft store")
             return Snapshot(false, emptyList())

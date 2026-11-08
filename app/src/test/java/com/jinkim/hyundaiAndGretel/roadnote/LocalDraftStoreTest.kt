@@ -159,6 +159,19 @@ class LocalDraftStoreTest {
         assertTrue(store().list().isEmpty())
     }
 
+    @Test fun abandonedTemporaryFileIsRemovedWithoutChangingCommittedData() = runBlocking {
+        store().setConsent(true)
+        val draft = store().save(input(), clock)
+        val temp = File(folder.root, "drafts.bin.tmp")
+        temp.writeText("uncommitted data")
+        assertEquals(listOf(draft), store().list())
+        assertFalse(temp.exists())
+        assertTrue(file.delete())
+        temp.writeText("uncommitted consent")
+        assertFalse(store().hasConsent())
+        assertFalse(temp.exists())
+    }
+
     @Test fun serializationFailureKeepsExistingFile() = runBlocking {
         store().setConsent(true)
         val bytes = file.readBytes()
