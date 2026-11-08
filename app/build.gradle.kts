@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 android {
-    namespace = "com.jinnayeong.wakeup"
+    namespace = "com.jinkim.hyundaiAndGretel"
     compileSdk = 35
     defaultConfig {
         applicationId = "com.jinnayeong.wakeup"

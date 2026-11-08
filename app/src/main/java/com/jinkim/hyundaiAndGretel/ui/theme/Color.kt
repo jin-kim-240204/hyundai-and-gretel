@@ -1,4 +1,4 @@
-package com.jinnayeong.wakeup.ui.theme
+package com.jinkim.hyundaiAndGretel.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
