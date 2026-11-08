@@ -6,6 +6,7 @@ import com.jinkim.hyundaiAndGretel.roadnote.RoadNoteInput
 import java.time.Instant
 
 const val CREATE_ROAD_NOTE_DRAFT = "CREATE_ROAD_NOTE_DRAFT"
+const val GLEO_INTENT_ACTION = "com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE_DRAFT"
 
 sealed interface ParsedGleoAction {
     data class Valid(val input: RoadNoteInput, val missingField: String? = null) : ParsedGleoAction

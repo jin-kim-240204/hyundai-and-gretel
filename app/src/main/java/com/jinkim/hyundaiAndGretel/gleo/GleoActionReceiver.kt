@@ -22,7 +22,7 @@ class GleoActionReceiver : BroadcastReceiver() {
         val probeId = if (BuildConfig.DEBUG) {
             GleoProbe.begin(intent.action.orEmpty(), raw.getOrNull() ?: "ACTION_PARAM 없음/잘못된 타입", describeExtras(intent), receivedAt)
         } else -1
-        if (intent.action != CREATE_ROAD_NOTE_DRAFT) {
+        if (intent.action != GLEO_INTENT_ACTION) {
             GleoProbe.complete(probeId, "지원하지 않는 함수 · 무처리", "없음", 0)
             return
         }

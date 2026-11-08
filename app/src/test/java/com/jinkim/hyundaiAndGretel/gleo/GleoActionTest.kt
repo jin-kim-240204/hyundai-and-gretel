@@ -17,6 +17,10 @@ class GleoActionTest {
     private val now = Instant.parse("2026-11-08T03:00:20Z")
     private val basic = mapOf<String, Any?>("content" to "도로에 구덩이가 있음", "locationMode" to "CURRENT_ROAD")
 
+    @Test fun androidActionIncludesPackageButSchemaFunctionNameDoesNot() {
+        assertEquals("com.jinkim.hyundaiAndGretel.$CREATE_ROAD_NOTE_DRAFT", GLEO_INTENT_ACTION)
+    }
+
     @Test fun currentRoadUsesVehicleDirectionWithoutRequiringSpokenTime() {
         val valid = validateGleoParameters(basic, now) as ParsedGleoAction.Valid
         assertEquals(DirectionMode.CURRENT_VEHICLE, valid.input.directionMode)

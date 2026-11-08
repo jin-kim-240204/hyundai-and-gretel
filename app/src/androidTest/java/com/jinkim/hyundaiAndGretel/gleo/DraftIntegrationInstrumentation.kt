@@ -101,7 +101,7 @@ class DraftIntegrationInstrumentation : Instrumentation() {
     private fun checkReceiver(result: Bundle) {
         GleoProbe.clear()
         targetContext.sendBroadcast(
-            Intent(CREATE_ROAD_NOTE_DRAFT)
+            Intent(GLEO_INTENT_ACTION)
                 .setClass(targetContext, GleoActionReceiver::class.java)
                 .putExtra("ACTION_PARAM", "[]"),
         )
