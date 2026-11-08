@@ -1,0 +1,45 @@
+{
+  "task": "driving-status-ui",
+  "selected_rules": [
+    "SAF-01",
+    "ENV-02",
+    "DES-01"
+  ],
+  "checks": [
+    {
+      "id": "SAF-01",
+      "status": "NOT_TESTED",
+      "evidence": "현재 Pleos 에뮬레이터 제한80에서 간결 UI 표시 PASS. 지역/전이/실차/카테고리 승인 미검증."
+    },
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "ComponentActivity/Compose 유지, android.car 플랫폼 공개 API·선택 라이브러리만 사용. 40 tests/assembleDebug/lintDebug/Studio PASS."
+    },
+    {
+      "id": "DES-01",
+      "status": "NOT_TESTED",
+      "evidence": "현재 화면 3개 짧은 상태문구/버튼·JSON 숨김 확인. 전체 폼팩터/대비/물리 크기·인지시간 실측 미검증."
+    },
+    {
+      "id": "DOC-6386c5462132#DO미선언",
+      "status": "PASS",
+      "evidence": "MainActivity DO metadata 추가, 시스템 전체차단 대신 제한UI. 현재 requiresDO=true/flags80에서 앱 표시 확인."
+    },
+    {
+      "id": "DOC-9faba42791f0#상태연동",
+      "status": "PASS",
+      "evidence": "CarUxMonitor 초기조회+listener·onStop 해제/disconnect. 불명/부분제한은 fail-closed. [UX] compact=true activeRestrictions=80 실제로그."
+    },
+    {
+      "id": "DOC-3790286d55ee#간결UI",
+      "status": "PASS",
+      "evidence": "DrivingStatusScreen: 짧은3문구, rawJSON/기록스크롤/버튼 없음. UIAutomator 실제제한화면 확인."
+    },
+    {
+      "id": "DOC-12839eb0a523#카테고리",
+      "status": "NOT_TESTED",
+      "evidence": "Mobility Services는 제품 목적상 후보. 실제 마켓/양산 허용 및 지역 카테고리 판정 미실행."
+    }
+  ]
+}

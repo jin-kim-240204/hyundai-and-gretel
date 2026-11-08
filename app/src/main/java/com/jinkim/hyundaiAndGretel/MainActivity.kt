@@ -4,6 +4,12 @@ import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.jinkim.hyundaiAndGretel.driving.CarUxMonitor
+import com.jinkim.hyundaiAndGretel.driving.DrivingStatusScreen
+import com.jinkim.hyundaiAndGretel.driving.drivingStatus
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,13 +27,18 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var drafts: DraftsViewModel
+    private var restricted by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        lifecycle.addObserver(CarUxMonitor(this) { restricted = it })
         if (!BuildConfig.DEBUG) drafts = ViewModelProvider(this)[DraftsViewModel::class.java]
         setContent {
             HyundaiAndGretelTheme {
-                if (BuildConfig.DEBUG) {
+                if (restricted) {
+                    val event = GleoProbe.events.collectAsStateWithLifecycle().value.firstOrNull()
+                    DrivingStatusScreen(drivingStatus(event))
+                } else if (BuildConfig.DEBUG) {
                     val events = GleoProbe.events.collectAsStateWithLifecycle().value
                     GleoProbeScreen(events, GleoProbe::clear)
                 } else {

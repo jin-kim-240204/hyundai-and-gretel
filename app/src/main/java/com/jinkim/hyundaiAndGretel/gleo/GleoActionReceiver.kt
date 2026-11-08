@@ -58,7 +58,7 @@ class GleoActionReceiver : BroadcastReceiver() {
                             .putExtra("response", callback),
                     )
                     GleoProbe.complete(probeId, "${response.status} · Callback 전송 요청 → $destination (수신 완료 미확인)", callback,
-                        SystemClock.elapsedRealtime() - startedAt)
+                        SystemClock.elapsedRealtime() - startedAt, status = response.status)
                 } catch (_: Exception) {
                     GleoProbe.complete(probeId, "Callback 전송 실패", callback, SystemClock.elapsedRealtime() - startedAt)
                 }
