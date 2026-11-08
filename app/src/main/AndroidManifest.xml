@@ -9,6 +9,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HyundaiAndGretel">
+        <!-- External Gleo access stays disabled until caller and callback trust are verified. -->
+        <receiver
+            android:name=".gleo.GleoActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="CREATE_ROAD_NOTE_DRAFT" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"
