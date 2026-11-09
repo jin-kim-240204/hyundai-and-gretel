@@ -12,3 +12,5 @@ S1~S6: 진행 중. 자동검사·런타임·미검증을 아래에 별도 기록
 S1 PASS: 실제 Pleos2.1.0/user10에 앱·계측 설치. SDK1.1.3 register 후 ADB 밖→안→밖 주입에서 ENTER/EXIT, remove 확인. ProximityTest 1개 PASS(27.068초). 첫 계측은 JUnit 메서드 반환형 오류로 실패, Unit 명시 후 수정 재실행 PASS. 지원 개수/차단·정차·이미안등록은 별도 미검증. applicationId를 기존 기능 브랜치와 동일하게 정정했으며 예전 com.jinnayeong.wakeup 데이터는 자동 이전하지 않음.
 
 S2 core PASS: LocationBufferTest 4개. callback 시각 기준45초 보관·30초 준비·최근접선택·5초 신선도·큰공백초기화·미터거리/경로검증. 패널은 데이터 계층과 ViewModel 연결 뒤 별도 UI 커밋에서 구현한다.
+
+S3 PASS: Room2.8.5/KSP2.3.13/H3-Java4.5.1 빌드. 첫 기기계측은 H3.so가 Java리소스로 제외돼 실패; Gradle Copy로 Android ABI별JNI 추출·newSystemInstance 사용 후 재실행 2테스트 PASS(0.151초). request멱등/충돌,동시8개receipt1행,자기제보/만료제외,cascade삭제,H3 경계포함 cover 검증. generated schema1.json 버전관리. Room import/동기화 서버는 없음. Kotlin프로퍼티 기반 컬럼명 및 nullable displayedAt으로상태파생해 문서의중복state컬럼은 생략.
