@@ -54,12 +54,18 @@ fun NotesScreen(model: NotesViewModel, onStart: () -> Unit) {
                 Text("파랑: 현재 위치 · 빨강: 심어진 쪽지 · 시연 경로 ${DemoRoute.ID}")
             }
             if (state.lastResult.isNotEmpty()) Text(state.lastResult)
-            val item = state.inbox.firstOrNull()
+            var inboxIndex by remember(state.actor) { mutableIntStateOf(0) }
+            val item = state.inbox.getOrNull(inboxIndex.coerceAtMost((state.inbox.size - 1).coerceAtLeast(0)))
             if (item != null) {
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(20.dp)) {
                         Text(if (item.note.category.name == "WARNING") "도로 경고" else "도로 안내", style = MaterialTheme.typography.titleLarge)
                         Text(item.note.content, style = MaterialTheme.typography.headlineSmall)
+                    }
+                }
+                if (state.inbox.size > 1) {
+                    TextButton(onClick = { inboxIndex = (inboxIndex + 1) % state.inbox.size }) {
+                        Text("다음 쪽지 (${inboxIndex + 1}/${state.inbox.size})")
                     }
                 }
                 LaunchedEffect(item.note.id, state.actor) { model.displayed(item.note.id) }
