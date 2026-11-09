@@ -33,19 +33,14 @@ class GleoActionReceiver : BroadcastReceiver() {
                     withTimeout(5_000) {
                         val parsed = if (raw.isFailure) {
                             ParsedGleoAction.Rejected(GleoResponse(GleoStatus.FAIL, "The request format is invalid.", reason = "INVALID_INPUT"))
-                        } else parseGleoAction(raw.getOrNull(), receivedAt)
+                        } else parseGleoAction(raw.getOrNull())
                         if (BuildConfig.DEBUG) previewGleoAction(parsed)
                         else GleoActionProcessor(LocalDraftStore(context)).process(parsed, receivedAt)
                     }
                 } catch (_: TimeoutCancellationException) {
-                    null
+                    GleoResponse(GleoStatus.FAIL, "The road report could not be processed in time.", reason = "TIMEOUT")
                 } catch (_: Exception) {
                     GleoResponse(GleoStatus.FAIL, "The report could not be prepared.", reason = "INVALID_INPUT")
-                }
-                val elapsed = SystemClock.elapsedRealtime() - startedAt
-                if (response == null || elapsed >= 5_000) {
-                    GleoProbe.complete(probeId, "TIMEOUT · Callback 생략", "없음", elapsed)
-                    return@launch
                 }
                 val callback = response.toCallbackJson()
                 // Debug-only preview cannot write drafts or control vehicles; release remains internal-only.

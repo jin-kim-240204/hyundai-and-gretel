@@ -69,19 +69,12 @@ object GleoProbe {
 
 fun previewGleoAction(action: ParsedGleoAction): GleoResponse = when (action) {
     is ParsedGleoAction.Rejected -> action.response
-    is ParsedGleoAction.Valid -> when {
-        action.missingField != null -> GleoResponse(
-            GleoStatus.ASKING, "The report ${action.missingField} is required.", missingField = action.missingField,
-        )
-        action.input.locationMode == LocationMode.NEEDS_CLARIFICATION -> GleoResponse(
-            GleoStatus.ASKING, "Which place or landmark was the road condition near?", missingField = "placeQuery",
-        )
-        else -> GleoResponse(
-            GleoStatus.SUCCESS,
-            "The road report parameters were received and validated; nothing was saved or published.",
-            reason = "PROBE_ONLY",
-        )
-    }
+    is ParsedGleoAction.Valid -> GleoResponse(
+        GleoStatus.SUCCESS,
+        "The road report was received successfully.",
+        reason = "PROBE_ONLY",
+        report = action.input,
+    )
 }
 
 @Composable
@@ -93,7 +86,7 @@ fun GleoProbeScreen(events: List<GleoProbeEvent>, onClear: () -> Unit) {
                     Text("Gleo 음성 연동 테스트", style = MaterialTheme.typography.headlineSmall)
                     Text("함수 선택 → 수신 JSON → 검증 → Callback을 확인합니다.")
                     Text("저장 동의 없이 테스트하며 디스크 저장·게시를 하지 않습니다.")
-                    Text("대기 함수: CREATE_ROAD_NOTE_DRAFT · 로그 태그: GleoProbe")
+                    Text("대기 함수: CREATE_ROAD_NOTE · 로그 태그: GleoProbe")
                     Text("수신점은 디버그 테스트용입니다. 표시된 요청의 발신자는 인증되지 않았습니다.")
                     Button(onClick = onClear) { Text("화면 기록 지우기") }
                     if (events.isEmpty()) Text("Gleo에게 도로 제보를 요청해 주세요. 아직 수신한 Action이 없습니다.")
