@@ -40,6 +40,10 @@ internal interface NoteDao {
     @Query("SELECT * FROM road_notes WHERE id=:id") suspend fun byId(id: String): NoteEntity?
     @Query("SELECT * FROM road_notes WHERE scenarioId=:scenario AND h3CellId IN (:cells)")
     fun nearby(scenario: String, cells: List<String>): Flow<List<NoteEntity>>
+    @Query("SELECT * FROM road_notes WHERE scenarioId=:scenario ORDER BY createdAt,id")
+    fun scenarioNotes(scenario: String): Flow<List<NoteEntity>>
+    @Query("SELECT * FROM road_notes WHERE scenarioId=:scenario AND expiresAt>:now ORDER BY createdAt DESC,id DESC LIMIT 1")
+    suspend fun latest(scenario: String, now: Long): NoteEntity?
     @Query("DELETE FROM road_notes WHERE scenarioId!=:active OR expiresAt<=:now") suspend fun clean(active: String, now: Long)
     @Query("DELETE FROM road_notes WHERE scenarioId=:scenario") suspend fun deleteScenario(scenario: String)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertReceipt(receipt: ReceiptEntity): Long

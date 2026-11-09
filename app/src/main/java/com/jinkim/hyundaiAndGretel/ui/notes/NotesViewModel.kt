@@ -18,5 +18,9 @@ class NotesViewModel(private val controller: DemoController) : ViewModel() {
         val result = controller.report(content, Category.WARNING)
         if (result is com.jinkim.hyundaiAndGretel.demo.ReportResult.Failed) controller.operationFailed(result.reason)
     } }
+    fun startPosition(actor: Actor) { viewModelScope.launch {
+        runCatching { controller.resetStartPosition(actor) }.onFailure { controller.operationFailed("시작 위치 조회 실패") }
+    } }
+    fun externalGps() { viewModelScope.launch { controller.useExternalGps() } }
     fun displayed(id: String) = controller.displayed(id)
 }

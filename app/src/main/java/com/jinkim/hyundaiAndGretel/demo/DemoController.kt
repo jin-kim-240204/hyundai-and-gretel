@@ -24,6 +24,11 @@ class DemoController(
     }
     private val source = PleosLocationSource(context)
     private val buffer = LocationBuffer()
+    private val debugGps = DebugGps(context)
+    private var debugGpsJob: Job? = null
+    private var pendingStartMeters: Double? = null
+    private var plotJob: Job? = null
+    private var plotNotes = emptyList<RoadNote>()
     private val mutex = Mutex()
     private var generation = 0L
     private var sdkJob: Job? = null
@@ -44,6 +49,7 @@ class DemoController(
     val actor get() = _state.value.actor
     init {
         observeInbox()
+        observePlot()
         scope.launch {
             while (isActive) {
                 delay(1000)
@@ -55,6 +61,7 @@ class DemoController(
                 val samples = buffer.snapshot(now)
                 _state.update { it.copy(bufferSeconds = samples.takeIf { it.size > 1 }?.let { (it.last().elapsedMillis-it.first().elapsedMillis)/1000 } ?: 0,
                     canReport = it.running && actor == Actor.A && buffer.anchor(now) != null,
+                    plotNotes = plotNotes.filter { note -> note.expiresAt > System.currentTimeMillis() },
                     inbox = allInbox.filter { entry -> entry.note.expiresAt > System.currentTimeMillis() }) }
                 if (_state.value.running) reconcile()
             }
@@ -72,6 +79,9 @@ class DemoController(
                     if (data == null) { invalidate("위치를 사용할 수 없음"); return@launch }
                     val progress = DemoRoute.progress(data.latitude, data.longitude)
                     if (progress == null) { invalidate("시연 경로 밖 위치"); return@launch }
+                    val expectedStart = pendingStartMeters
+                    if (expectedStart != null && kotlin.math.abs(progress - expectedStart) > 5) return@launch
+                    pendingStartMeters = null
                     if (lastSdkTime != null && data.timestampMillis < lastSdkTime!!) {
                         invalidate("위치 시각 역행"); lastSdkTime = data.timestampMillis; return@launch
                     }
@@ -109,17 +119,21 @@ class DemoController(
     }
     fun stop(message: String = "시연 중지") {
         generation++
+        debugGpsJob?.cancel()
+        runCatching { debugGps.stop() }.onFailure { Log.w("RoadNotes", "MOCK_GPS_CLEANUP_FAILED", it) }
+        pendingStartMeters = null
         sdkJob?.cancel(); nearbyJob?.cancel()
         ready = false; cells = emptyList(); candidates = emptyList(); lastSdkTime = null
         clearAlerts()
         runCatching { source.stop() }.onFailure { Log.w("RoadNotes", "SDK_RELEASE_FAILED", it) }
         invalidate(message)
-        _state.update { it.copy(running = false, candidateCount = 0) }
+        _state.update { it.copy(running = false, candidateCount = 0, debugGpsActive = false, debugSpeedKph = 0.0) }
     }
     suspend fun switchActor(next: Actor) = mutex.withLock {
         if (next == actor) return@withLock
         val running = _state.value.running
         stop()
+        allInbox = emptyList()
         _state.update { it.copy(actor = next, inbox = emptyList(), lastResult = "") }
         observeInbox()
         if (running) start()
@@ -132,9 +146,60 @@ class DemoController(
         scenario = next
         _state.value = DemoState(keepScreenOn = preferences.getBoolean("keepScreenOn", true))
         allInbox = emptyList()
+        plotNotes = emptyList()
         observeInbox()
+        observePlot()
         notes.deleteScenario(previous)
         notes.clean(scenario, System.currentTimeMillis())
+    }
+    suspend fun resetStartPosition(next: Actor) = mutex.withLock {
+        if (!_state.value.running) { operationFailed("먼저 합성 위치 시연을 시작하세요"); return@withLock }
+        val startMeters = if (next == Actor.A) 0.0 else (notes.latest(scenario, System.currentTimeMillis())?.progressMeters ?: 0.0) - 600.0
+        stop()
+        allInbox = emptyList()
+        _state.update { it.copy(actor = next, inbox = emptyList(), lastResult = "") }
+        observeInbox()
+        try {
+            debugGps.setPosition(startMeters)
+            pendingStartMeters = startMeters
+            start()
+            _state.update { it.copy(debugGpsActive = true, status = "시작 위치 SDK 수신 대기") }
+            debugGpsJob = scope.launch {
+                var progress = startMeters
+                var lastTime = SystemClock.elapsedRealtime()
+                try {
+                    while (isActive) {
+                        val speed = debugGps.speedKph()
+                        val now = SystemClock.elapsedRealtime()
+                        // Keep the start fixed until the SDK confirms it, so cached old positions cannot win.
+                        if (pendingStartMeters == null) progress += speed / 3.6 * (now - lastTime) / 1000.0
+                        lastTime = now
+                        debugGps.setPosition(progress)
+                        _state.update { it.copy(debugSpeedKph = speed) }
+                        delay(1_000)
+                    }
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (error: Exception) {
+                    stop("시연 GPS 오류: ${error.javaClass.simpleName} · 모의 위치 설정/웹콘솔 확인")
+                }
+            }
+        } catch (error: Exception) {
+            stop("위치 초기화 실패: ${error.javaClass.simpleName} · 모의 위치 권한 설정 확인")
+        }
+    }
+    suspend fun useExternalGps() = mutex.withLock {
+        val running = _state.value.running
+        stop("외부 GPS 사용")
+        if (running) start()
+    }
+    private fun observePlot() {
+        plotJob?.cancel()
+        plotJob = scope.launch {
+            notes.observeScenario(scenario).catch { operationFailed("시연 쪽지 표시 조회 실패") }.collect { rows ->
+                plotNotes = rows
+                _state.update { it.copy(plotNotes = rows.filter { note -> note.expiresAt > System.currentTimeMillis() }) }
+            }
+        }
     }
     private fun observeInbox() {
         inboxJob?.cancel()
@@ -273,6 +338,7 @@ class DemoController(
 data class DemoState(val actor: Actor = Actor.A, val running: Boolean = false, val location: LocationSample? = null,
     val status: String = "합성 위치 시연 준비", val h3Cell: String = "", val keepScreenOn: Boolean = true, val bufferSeconds: Long = 0, val canReport: Boolean = false,
     val noteCount: Int = 0, val candidateCount: Int = 0, val registeredCount: Int = 0, val overflowCount: Int = 0,
+    val debugGpsActive: Boolean = false, val debugSpeedKph: Double = 0.0, val plotNotes: List<RoadNote> = emptyList(),
     val nearbyNotes: List<RoadNote> = emptyList(), val inbox: List<InboxItem> = emptyList(), val lastResult: String = "", val lastEvent: String = "")
 data class ReportContext(val generation: Long, val scenario: String, val actor: Actor, val utc: Long,
                          val elapsed: Long, val samples: List<LocationSample>)

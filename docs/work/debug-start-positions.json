@@ -1,0 +1,36 @@
+{
+  "task": "debug-start-positions",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01",
+    "DES-04"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "MVVM이벤트→controller→src/debug DebugGps,release동일슬롯no-op. 기존Activity/Compose구조유지."
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "StartPositionTest 37.679초 PASS. A/B초기화SDK콜백·600m간격·웹콘솔속도SDK이동·외부GPS복귀검증. stop시provider/listener정리."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "debug전용·에뮬레이터guard·우리앱mock app-op만allow,127.0.0.1만cleartext허용. 위치초기화로쪽지/수신이력미삭제. 합성좌표만처리."
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "2560x1440/density160 실기기UI에서600m분리·마커이동·스크롤패널확인. 전체폼팩터/주야간은미검증."
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화",
+      "status": "PASS",
+      "evidence": "새generation에서source재초기화,새시작좌표확인전이전SDK캐시필터. mock모드중지시provider해제. 실제기기계측PASS."
+    }
+  ]
+}

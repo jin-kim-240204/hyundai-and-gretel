@@ -40,3 +40,19 @@ Room·H3 계측만 실행: `adb shell am instrument --user 10 -w -e class com.ji
 `adb logcat -s RoadNotes:I RoadNoteE2E:I RoadNoteTest:I '*:S'`
 
 RoadNotes: PROXIMITY_REGISTERED / PROXIMITY_ENTER / PROXIMITY_EXIT / NOTE_SAVED / NOTE_RECEIVED / GLEO_CALLBACK_SENT / GLEO_CALLBACK_SEND_FAILED. 기본로그는위경도·발화원문을출력하지않는다. 화면의좌표는합성시연진단용이다. 실제음성발화/외부Gleo수신은별도확인해야한다.
+
+## 패널에서 시작 위치를 옮기는 시연 (권장)
+
+debug 앱에 한 번 모의 위치 권한을 설정한다:
+
+`adb -s emulator-5554 shell appops set --user 10 com.jinkim.hyundaiAndGretel android:mock_location allow`
+
+1. 앱에서 합성 위치 동의·시연 시작 후 디버그 패널을 연다.
+2. **A 시작 위치로 초기화**: 기준점0m로 실제 테스트 GPS를 주입한다. 버퍼·이전 SDK 등록을 비우고 새로운 SDK 위치를 기다린다.
+3. 이 모드에서는 앱이 같은 에뮬레이터의 Pleos 웹콘솔 속도를 읽어 GPS를 이동시킨다. D에서 액셀을 밟으면 전진, P/N이면 정지, R이면 후진한다. 노트북 GPS 재생 스크립트를 동시에 실행하지 않는다.
+4. A가 약60초 주행한 뒤 제보한다. **B 시작 위치로 초기화 · 쪽지600m뒤**를 누르면 최신미만료쪽지의600m뒤로이동한다. 쪽지가없으면기준점의600m뒤다. 시속36km에서는수신반경150m까지약45초걸린다.
+5. **외부 GPS 사용 · ADB 경로 재생**을 누르면 테스트 provider를 제거하고 기존ADB입력으로복귀한다. 시연중지·앱비가시도provider를정리한다. 프로세스강제종료로정리가안됐으면앱다시실행시marker를통해정리한다.
+
+시작 위치 초기화는 쪽지/수신이력을 삭제하지 않는다. B가이미받은쪽지는다시새수신되지않는다. 전체재시연은테스트데이터초기화후A제보부터진행한다. 파란점은현재차량,빨간점은전체로컬시연쪽지이며같은거리축에표시한다. 쪽지는차량이멀어져도H3후보조회와독립적으로표시한다. 점이동일좌표여도상하로나눠가리지않는다. 실제지도는아닌직선경로도식이다.
+
+에뮬레이터전용권한설정과mockGPS코드/localhost통신은debug에만있다. 설정해제는 `adb shell appops set --user 10 com.jinkim.hyundaiAndGretel android:mock_location default`로한다. Android에뮬레이터도구의GPS와앱mockprovider를동시에쓰면동작이혼란스러우므로입력모드를전환해서사용한다.

@@ -5,4 +5,4 @@ import com.jinkim.hyundaiAndGretel.demo.DemoState
 import com.jinkim.hyundaiAndGretel.notes.Actor
 
 @Composable
-fun DebugPanel(state: DemoState, onActor: (Actor) -> Unit, onReset: () -> Unit, onReport: (String) -> Unit) = Unit
+fun DebugPanel(state: DemoState, onActor: (Actor) -> Unit, onReset: () -> Unit, onReport: (String) -> Unit, onStartPosition: (Actor) -> Unit, onExternalGps: () -> Unit) = Unit

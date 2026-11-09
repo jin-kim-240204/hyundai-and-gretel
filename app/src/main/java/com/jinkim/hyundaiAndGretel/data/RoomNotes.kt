@@ -20,6 +20,9 @@ class RoomNotes(private val db: NoteDatabase, private val spatial: SpatialIndex)
     override fun observeNearby(scenarioId: String, cells: List<String>) =
         dao.nearby(scenarioId, cells).map { rows -> rows.map(NoteEntity::toDomain) }
 
+    fun observeScenario(scenario: String) = dao.scenarioNotes(scenario).map { rows -> rows.map(NoteEntity::toDomain) }
+    suspend fun latest(scenario: String, now: Long) = dao.latest(scenario, now)?.toDomain()
+
     suspend fun clean(active: String, now: Long) = dao.clean(active, now)
     suspend fun deleteScenario(scenario: String) = dao.deleteScenario(scenario)
 }
