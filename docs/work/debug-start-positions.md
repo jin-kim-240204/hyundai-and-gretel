@@ -23,3 +23,5 @@ PASS: 실제UI버튼B초기화→파랑-600m/빨강0m표시. SDK전달float오�
 NOT_TESTED: 전체폼팩터/주야간/실차인증,다른Pleos버전,프로세스강제종료복구오류주입. 지원범위는debug Pleos에뮬레이터이며release에는mockprovider·localhostHTTP구현이없다. 에뮬레이터GPS/앱mock동시입력은지원하지않고외부GPS전환필요. 모의권한이없으면시작위치실패를표시하며fakeUI위치로대체하지않는다.
 
 최종PASS: debug/release assemble,lint,전체단위8개,Studio build_project. HOME으로가시성중단/provider정리후최종debug APK설치·실행완료. 앱mock app-op allow는시연버튼사용을위해유지했다. 실제마이크/Gleo승인/실차검증은이번범위밖. 작업보고서exit2는전체폼팩터NOT_TESTED를의미한다.
+
+설치정정기록: 최초최종설치시APK산출물이없어adb failed-to-stat. assembleDebug재실행으로재생성(2초PASS) 후절대경로adb install -r Success·앱실행확인. 코드추가변경없음.
