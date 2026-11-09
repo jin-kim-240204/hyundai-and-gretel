@@ -5,3 +5,5 @@ implementation-plan/diagrams/전체 검토 기록은 gm/spec-road-note-system에
 기존 브랜치에서 별도로 추가했던 전체 계획은 분리 커밋에서 제거하고 설계 브랜치를 merge하여 동일 문서를 다시 상속한다. 변경 파일의 원본은 /tmp/hyundai-spec-transfer-backup에 보관해 데이터 손실 없이 이동한다. 따라서 설계 대비 PR diff에는 전체 계획 변경이 남지 않아야 한다.
 ENV-02/INT-01 적용: 앱 코드·스키마 불변, 문서 소유권만 정리. 충돌 시 해결 전에 사용자에게 확인한다.
 검증: merge 후 spec 공통 조상 여부·전체 계획 diff 없음·harness·diff --check. 앱 코드 변경 없으므로 직전 코드 검사 결과를 재사용하고 추가 빌드 N/A.
+
+검증 결과: spec 브랜치 merge 무충돌, 공통 조상 확인 및 전체 계획 diff 없음 PASS. report 최초 개별 DOC 항목 누락은 추가하여 수정. 문서 전용 변경으로 빌드 재실행 N/A.
