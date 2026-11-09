@@ -1,6 +1,6 @@
 # 위치 기반 쪽지 구현 플랜 — 리뷰 초안
 
-작성: 2026-11-09 / 브랜치: `ny/feat-fused-location-notes` / 상태: **설계 리뷰 대기, 제품 구현 전**.
+작성: 2026-11-09 / 브랜치: `ny/feat-fused-location-notes` / 상태: **S0~S6 코드 구현, 단계별 검증 진행**.
 
 전체 서비스 계약은 [전체 테크스펙](implementation-plan.md), 기술 실험 근거는 [SDK 검증 기록](../work/fused-location-spike.md)이다. 이 문서는 이번 기능 브랜치의 상세 설계와 스프린트 백로그다. 아래 변경 제안은 리뷰 후 정본의 해당 절에 반영하며, 상충한 두 정책을 동시에 구현하지 않는다. 스프린트는 기간이 아닌 검증 가능한 작업 묶음이다.
 
@@ -8,7 +8,7 @@
 
 **A가 주행하며 제보 → 앱 수신 약30초 전 위치에 Room 쪽지 저장 → B가 같은 경로로 접근 → B 수신함에 1회 등록·표시**를 노트북 한 대·Pleos 에뮬레이터 한 대에서 재현한다. 정차 시에도 위치 조건이 맞으면 동작한다. A/B는 같은 로컬 DB를 공유하는 가상 사용자이며 서로 다른 실차 간 공유를 입증하지 않는다.
 
-현재 브랜치의 앱은 ComponentActivity/Compose 기본 화면, Vehicle 의존성만 있다. FusedLocation·Room·스키마·Gleo Receiver는 없다. namespace는 `com.jinkim.hyundaiAndGretel`이지만 applicationId는 `com.jinnayeong.wakeup`으로 남아 있다. 기존 음성 PR의 앱 식별자·스키마·콜백 변경을 대조하고 통합할 때 일치시킨다. 기본 Manifest에는 distractionOptimized 선언도 없으므로 기존 기능 브랜치의 설정을 현재 브랜치에 이미 있다고 취급하지 않는다.
+설계 시작 시점의 앱은 ComponentActivity/Compose 기본 화면, Vehicle 의존성만 있다. FusedLocation·Room·스키마·Gleo Receiver는 없다. namespace는 `com.jinkim.hyundaiAndGretel`이지만 applicationId는 `com.jinnayeong.wakeup`으로 남아 있다. 기존 음성 PR의 앱 식별자·스키마·콜백 변경을 대조하고 통합할 때 일치시킨다. 기본 Manifest에는 distractionOptimized 선언도 없으므로 기존 기능 브랜치의 설정을 현재 브랜치에 이미 있다고 취급하지 않는다.
 
 검증 완료: Pleos2.1.0 / SDK1.1.3, ADB40개 주입 →21개 실제 콜백,39.111초 수집, 최대 콜백 간격4.010초. SDK1Hz 전달 보장·accuracyMeters·측정 단조시각은 확인되지 않았다. SDK proximity ENTER/EXIT는 API 존재만 확인했다.
 
@@ -267,3 +267,20 @@ S1: 고정 좌표1개·반경150m 등록 → ADB로 밖→안→밖 이동 → E
 S5: H3 경계 양쪽 쪽지 조회, 다른 셀 안150m 쪽지,150m 밖 후보 미수신, 새 쪽지 등록 당시 이미 반경 안, ENTER/보완 동시 호출, TTL 만료 등록 해제, reset 중 지연 이벤트, 후보 한도 초과를 검증한다. S1에서 SDK ENTER가 동작하지 않으면 조용히 전 위치 거리 계산으로 바꾸지 않고 실패와 대안을 문서화해 리뷰한다.
 
 공식 근거: [H3 indexing](https://h3geo.org/docs/highlights/indexing/), [gridDisk](https://h3geo.org/docs/api/traversal/), [셀 크기 통계](https://h3geo.org/docs/core-library/restable/), [Pleos 공식 샘플](https://github.com/Pleos-Playground/pleos-sample-fusedlocation-app). API 존재와 실제 기기 동작 검증을 구분한다. H3 도입은 이번 설계 방향이며 현재 의존성·Entity·SDK 등록 코드는 작성하지 않았다.
+
+
+## 12. 구현 결과와 설계에서 단순화한 부분
+
+현재 구현은 notes/domain 계산, data/Room·H3, location/SDK 어댑터, demo/세션 조합, ui/notes의 ViewModel·Compose로 나뉜다. 범용 DI/모듈 분할/추가 프레임워크는 없다. 실제 파일과 실행 방법은 [시연 안내](../LOCATION-DEMO.md), 검증 결과는 [작업 기록](../work/fused-location-implementation.md)에 있다.
+
+- 위치 버퍼는 메모리45초, callback 단조시각 기준30초 근사 선택, 최대5초 오차다. source SDK / synthetic만 활성화했다.
+- H3는res9, 고정 서울 직선 경로400m 사각 cover + 이웃ring 조회다. 실제 도로/전지구 범위 보장은 하지 않는다. 서버폴링10초는 구현하지 않았다.
+- Room 컬럼명은 Kotlin프로퍼티명과 동일하다. offset으로부터 errorMillis를 계산하며 중복저장하지 않는다. receipt의 displayedAt=null이면PENDING, 값이있으면DISPLAYED로 파생해 상태컬럼불일치를없앴다. 생성스키마를app/schemas에보관한다.
+- SDK 등록과 H3 후보 조합은 DemoController 안의 작은 함수로 구현했다. 책임이 작아 아직별도ProximityRegistry/PickupEvaluator클래스는 만들지 않았고, 순수 eligible 함수와 저장소경계는유지했다.
+- SDK등록은시연최대16개로제한하고초과개수를표시한다. 공식SDK한도라는뜻은아니며실제등록실패도표시한다.
+- 경로방향은고정fixture진행거리변화로FORWARD/REVERSE를판단한다. 처음정차상태는fixture의FORWARD방향을기본으로하고,실도로헤딩정확도를입증하지않는다.
+- 제보는기존음성브랜치의schema계약만재사용해새Room저장흐름에연결했다. 기존DraftStore/미리보기성공경로를복제하지않았다. debug receiver만외부공개,release는내부전용이다.
+- 디버그패널과하드코딩테스트제보는src/debug,release패널은no-op이다. 화면유지스위치는앱설정으로저장한다.
+- 과거검증원시JSON은사용자요청으로삭제했다. 현재app/schemas/1.json은실험파일이아닌Room스키마산출물이다.
+
+실제음성/Gleo승인·실차·전체폼팩터·개인정보차단·SDK등록한도는코드완료와구분해서NOT_TESTED로남긴다. 이문서앞부분의예상클래스/표는설계책임설명이고실제파일목록이아니다.

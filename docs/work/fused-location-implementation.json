@@ -1,0 +1,64 @@
+{
+  "task": "fused-location-implementation",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-01",
+    "VEH-03",
+    "PRIV-01",
+    "DES-04",
+    "INT-01",
+    "SAF-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "ComponentActivity/Compose 유지, verify_harness --build PASS. SDK/Room/H3 debug·release assemble PASS."
+    },
+    {
+      "id": "VEH-01",
+      "status": "NOT_TESTED",
+      "evidence": "Manifest FUSED_LOCATION dangerous 선언, 계측 허용 상태 실제 SDK PASS. 개인정보 차단/권한 철회 전체 실험 미완료."
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "ProximityTest ENTER/EXIT/remove 및 실제SDK A/B통합 PASS. 서비스 강제끊김/재연결/등록한도는 미검증."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "합성시연고지/동의,원시위치메모리45초,공유쪽지로컬Room,기본로그원문/좌표제외.서버전송없음,release외부receiver차단."
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "Pleos2560x1440 앱window 실제 기본UI 캡처 검토. 전체 가로/세로/분할·물리크기·주야간 규정 검증 미완료."
+    },
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "기존3필드영문schema재사용,입력/콜백JSON계측과Receiver→Room연결검증. 실제마이크발화와Gleo수신·최종음성은 미검증."
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "PleosLocationSource start/stop,동일listener해제/alert삭제/release,이후새인스턴스. ProximityTest와B전환통합확인."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "연속콜백실제수신,callback단조시각,마지막캐시조회로30초이력대체안함. LocationBufferTest4개 및SDK통합."
+    },
+    {
+      "id": "DOC-ba9b83fc86f6#오류",
+      "status": "NOT_TESTED",
+      "evidence": "nullable/error→invalidate 및표시구현.실제차단/서비스오류주입 미실행."
+    },
+    {
+      "id": "SAF-01",
+      "status": "NOT_TESTED",
+      "evidence": "가상Drive36km/h에서같은앱UI유지,FLAG_KEEP_SCREEN_ON ON/OFF확인. docs/work/evidence/location-implementation. 실차지역/카테고리별규제검증미완료."
+    }
+  ]
+}

@@ -18,3 +18,17 @@ S3 PASS: Room2.8.5/KSP2.3.13/H3-Java4.5.1 빌드. 첫 기기계측은 H3.so가 J
 S4/S5 core: DemoController가 세션/입력snapshot/과거anchor/직렬쓰기와 SDK 등록수명을 소유하고 ViewModel은 UI이벤트와StateFlow만 노출한다. 위치·H3계산·Room은 UI에서 호출하지 않는다. SDK ENTER 중심 + 등록당시반경안/지연위치 보완검사. 최초A/B실제SDK 통합계측 PASS(56.673초), 후속방향/이벤트필터수정은 최종계측으로 재검증한다. H3는res9,고정서울경로400m bounding box cover+이웃ring으로경계포함,16개SDK등록초과는표시하며공식한도보장아님.
 
 S2 UI/S5 화면: src/debug Compose패널(A/B·초기화확인·fixture제보·상태), release동일슬롯no-op. NotesViewModel→NotesScreen 상태/이벤트 단방향, 실제window안 UI·FLAG_KEEP_SCREEN_ON설정·비가시수집중단. 기본실행화면 스크린샷에서시스템영역침범/잘림없음 확인. 물리글자높이/다중폼팩터전체인증은 NOT_TESTED. debug/release 빌드,단위테스트,lint PASS. 주행값바꾼동작은 별도확인예정.
+
+S6 PASS(앱 경계): 실제 GleoActionReceiver로 ACTION_PARAM broadcast → Room anchor 저장 → GLEO_CALLBACK_SENT success → B proximity 등록/ENTER → 수신1행의 통합계측 PASS(54.954초). 이전generation의capture재사용은SESSION_NOT_READY, 같은반경중복수신없음도assert. 실제 Gleo모델/마이크/최종음성수신확인은 NOT_TESTED. 콜백은저장커밋후1회요청하고 asking없음. exported debug입력은JSON타입/크기/enum검사, release는비공개.
+
+최종 자동검사: debug/release assemble, lintDebug, 단위6개 PASS. Room/H3/GleoJson기기계측3개 PASS(0.128초). verify_harness --build PASS, Studio build_project PASS. 첫E2E호스트도구는텍스트버퍼때문에준비로그를놓쳐timeout; Queue기반리더+runToken으로수정후실제경로재생·계측PASS. 실패를허용치완화로숨기지않음.
+
+UI 검증: Pleos2560x1440,density160,기본앱·패널캡처확인. 로컬Virtual Console의실제UI엔드포인트로Drive/36km/h 설정·조회확인,앱같은화면유지. 앱Window KEEP_SCREEN_ON 설정ON 플래그확인,스위치OFF시플래그제거확인. 실험후가상차량Park/0복구확인. 웹콘솔세션만료후복구첫요청503은heartbeat갱신후복구완료. Gleo마이크표시가있는장면에서도앱유지관측했으나마이크발화완료/인식성공을증명하지않음.
+
+남은 NOT_TESTED: privacy차단·서비스강제끊김·권한철회전체수명·SDK등록최대개수·이미반경안SDK단독발행·전체가로세로/분할/주야간/실차·공급자승인. 이미안등록은앱보완경로구현,기기통합의주경로는ENTER검증. 최종보고서exit2는이필수미검증을표시한다. 코드완료와제품/심사전체검증완료를구분한다. 푸시하지않음.
+
+화면 수신함에 여러행이있으면‘다음쪽지’로한번에하나씩확인하도록보완했다. 최종diff검사PASS, 변경후debug/release/단위/lint재실행PASS. 사용자위치버퍼는계속메모리전용이며별도상시서비스는추가하지않았다.
+
+최종리뷰보완 PASS: 과거snapshot이남아도현재위치가사용불가면저장전LOCATION_UNAVAILABLE로거절. SessionGuardTest 1개실기기PASS(0.129초). 계측직전emulator접속이끊겨기존AVD재기동후실행했으며데이터wipe없음. 보완후debug/release assemble,lint,단위6개,Studio빌드PASS. 이보완은실제SDK오류주입전체검증을대체하지않는다.
+
+커밋분리: 설계 / SDK접근 / 버퍼 / Room·H3 / 심기·수신 / MVVM UI·패널 / 다중쪽지표시 / Gleo / 저장전상태검사 / 통합계측·시연안내·최종정책. 실험원시JSON은추가하지않고필수Room스키마와검증보고서만관리한다.
