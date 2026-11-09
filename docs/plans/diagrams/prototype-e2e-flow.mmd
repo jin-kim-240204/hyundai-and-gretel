@@ -1,0 +1,31 @@
+flowchart TD
+    Start[앱 시작 · 주행·정차 모두 지원] --> Gate{동의·권한·위치 소스 준비}
+    Gate -->|실패| Block[사용 불가 상태 표시]
+    Gate -->|성공| Session[가상 사용자 A · 세션 시작]
+    SDK[Pleos FusedLocation 위치 콜백] --> Source[위치 검증 · 경로 문맥 생성]
+    Replay[합성 경로 재생 · SDK 미통과 표시] -. 테스트 대체 입력 .-> Source
+    Session --> Source
+    Source --> Buffer[사용자별 메모리 30초 위치 버퍼]
+    Buffer --> Ready{30초 이력·품질 충족}
+    Ready --> UI[준비 상태 표시]
+    Voice[사용자 즉시 제보] --> Gleo[Gleo · 내용 추출·카테고리 분류]
+    Gleo --> Receiver[CREATE_ROAD_NOTE 수신 · 시각·A/B·세션 고정]
+    Receiver --> Validate{필수 입력·세션 검증}
+    Validate -->|실패| Fail[fail 콜백 1회 · 종료]
+    Validate -->|통과| Anchor[버퍼 스냅샷에서 수신 30초 전 위치 선택]
+    Anchor --> Quality{이력·정확도·방향·도로 문맥 유효}
+    Quality -->|실패| Fail
+    Quality -->|통과| Tx[Room 트랜잭션 · 쪽지 ACTIVE 저장]
+    Tx -->|저장 실패| Fail
+    Tx -->|커밋 성공| Success[success 콜백 1회 · 쪽지 저장 안내]
+    Tx --> DB[(Room · 쪽지 공유 공간)]
+    Success --> Switch[같은 화면에서 B 전환 · 주행 중에도 가능]
+    Switch --> B[B 현재 위치 확보 · 주행·정차 무관]
+    B --> Matcher[유효 쪽지 조회 · 거리·동일 경로·방향·전방 판정]
+    DB -->|쪽지 변경 시 재평가| Matcher
+    Matcher --> Match{반경·경로·방향 조건 충족}
+    Match -->|아니오| B
+    Policy[속도·기어로 수신 차단 안 함] -. 판정 정책 .-> Match
+    Match -->|예| Receipt[Room · B 수신 이력 원자적 등록]
+    Receipt --> Display[미표시 수신 쪽지 화면 표시]
+    Display --> Mark[표시 완료 기록 · 동일 B 중복 방지]
