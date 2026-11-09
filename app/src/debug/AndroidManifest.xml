@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <receiver android:name=".gleo.GleoActionReceiver" android:exported="true">
+            <intent-filter><action android:name="com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE" /></intent-filter>
+        </receiver>
+    </application>
+</manifest>
