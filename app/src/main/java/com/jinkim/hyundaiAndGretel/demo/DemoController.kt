@@ -240,6 +240,7 @@ class DemoController(
         return mutex.withLock {
             if (context.generation != generation || context.scenario != scenario || context.actor != actor || actor != Actor.A || !_state.value.running)
                 return@withLock ReportResult.Failed("SESSION_NOT_READY")
+            if (_state.value.location == null) return@withLock ReportResult.Failed("LOCATION_UNAVAILABLE")
             try {
                 val now = System.currentTimeMillis()
                 val note = RoadNote(UUID.randomUUID().toString(), UUID.randomUUID().toString(), scenario, actor.id,
