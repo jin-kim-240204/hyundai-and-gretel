@@ -1,0 +1,19 @@
+{
+  "task": "gleo-spec-base",
+  "selected_rules": [
+    "ENV-02",
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "문서 소유권 변경만 수행하며 앱 구조/코드 불변."
+    },
+    {
+      "id": "INT-01",
+      "status": "PASS",
+      "evidence": "Gleo 상세 문서는 이 기능 브랜치에 유지, 공통 시스템 설계는 부모 브랜치 문서로 링크. schema 변경 없음."
+    }
+  ]
+}
