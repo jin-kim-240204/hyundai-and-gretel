@@ -16,3 +16,5 @@ S2 core PASS: LocationBufferTest 4개. callback 시각 기준45초 보관·30초
 S3 PASS: Room2.8.5/KSP2.3.13/H3-Java4.5.1 빌드. 첫 기기계측은 H3.so가 Java리소스로 제외돼 실패; Gradle Copy로 Android ABI별JNI 추출·newSystemInstance 사용 후 재실행 2테스트 PASS(0.151초). request멱등/충돌,동시8개receipt1행,자기제보/만료제외,cascade삭제,H3 경계포함 cover 검증. generated schema1.json 버전관리. Room import/동기화 서버는 없음. Kotlin프로퍼티 기반 컬럼명 및 nullable displayedAt으로상태파생해 문서의중복state컬럼은 생략.
 
 S4/S5 core: DemoController가 세션/입력snapshot/과거anchor/직렬쓰기와 SDK 등록수명을 소유하고 ViewModel은 UI이벤트와StateFlow만 노출한다. 위치·H3계산·Room은 UI에서 호출하지 않는다. SDK ENTER 중심 + 등록당시반경안/지연위치 보완검사. 최초A/B실제SDK 통합계측 PASS(56.673초), 후속방향/이벤트필터수정은 최종계측으로 재검증한다. H3는res9,고정서울경로400m bounding box cover+이웃ring으로경계포함,16개SDK등록초과는표시하며공식한도보장아님.
+
+S2 UI/S5 화면: src/debug Compose패널(A/B·초기화확인·fixture제보·상태), release동일슬롯no-op. NotesViewModel→NotesScreen 상태/이벤트 단방향, 실제window안 UI·FLAG_KEEP_SCREEN_ON설정·비가시수집중단. 기본실행화면 스크린샷에서시스템영역침범/잘림없음 확인. 물리글자높이/다중폼팩터전체인증은 NOT_TESTED. debug/release 빌드,단위테스트,lint PASS. 주행값바꾼동작은 별도확인예정.
