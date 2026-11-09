@@ -22,7 +22,7 @@ object DemoRoute {
 }
 
 data class LocationSample(val latitude: Double, val longitude: Double, val elapsedMillis: Long,
-                          val progressMeters: Double, val heading: Float?)
+                          val progressMeters: Double, val heading: Float?, val direction: String = "FORWARD")
 data class Anchor(val sample: LocationSample, val offsetMillis: Long) {
     val errorMillis get() = abs(offsetMillis - 30_000)
 }
