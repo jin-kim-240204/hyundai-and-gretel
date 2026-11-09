@@ -6,11 +6,12 @@ android {
     namespace = "com.jinkim.hyundaiAndGretel"
     compileSdk = 35
     defaultConfig {
-        applicationId = "com.jinnayeong.wakeup"
+        applicationId = "com.jinkim.hyundaiAndGretel"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -20,6 +21,9 @@ android {
 }
 dependencies {
     implementation("ai.pleos.playground:Vehicle:2.3.2")
+    implementation("ai.pleos.playground:FusedLocation:1.1.3")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
