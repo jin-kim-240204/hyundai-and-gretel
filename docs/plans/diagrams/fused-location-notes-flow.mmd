@@ -1,0 +1,25 @@
+flowchart LR
+  VC["Pleos Virtual Console: 속도·기어"] --> VS["주행 UI 확인"]
+  ADB["ADB: 합성 GPS 경로"] --> SDK["Pleos FusedLocation"]
+  SDK --> LC["LocationCollector"]
+  LC --> BUF["메모리45초 버퍼"]
+  G["Gleo / debug 제보"] --> CREATE["30초 전 anchor 선택"]
+  BUF --> CREATE
+  CREATE --> H3["anchor 좌표로 H3 ID 산출"]
+  H3 --> REPO["공유 쪽지 Repository"]
+  REPO --> DB[("지금 Room / 추후 서버")]
+  LC --> CELLS["현재·주변 H3 셀 집합"]
+  CELLS --> FETCH["주변 쪽지 조회"]
+  DB --> FETCH
+  FETCH --> REG["ProximityRegistry: 차집합 등록·해제"]
+  REG --> PROX["SDK proximity"]
+  PROX --> ENTER["ENTER"]
+  ENTER --> PICK["경로·방향·만료·중복 검사"]
+  LC --> PICK
+  REG --> CHECK["이미 반경 안: 보완 검사"]
+  CHECK --> PICK
+  PICK --> RECEIPT[("로컬 Room 수신·표시 이력")]
+  RECEIPT --> UI["쪽지 표시 / ACK"]
+  PANEL["debug: A/B·초기화·상태"] --> SESSION["DemoSession / generation"]
+  SESSION --> LC
+  SESSION --> REG
