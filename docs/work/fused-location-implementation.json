@@ -6,7 +6,6 @@
     "VEH-03",
     "PRIV-01",
     "DES-04",
-    "INT-01",
     "SAF-01"
   ],
   "checks": [
@@ -37,8 +36,8 @@
     },
     {
       "id": "INT-01",
-      "status": "NOT_TESTED",
-      "evidence": "기존3필드영문schema재사용,입력/콜백JSON계측과Receiver→Room연결검증. 실제마이크발화와Gleo수신·최종음성은 미검증."
+      "status": "N/A",
+      "evidence": "범위 밖 중복 구현으로 제거. Gleo는 기존 gm/feat-speech-to-text PR 책임. 현재 검증은 remove-gleo-from-location-branch 보고서 참조."
     },
     {
       "id": "DOC-1ba06876919b#수명",

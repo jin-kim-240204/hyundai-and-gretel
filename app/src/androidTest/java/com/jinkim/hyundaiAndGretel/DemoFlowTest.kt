@@ -4,9 +4,6 @@ import android.content.Intent
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jinkim.hyundaiAndGretel.demo.ReportResult
-import com.jinkim.hyundaiAndGretel.gleo.GLEO_ACTION
-import com.jinkim.hyundaiAndGretel.gleo.callbackJson
-import org.json.JSONObject
 import com.jinkim.hyundaiAndGretel.notes.*
 import kotlinx.coroutines.*
 import org.junit.Assert.*
@@ -27,11 +24,11 @@ class DemoFlowTest {
             Log.i("RoadNoteE2E", "$token A_READY")
             withTimeout(55_000) { while (!controller.state.value.canReport) delay(100) }
             val oldContext = withContext(Dispatchers.Main) { controller.capture() }
-            context.sendBroadcast(Intent(GLEO_ACTION).setPackage(context.packageName).putExtra("ACTION_PARAM",
-                """{"content":"도로에 구덩이가 있어요","category":"WARNING","locationMode":"CURRENT_ROAD"}"""))
-            withTimeout(5000) { while (controller.state.value.nearbyNotes.isEmpty()) delay(50) }
-            val note = controller.state.value.nearbyNotes.single()
-            assertEquals("success", JSONObject(callbackJson(ReportResult.Saved(note))).getString("status"))
+            val result = withContext(Dispatchers.Main) {
+                controller.report("도로에 구덩이가 있어요", Category.WARNING, oldContext)
+            }
+            assertTrue(result.toString(), result is ReportResult.Saved)
+            val note = (result as ReportResult.Saved).note
             assertTrue(note.offsetMillis in 25_000..35_000)
             assertTrue(controller.state.value.location!!.progressMeters - note.progressMeters > 200)
             withContext(Dispatchers.Main) { controller.switchActor(Actor.B) }

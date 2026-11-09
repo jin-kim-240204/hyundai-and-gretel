@@ -2,17 +2,19 @@
 
 작성: 2026-11-09 / 브랜치: `ny/feat-fused-location-notes` / 상태: **S0~S6 코드 구현, 단계별 검증 진행**.
 
+**이번 브랜치 범위는 디버그 제보로 쪽지 심기·수신까지다. Gleo 스키마·수신·파싱·콜백은 기존 `gm/feat-speech-to-text` PR의 책임이며 여기서 구현하거나 통합하지 않는다.**
+
 전체 서비스 계약은 [전체 테크스펙](implementation-plan.md), 기술 실험 근거는 [SDK 검증 기록](../work/fused-location-spike.md)이다. 이 문서는 이번 기능 브랜치의 상세 설계와 스프린트 백로그다. 아래 변경 제안은 리뷰 후 정본의 해당 절에 반영하며, 상충한 두 정책을 동시에 구현하지 않는다. 스프린트는 기간이 아닌 검증 가능한 작업 묶음이다.
 
 ## 1. 목표와 현재 상태
 
 **A가 주행하며 제보 → 앱 수신 약30초 전 위치에 Room 쪽지 저장 → B가 같은 경로로 접근 → B 수신함에 1회 등록·표시**를 노트북 한 대·Pleos 에뮬레이터 한 대에서 재현한다. 정차 시에도 위치 조건이 맞으면 동작한다. A/B는 같은 로컬 DB를 공유하는 가상 사용자이며 서로 다른 실차 간 공유를 입증하지 않는다.
 
-설계 시작 시점의 앱은 ComponentActivity/Compose 기본 화면, Vehicle 의존성만 있다. FusedLocation·Room·스키마·Gleo Receiver는 없다. namespace는 `com.jinkim.hyundaiAndGretel`이지만 applicationId는 `com.jinnayeong.wakeup`으로 남아 있다. 기존 음성 PR의 앱 식별자·스키마·콜백 변경을 대조하고 통합할 때 일치시킨다. 기본 Manifest에는 distractionOptimized 선언도 없으므로 기존 기능 브랜치의 설정을 현재 브랜치에 이미 있다고 취급하지 않는다.
+설계 시작 시점의 앱은 ComponentActivity/Compose 기본 화면, Vehicle 의존성만 있다. FusedLocation·Room·스키마·Gleo Receiver는 없다. namespace는 `com.jinkim.hyundaiAndGretel`이지만 applicationId는 `com.jinnayeong.wakeup`으로 남아 있다. 앱 식별자는 현재 프로젝트 이름을 사용한다. 기존 음성 PR은 별도 유지한다. 기본 Manifest에는 distractionOptimized 선언도 없으므로 기존 기능 브랜치의 설정을 현재 브랜치에 이미 있다고 취급하지 않는다.
 
 검증 완료: Pleos2.1.0 / SDK1.1.3, ADB40개 주입 →21개 실제 콜백,39.111초 수집, 최대 콜백 간격4.010초. SDK1Hz 전달 보장·accuracyMeters·측정 단조시각은 확인되지 않았다. SDK proximity ENTER/EXIT는 API 존재만 확인했다.
 
-이번 범위 밖: 서버·인증·동기화·오프라인 업로드 큐, 실도로 지도매칭, NAMED_PLACE/DEFERRED, asking/draft, 자동 음성 경고, 상시 백그라운드 추적, 지도 SDK, 디버그 패널 라이브러리. 접근 트리거는 SDK proximity ENTER를 사용하고, 앱은 경로·방향·만료·중복을 추가 검사한다. 실제 proximity 동작 검증을 구현 전 게이트로 둔다.
+이번 범위 밖: Gleo 코드·스키마·음성 연동, 서버·인증·동기화·오프라인 업로드 큐, 실도로 지도매칭, NAMED_PLACE/DEFERRED, asking/draft, 자동 음성 경고, 상시 백그라운드 추적, 지도 SDK, 디버그 패널 라이브러리. 접근 트리거는 SDK proximity ENTER를 사용하고, 앱은 경로·방향·만료·중복을 추가 검사한다. 실제 proximity 동작 검증을 구현 전 게이트로 둔다.
 
 ## 2. 리뷰할 정책 제안
 
@@ -20,7 +22,7 @@
 
 | 항목 | 제안 | 근거·제한 |
 |---|---|---|
-| 목표 위치 | 제보 JSON 앱 수신 단조시각 -30초 | LLM 입력에 시각·좌표 추가 안 함 |
+| 목표 위치 | 테스트 제보 처리 시작 단조시각 -30초 | 디버그 입력은 내용·분류, 위치는 앱에서 결정 |
 | 보관 | 최근45초, 추가·조회 때 정리 | 경계 앞 표본 보존.45초 미만 수집이어도30초 조건이면 사용 가능 |
 | 선택 | 목표와 단조시각 차이가 가장 작은 표본, 동률이면 과거 표본 | 보간 생략. 실제 offset과 오차 기록 |
 | 준비 | 현재 세션에서30초 이상 수집 + 목표 오차5초 이내 + 최신 콜백5초 이내 | 초기5초 표본만으로 준비 완료 처리하지 않음 |
@@ -44,7 +46,7 @@
 | LocationCollector | SDK nullable/error → LocationSample·LocationState. 동일 listener 등록/해제·release, 가시성 수명 관리 |
 | LocationBuffer | session/generation 일치 표본 → 불변 snapshot·anchor 선택. Room에 궤적 저장 안 함 |
 | DemoSessionController | A/B 전환·리셋 → scenarioId, actorId, generation, synthetic 동의. 단일 Mutex로 세션 변경/쓰기 직렬화 |
-| CreateRoadNote | ReportInput + ReceiptContext + snapshot → SaveResult. 저장 전 입력·권한·anchor 검증 |
+| CreateRoadNote | 내용·분류 + ReportContext + snapshot → SaveResult. 저장 전 입력·권한·anchor 검증 |
 | RoadNoteRepository | 도메인 명령/조회·Flow 제공. Entity/DAO/SQLite타입을 외부에 노출 안 함 |
 | RoomRoadNoteRepository | Entity 매핑·DAO·트랜잭션·제약 충돌을 도메인 결과로 변환 |
 | NearbyNoteCoordinator | 현재 위치 → 주변 H3 셀 조회 → 쪽지 후보 목록. Room Flow 변경과 구역 이동에 반응 |
@@ -64,7 +66,7 @@ A/B 전환은 generation 증가, 수집 listener 해제·새 인스턴스 초기
 
 세션 전환·리셋·쓰기 최종 구간은 같은 Mutex 사용. 잠금 획득 후generation 재확인 → 짧은DB트랜잭션 → 잠금 해제 순서다. SDK/콜백 전송/긴계산은 DB트랜잭션 안에서 하지 않는다. DB 스냅샷 경쟁은 트랜잭션 내부에서 만료·중복·scenario를 재검증한다.
 
-비가시·권한철회·SDK오류·null/사용불가 위치·긴공백은 위치 유효성 해제 및 버퍼 재준비로 연결한다. 가시성은 Activity의onStop/복귀 실제 로그로 검증하며 Gleo오버레이가 수집을 끊으면 E2E차단 이슈로 다룬다. 프로세스 재시작 시 A·중지 상태로 시작, 쪽지/수신함은 복원, 위치는 재준비. UTC 점프 감지 시 수집/심기/줍기 중지 후 리셋을 요구한다. 단순시간 변경으로 오래된 쪽지를 되살리지 않는다.
+비가시·권한철회·SDK오류·null/사용불가 위치·긴공백은 위치 유효성 해제 및 버퍼 재준비로 연결한다. 가시성은 Activity의onStop/복귀 실제 로그로 검증하며 시스템 오버레이가 수집을 끊는지는 가시성 정책에 따라 다룬다. 프로세스 재시작 시 A·중지 상태로 시작, 쪽지/수신함은 복원, 위치는 재준비. UTC 점프 감지 시 수집/심기/줍기 중지 후 리셋을 요구한다. 단순시간 변경으로 오래된 쪽지를 되살리지 않는다.
 
 ## 5. Room v1 모델 — 서버 전환을 고려한 설계
 
@@ -150,7 +152,6 @@ INSERT OR REPLACE 사용 금지: 기존쪽지·자식수신이력을삭제할수
 - **줍기:** 유효위치snapshot으로후보평가 → Mutex에서generation확인 → transaction에서note의현재만료/범위/자기제보/중복재확인+receipt삽입. 여러동시평가도PK로1행.
 - **만료:** Room Flow는시간경과만으로재실행되지않는다. 위치이벤트·DB변경·세션시작과가시중1초ticker에서now를갱신해후보/수신함을거른다. 만료된pending은보여주지않는다. 활성scenario시작·심기·리셋때만료행정리(cascade). TTL정리를백그라운드영구작업으로만들지않는다.
 - **리셋:** 잠금내generation증가/현재위치폐기 → 새scenario영속선택 → 이전scenario쪽지삭제transaction(cascade). 실패시새scenario유지·정리실패표시, 이전데이터다시노출안함.
-- **저장후콜백실패:** DB와Gleo전송은원자적이지않음. 쪽지는남기고전송실패표시,자동재제보안함. 새Gleo호출은새request이므로의미상중복가능.
 - **재시작:** 동일active scenario의미만료쪽지·PENDING복원,actorA/중지상태. 새위치확보전줍기안함.앱재설치보존·실데이터복구는이번범위밖.
 
 ### 5.7 서버 교체 시 유지할 것과 바뀔 것
@@ -181,15 +182,15 @@ v1기기계측필수: FK/cascade,동일request2회,동일request다른payload충
 
 | 묶음 | 구현 범위 / 예상 파일 | 완료 조건과 리뷰 산출물 |
 |---|---|---|
-| S0 설계 확정 | 이문서,전체spec§5/6/8/9/10,관련 Mermaid 원본 | 숫자·시간의미·Room·H3 조회계약 리뷰완료,상충정책해소. Gleo브랜치통합방법/앱ID확정 |
+| S0 설계 확정 | 이문서,전체spec§5/6/8/9/10,관련 Mermaid 원본 | 숫자·시간의미·Room·H3 조회계약 리뷰완료,상충정책해소. 기존 Gleo PR과 구현 범위 분리 |
 | S1 SDK 연결·proximity 실험 | Gradle/Manifest,location/LocationCollector,Application/화면수명 | 실제앱에서ADB40초수신,권한거절·null/error·재시작처리,중복listener없음,SDKrelease대칭. ENTER/EXIT·이미 반경 안 등록·해제·세션 지연 이벤트·등록 한도 실험 |
 | S2 버퍼·패널 | location/LocationBuffer, demo/DemoSessionController,ViewModel,src/debug UI | 불규칙콜백·30초준비·45초만료·동률·5초경계·A/B지연콜백단위테스트. 실제패널에서좌표/span/상태확인 |
 | S3 Room 기반 | data/local Entity/DAO/Database,repository/domain모델,Gradle/KSP/schema | v1계측테스트통과, H3 산출/셀 경계·조회범위 테스트, DB관계/인덱스검토,DAO외부누출없음,실패·reset경쟁·복구검증 |
 | S4 쪽지 심기 | CreateRoadNote,debug테스트진입,저장결과UI | 수신snapshot고정,약30초전anchor저장,현재위치와구분. 미준비/DB실패저장없음. 실제커밋후결과1회 |
 | S5 주변 조회·SDK 접근·쪽지 줍기 | NearbyNoteCoordinator, ProximityRegistry, PickupEvaluator, ReceiptStore, 수신함 UI/ACK | 반경밖0회→접근1회→계속반경안추가0회,다른recipient수신가능,만료·역방향·자기제보제외. H3 경계·등록 차집합·정차/이미 반경 안/새 쪽지·등록 실패/한도 검증 |
-| S6 Gleo·주행 E2E | 기존음성PR통합,영문schema/Receiver/callback,화면유지설정,시연스크립트 | 실제음성→저장후success→B수신,추가질문없음,앱수신부터응답목표5초. 주행중동일화면·Gleo오버레이수집확인 |
+| S6 주행·심기·수신 E2E | debug 테스트 제보, 화면 유지 설정, 시연 스크립트 | 테스트 제보→과거 위치 Room 저장→B 접근 수신, 주행 중 동일 화면 유지. Gleo 구현 제외 |
 
-S1~S5는debug제보로독립검증한다. S6의Gleo코드통합은공유spec기준으로diff를검토하고사용자기존변경을덮어쓰지않는다. Gleo스키마는content/locationMode=CURRENT_ROAD/category 두enum의3필드,설명은영어,CREATE_ROAD_NOTE한번호출한번응답이다. 기존PR의초안저장과Room공유저장을동시에실행하지않는다. UI개편/앱이름정리는필수통합부분만취한다.
+S1~S6은 디버그 제보로 검증한다. 이 브랜치에는 schema.json·BroadcastReceiver·JSON 파서·Gleo 콜백이 없다. 위치/Room의 입력·결과 계약만 유지하며 음성 연결은 기존 PR에서 별도로 다룬다.
 
 각스프린트종료시작동장면/검사결과를작업기록에남겨리뷰후다음단계로진행한다. FAIL수정없이반복실행하지않으며필수NOT_TESTED면완료라하지않는다. 자동검사기본은verify_harness,코드변경은assembleDebug/lintDebug및관련단위/Room계측테스트. release에서debug메뉴/제보진입부재도최종확인한다.
 
@@ -197,8 +198,8 @@ S1~S5는debug제보로독립검증한다. S6의Gleo코드통합은공유spec기�
 
 1. Pleos2.1.0실행,Virtual Console연결,앱debug빌드실행. 리셋→합성위치목적고지/동의→권한허용→A선택.
 2. 웹콘솔에서기어/속도주행상태설정. ADB스크립트는별도로동쪽직선R1,10m/s합성경로를주입한다. 웹콘솔애니메이션이GPS를움직인다고가정하지않는다. 둘의자동연동은이번범위밖.
-3. 약60초주행후‘구덩이제보’발화. 실제JSON수신시각r과선택offset을기록. 기대anchor는수신30초전인x=10*(r-30)의근처. 정확히x=300을고정기대하지않는다.
-4. 패널에서note1행·anchor오차한도·success후추가질문없음을확인. 패널닫으면현재위치와쪽지위치를도식에서구분한다.
+3. 약60초 주행 후 디버그 패널에서 테스트 제보를 누른다. 처리 시작 시각 r과 선택 offset을 기록한다. 기대 anchor는 처리 시작30초전인 x=10*(r-30) 근처다.
+4. 패널에서note1행·anchor오차한도·저장 결과를 확인. 패널닫으면현재위치와쪽지위치를도식에서구분한다.
 5. A의 ADB 재생 중지 후 B 전환. 이전A좌표가B첫위치로채택되지않도록generation교체/SDK재등록완료후B경로주입. 필요시B첫고정좌표주입확인을기다리고재생한다. B는anchor보다300m뒤에서출발한다.
 6. B의 현재 위치에서 주변 H3 셀을 조회하고 쪽지를 SDK proximity에 등록한다. 150m 밖에서는 receipt0행, 접근 시 ENTER → 추가 조건 검사 → receipt(B)1행·쪽지 표시. 셀 조회·등록 성공·ENTER·수신 저장을 각각 증거로 남긴다. 정확히150m 경계에서 이벤트가 온다고 가정하지 않는다.
 7. 더이동/패널재열기해도receipt1행,원본note유지. B가반경안정차한경우도유효위치가있으면동작. 정차상태반복좌표에서콜백이안오는경우STALE정책을확인하고미검증을숨기지않는다.
@@ -211,7 +212,7 @@ S1~S5는debug제보로독립검증한다. S6의Gleo코드통합은공유spec기�
 - 초기45초보관/최근접표본/5초허용으로진행할지. 현재2초정책은실측에서실패했으므로정본수정필수.
 - callback수신시각기준근사배치를프로토타입계약으로받아들일지. 실제측정시각보장과분리.
 - Room공유원본과로컬수신함분리를서버단계에서도유지할지(현재는하나의DB,두테이블).
-- SDK위치중단/정차콜백정책,Gleo오버레이가시성,기존브랜치앱ID/DO설정통합은실행검증게이트.
+- SDK위치중단/정차콜백정책,시스템오버레이가시성,주행화면설정은실행검증게이트.
 - 서버전환은저장소경계를재사용하지만인증·서버시각·갱신전략·분산중복·위치공유보안의추가설계가필수.
 
 공식 참고: [Room Entity](https://developer.android.com/training/data-storage/room/defining-data), [관계](https://developer.android.com/training/data-storage/room/relationships), [마이그레이션](https://developer.android.com/training/data-storage/room/migrating-db-versions), [데이터계층](https://developer.android.com/topic/architecture/data-layer). 2026-11-09원문확인. 이문서는설계초안이며제품구현·Room제약·화면동작PASS증거가아니다.
@@ -223,7 +224,7 @@ S1~S5는debug제보로독립검증한다. S6의Gleo코드통합은공유spec기�
 
 메모리의 위치 버퍼는 앱 프로세스 안의 객체다. Activity의 화면이 가려져도 소유 객체와 프로세스가 살아 있으면 데이터가 남을 수 있다. 그러나 프로세스 종료 시 사라지며, Application이나 Service에 두었다고 영구 보존되거나 백그라운드 실행이 보장되지는 않는다. 메모리 보관과 새로운 위치를 계속 수집하는 일은 별도다.
 
-현재 초안은 **앱이 보이는 시연 세션에서 수집**하고 완전히 비가시 상태가 되면 수집 중단·버퍼 비움, 복귀 후 재준비하는 정책이다. 따라서 백그라운드 연속 제보/수신을 이미 지원하는 설계가 아니다. Gleo 오버레이·분할 화면은 실제 가시성 변화와 SDK 수신을 검증해야 한다.
+현재 초안은 **앱이 보이는 시연 세션에서 수집**하고 완전히 비가시 상태가 되면 수집 중단·버퍼 비움, 복귀 후 재준비하는 정책이다. 따라서 백그라운드 연속 제보/수신을 이미 지원하는 설계가 아니다. 시스템 오버레이·분할 화면은 실제 가시성 변화와 SDK 수신을 검증해야 한다.
 
 다른 앱을 사용하는 동안에도 제보·접근 수신이 필요하다면 가시성 정책을 바꾸고 서비스 기반 수집의 수명·권한·사용자 알림·Pleos 지원 범위를 별도 설계한다. 이 경우에도 버퍼는 서비스가 사용하는 메모리에 둘 수 있으며 Room으로 바꿔야 하는 것은 아니다. Android foreground service를 선언하는 것만으로 Pleos 위치의 백그라운드 지원이나 프로세스 영구 생존을 보장하지 않는다.
 
@@ -279,11 +280,11 @@ S5: H3 경계 양쪽 쪽지 조회, 다른 셀 안150m 쪽지,150m 밖 후보 �
 - SDK 등록과 H3 후보 조합은 DemoController 안의 작은 함수로 구현했다. 책임이 작아 아직별도ProximityRegistry/PickupEvaluator클래스는 만들지 않았고, 순수 eligible 함수와 저장소경계는유지했다.
 - SDK등록은시연최대16개로제한하고초과개수를표시한다. 공식SDK한도라는뜻은아니며실제등록실패도표시한다.
 - 경로방향은고정fixture진행거리변화로FORWARD/REVERSE를판단한다. 처음정차상태는fixture의FORWARD방향을기본으로하고,실도로헤딩정확도를입증하지않는다.
-- 제보는기존음성브랜치의schema계약만재사용해새Room저장흐름에연결했다. 기존DraftStore/미리보기성공경로를복제하지않았다. debug receiver만외부공개,release는내부전용이다.
+- 제보는 디버그 패널에서 controller.report로 전달한다. 기존 음성 브랜치의 스키마/Receiver/파서/콜백은 이 브랜치에 복제하지 않는다.
 - 디버그패널과하드코딩테스트제보는src/debug,release패널은no-op이다. 화면유지스위치는앱설정으로저장한다.
 - 과거검증원시JSON은사용자요청으로삭제했다. 현재app/schemas/1.json은실험파일이아닌Room스키마산출물이다.
 
-실제음성/Gleo승인·실차·전체폼팩터·개인정보차단·SDK등록한도는코드완료와구분해서NOT_TESTED로남긴다. 이문서앞부분의예상클래스/표는설계책임설명이고실제파일목록이아니다.
+실차·전체폼팩터·개인정보차단·SDK등록한도는코드완료와구분해서NOT_TESTED로남긴다. 이문서앞부분의예상클래스/표는설계책임설명이고실제파일목록이아니다.
 
 ## 13. 시작 위치 조작과 도식 정책 보완
 

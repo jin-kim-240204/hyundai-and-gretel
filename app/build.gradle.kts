@@ -18,7 +18,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    buildFeatures { compose = true; buildConfig = true }
+    buildFeatures { compose = true }
     packaging.resources.excludes += setOf("darwin-*/**", "windows-*/**", "META-INF/native-image/**")
 }
 dependencies {

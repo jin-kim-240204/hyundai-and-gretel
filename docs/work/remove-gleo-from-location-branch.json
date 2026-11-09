@@ -1,0 +1,24 @@
+{
+  "task": "remove-gleo-from-location-branch",
+  "selected_rules": [
+    "ENV-02",
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "일반Activity/Compose·위치/Room/시연패널유지. debug/release빌드·lintDebug·단위7개PASS."
+    },
+    {
+      "id": "INT-01",
+      "status": "N/A",
+      "evidence": "이번위치브랜치의Gleo코드·스키마·수신기·전용테스트제거. debug/release APK asset/DEX/Manifest에서부재assert. 기존gm음성브랜치는변경없음."
+    },
+    {
+      "id": "DOC-c6fc94252d66#Gleo제외",
+      "status": "N/A",
+      "evidence": "Gleo Action/Callback은이번기능범위밖. 해당Receiver·ACTION_PARAM처리·APP_ACTION_RESPONSE생성경로를모두제거하고기존음성PR에남긴다."
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # 위치 쪽지 스프린트 구현
 
+범위 정정: 아래 Gleo 관련 구현·실험은 요청 범위를 넘긴 과거 작업이며 제거했다. 현재 코드는 디버그 제보로 쪽지 심기·수신만 제공한다. 현재 검증은 [제거 작업 기록](remove-gleo-from-location-branch.md)을 따른다.
+
 요청: S0~S6을 순서대로 구현하고 검증 단위로 한국어 커밋. push는 요청 범위 밖. MVVM + ponytail: UI는 상태/이벤트, ViewModel은 화면 조합, 위치/저장/판정은 별도 책임. 범용 프레임워크·서버·상시추적 추가 없음.
 
 선택 규칙: ENV-01/02/03, VEH-01/03/04, PRIV-01, DES-01/04/06, SAF-01, INT-01. 원문: DOC-c5e08a80ebfd#의존성, DOC-402de45b9f3d#권한, DOC-1ba06876919b#수명, DOC-9844e9eaad3c#콜백, DOC-ba9b83fc86f6#오류, DOC-72a5d7ab4ebb#최소수집, DOC-e12e49cc3efc#레이아웃, DOC-189d894e8124#윈도. 앞선 상세 플랜의 검토 내용과 공식 SDK 샘플을 적용하고 설치 AAR 심볼 확인. 새 proximity 원문은 API 존재와 실험 결과를 구분한다.
