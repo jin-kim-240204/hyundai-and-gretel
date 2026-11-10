@@ -1,0 +1,35 @@
+{
+  "task": "spec-step02-location-buffer",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "문서 대조만 PASS: 문서만 추가, 기존 Activity/MVVM구조 변경 없음"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "문서 대조만 PASS: 기존 FGS추적 소유·직렬콜백·좁은Binder 유지 계획"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "문서 대조만 PASS: 45초 메모리 전용·DB/서버업로드 없음, 로그 최소화"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "문서 대조만 PASS: 공식 위치데이터접근 수신/중지절과 스펙§3~6 대조, 콜백수신시각을 측정시각으로 위장하지 않음"
+    },
+    {
+      "id": "DOC-ba9b83fc86f6#오류",
+      "status": "PASS",
+      "evidence": "문서 대조만 PASS: 공식 오류처리 null/오류 제한 요구를 §5/6과 B09/11로 연결"
+    }
+  ]
+}
