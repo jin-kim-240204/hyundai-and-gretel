@@ -14,28 +14,31 @@ import androidx.lifecycle.viewModelScope
 import com.jinkim.hyundaiAndGretel.location.LocationTrackingService
 import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 class LocationViewModel(private val app: Application) : AndroidViewModel(app), ServiceConnection {
-    private val mutableStatus = MutableStateFlow(TrackingStatus.STOPPED)
-    val status = mutableStatus.asStateFlow()
+    private val connectedStatus = MutableStateFlow<StateFlow<TrackingStatus>?>(null)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val status = connectedStatus
+        .flatMapLatest { it ?: flowOf(TrackingStatus.STOPPED) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, TrackingStatus.STOPPED)
     private val mutableStartCommandFailed = MutableStateFlow(false)
     val startCommandFailed = mutableStartCommandFailed.asStateFlow()
-    private var observation: Job? = null
     private val bound = app.bindService(Intent(app, LocationTrackingService::class.java), this, Context.BIND_AUTO_CREATE)
 
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-        val connected = (binder as LocationTrackingService.LocalBinder).status
-        observation?.cancel()
-        observation = viewModelScope.launch { connected.collect { mutableStatus.value = it } }
+        connectedStatus.value = (binder as LocationTrackingService.LocalBinder).status
     }
 
     override fun onServiceDisconnected(name: ComponentName) {
-        observation?.cancel()
-        mutableStatus.value = TrackingStatus.STOPPED
+        connectedStatus.value = null
     }
 
     fun start() {
@@ -56,7 +59,6 @@ class LocationViewModel(private val app: Application) : AndroidViewModel(app), S
     }
 
     override fun onCleared() {
-        observation?.cancel()
         if (bound) app.unbindService(this)
     }
 }

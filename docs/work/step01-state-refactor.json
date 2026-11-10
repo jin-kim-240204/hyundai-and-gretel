@@ -1,0 +1,46 @@
+{
+  "task": "step01-state-refactor",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-01",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "기존 ComponentActivity/Compose 구조. 원래 프로젝트에서 debug/release/IDE/harness 빌드 PASS"
+    },
+    {
+      "id": "VEH-01",
+      "status": "NOT_TESTED",
+      "evidence": "권한 플래그3상태 동등 변환을 코드 대조. 실제 팝업 대기 중 재생성 조합은 기존 미검증 유지"
+    },
+    {
+      "id": "DOC-402de45b9f3d#권한",
+      "status": "NOT_TESTED",
+      "evidence": "허용·RESUMED·취소 정책 불변. 실제 권한 팝업 전체 재실행 안 함"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "단위6개/기기계측3개. 소스재사용 이전콜백차단 및 상태 연결해제/재연결, 기존 SDK 정리 회귀"
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "SDK 어댑터 diff없음. unregister 실패 뒤 release 계측 재실행 PASS"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "generation으로 이전 세션 차단, nullable/error/cleanup 단위 및 실제 서비스 상태 전달 회귀 PASS"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "좌표 저장/전송/로그 범위 불변. 임시폴링은 검증과 커밋에서 제외"
+    }
+  ]
+}

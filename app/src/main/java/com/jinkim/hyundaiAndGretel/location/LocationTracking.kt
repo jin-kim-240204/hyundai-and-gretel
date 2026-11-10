@@ -35,18 +35,22 @@ class LocationTracking(
             val current = createSource()
             source = current
             val supported = current.start(
-                { fix -> scope.launch {
-                    if (generation != session || source !== current) return@launch
-                    if (fix == null || !fix.hasValidCoordinates()) {
-                        update(TrackingStatus.UNAVAILABLE)
-                        return@launch
+                onLocation = { fix ->
+                    scope.launch {
+                        if (generation != session) return@launch
+                        if (fix == null || !fix.hasValidCoordinates()) {
+                            update(TrackingStatus.UNAVAILABLE)
+                            return@launch
+                        }
+                        update(TrackingStatus.RECEIVING)
+                        log("session=$session LOCATION lat=${fix.latitude} lon=${fix.longitude} elapsed=${fix.receivedElapsedMillis}")
                     }
-                    update(TrackingStatus.RECEIVING)
-                    log("session=$session LOCATION lat=${fix.latitude} lon=${fix.longitude} elapsed=${fix.receivedElapsedMillis}")
-                } },
-                { error -> scope.launch {
-                    if (generation == session && source === current) fail(error)
-                } },
+                },
+                onError = { error ->
+                    scope.launch {
+                        if (generation == session) fail(error)
+                    }
+                },
             )
             if (!supported) {
                 stop()

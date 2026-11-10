@@ -24,13 +24,13 @@ import com.jinkim.hyundaiAndGretel.ui.location.LocationView
 
 class MainActivity : ComponentActivity() {
     private val viewModel: LocationViewModel by viewModels()
-    private var pendingStart = false
-    private var permissionResultReady = false
+    private enum class PendingStart { NONE, WAITING_FOR_PERMISSION, PERMISSION_RESULT_READY }
+    private var pendingStart = PendingStart.NONE
     private var permissionMessage by mutableStateOf("")
     private val permissionRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (BuildConfig.DEBUG) Log.d("RoadLocation", "PERMISSION_RESULT pending=$pendingStart state=${lifecycle.currentState}")
-        if (pendingStart) {
-            permissionResultReady = true
+        if (BuildConfig.DEBUG) Log.d("RoadLocation", "PERMISSION_RESULT pending=${pendingStart != PendingStart.NONE} state=${lifecycle.currentState}")
+        if (pendingStart != PendingStart.NONE) {
+            pendingStart = PendingStart.PERMISSION_RESULT_READY
             completePermissionRequest()
         }
     }
@@ -52,8 +52,7 @@ class MainActivity : ComponentActivity() {
                 permissionMessage = permissionMessage,
                 onStart = ::requestStart,
                 onStop = {
-                    pendingStart = false
-                    permissionResultReady = false
+                    pendingStart = PendingStart.NONE
                     viewModel.stop()
                 },
                 onOpenSettings = {
@@ -64,22 +63,20 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestStart() {
-        if (pendingStart) return
+        if (pendingStart != PendingStart.NONE) return
         if (requiredPermissions.all(::granted)) {
             permissionMessage = ""
             viewModel.start()
         } else {
-            pendingStart = true
-            permissionResultReady = false
+            pendingStart = PendingStart.WAITING_FOR_PERMISSION
             val permissions = requiredPermissions + if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
             permissionRequest.launch(permissions.toTypedArray())
         }
     }
 
     private fun completePermissionRequest() {
-        if (!pendingStart || !permissionResultReady || !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
-        pendingStart = false
-        permissionResultReady = false
+        if (pendingStart != PendingStart.PERMISSION_RESULT_READY || !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+        pendingStart = PendingStart.NONE
         if (requiredPermissions.all(::granted)) {
             permissionMessage = ""
             viewModel.start()
@@ -91,9 +88,8 @@ class MainActivity : ComponentActivity() {
     private fun granted(permission: String) = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 
     override fun onStop() {
-        if (BuildConfig.DEBUG && pendingStart) Log.d("RoadLocation", "PERMISSION_START_CANCELLED onStop")
-        pendingStart = false
-        permissionResultReady = false
+        if (BuildConfig.DEBUG && pendingStart != PendingStart.NONE) Log.d("RoadLocation", "PERMISSION_START_CANCELLED onStop")
+        pendingStart = PendingStart.NONE
         super.onStop()
     }
 

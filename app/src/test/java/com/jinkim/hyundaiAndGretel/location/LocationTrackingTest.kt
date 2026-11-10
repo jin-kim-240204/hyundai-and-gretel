@@ -60,6 +60,24 @@ class LocationTrackingTest {
         tracking.stop()
     }
 
+    @Test fun generationRejectsOldCallbacksEvenWhenSourceInstanceIsReused() = runTest {
+        val source = FakeSource()
+        val tracking = LocationTracking(this, { source }, {}, {})
+        tracking.start()
+        val oldLocation = source.location
+        val oldError = source.error
+        tracking.stop()
+        tracking.start()
+        oldLocation(null)
+        oldError(IllegalStateException("previous session"))
+        runCurrent()
+        assertEquals(TrackingStatus.WAITING, tracking.status.value)
+        source.location(LocationFix(1.0, 2.0, 3))
+        runCurrent()
+        assertEquals(TrackingStatus.RECEIVING, tracking.status.value)
+        tracking.stop()
+    }
+
     @Test fun sdkFailureCleansUpButCleanupErrorDoesNotReactivate() = runTest {
         val source = FakeSource().apply { stopError = IllegalStateException("cleanup") }
         var failures = 0
