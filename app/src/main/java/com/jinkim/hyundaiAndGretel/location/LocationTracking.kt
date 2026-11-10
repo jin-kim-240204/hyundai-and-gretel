@@ -37,26 +37,25 @@ class LocationTracking(
             val supported = current.start(
                 { fix -> scope.launch {
                     if (generation != session || source !== current) return@launch
-                    if (fix == null || !fix.latitude.isFinite() || !fix.longitude.isFinite() ||
-                        fix.latitude !in -90.0..90.0 || fix.longitude !in -180.0..180.0) {
+                    if (fix == null || !fix.hasValidCoordinates()) {
                         update(TrackingStatus.UNAVAILABLE)
-                    } else {
-                        update(TrackingStatus.RECEIVING)
-                        log("session=$session LOCATION lat=${fix.latitude} lon=${fix.longitude} elapsed=${fix.receivedElapsedMillis}")
+                        return@launch
                     }
+                    update(TrackingStatus.RECEIVING)
+                    log("session=$session LOCATION lat=${fix.latitude} lon=${fix.longitude} elapsed=${fix.receivedElapsedMillis}")
                 } },
                 { error -> scope.launch {
                     if (generation == session && source === current) fail(error)
                 } },
             )
-            if (supported) {
-                log("session=$session REGISTERED")
-                update(TrackingStatus.WAITING)
-            } else {
+            if (!supported) {
                 stop()
                 update(TrackingStatus.UNSUPPORTED)
                 onFailure()
+                return
             }
+            log("session=$session REGISTERED")
+            update(TrackingStatus.WAITING)
         } catch (cancelled: CancellationException) {
             stop()
             throw cancelled
@@ -89,6 +88,10 @@ class LocationTracking(
         log("session=$generation SDK_ERROR ${error.javaClass.simpleName}")
         onFailure()
     }
+
+    private fun LocationFix.hasValidCoordinates() =
+        latitude.isFinite() && longitude.isFinite() &&
+            latitude in -90.0..90.0 && longitude in -180.0..180.0
 
     private fun update(value: TrackingStatus) {
         if (mutableStatus.value == value) return

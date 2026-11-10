@@ -53,3 +53,7 @@ NOT_TESTED: 권한 팝업 대기 중 실제 Activity 재생성 조합, privacy �
 마무리: 설정 복귀 시 이미 허용된 권한의 오래된 안내만 지우고 자동 시작하지 않도록 정리. 최종 debug/release·단위·lint·Studio 재검사 PASS. 테스트 후 수집 중지 상태 확인, 이번 실행의 에뮬레이터 종료. 설치 APK/테스트 APK와 허용된 앱 권한은 AVD에 남아 있다. 보고서 exit2는 명시된 미검증을 나타내며 실패를 PASS로 바꾸지 않는다.
 
 후속 요청: 사용자가 `feat:-` 접두사의 단일 구현 커밋 및 푸시를 승인했다. 위 소스 검증 결과를 재사용하고 diff 검사를 재확인한다. 미검증 항목은 그대로 유지하며 다음 단계는 진행하지 않는다.
+
+## PR 구현 리뷰 후속
+
+이번 리뷰 반영과 새 검증 범위는 [후속 기록](pr4-implementation-feedback.md)에 분리했다. 기존 ‘같은 tracking 인스턴스 유지’ 검증을 새 화면 재연결 근거로 확대하지 않는다. 기존 FakeSource.stop 예외도 SDK unregister/release 실행 증거가 아니다. 이번 후속 계측에서 화면 ViewModel 상태·등록 횟수와 실제 SDK의 unregister 권한거절 후 release 경로를 별도 확인했다. 권한 팝업 대기 중 재생성은 여전히 NOT_TESTED다.

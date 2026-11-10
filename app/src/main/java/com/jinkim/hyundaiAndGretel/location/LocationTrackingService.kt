@@ -23,13 +23,13 @@ import kotlinx.coroutines.cancel
 
 class LocationTrackingService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    val tracking = LocationTracking(scope, { PleosLocationSource(this) }, {
+    private val tracking = LocationTracking(scope, { PleosLocationSource(this) }, {
         if (BuildConfig.DEBUG) Log.d("RoadLocation", it)
     }, { finishForeground() })
     private val binder = LocalBinder()
 
     inner class LocalBinder : Binder() {
-        val service: LocationTrackingService get() = this@LocationTrackingService
+        val status get() = tracking.status
     }
 
     override fun onBind(intent: Intent): IBinder = binder
@@ -51,7 +51,7 @@ class LocationTrackingService : Service() {
         return START_NOT_STICKY
     }
 
-    fun stopTracking() {
+    private fun stopTracking() {
         try {
             tracking.stop()
         } finally {

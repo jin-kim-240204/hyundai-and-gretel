@@ -1,0 +1,62 @@
+{
+  "task": "pr4-implementation-feedback",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01",
+    "DES-04",
+    "VEH-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "기존 ComponentActivity/Compose 유지. debug/release/IDE/harness --build PASS"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "기존 세션 단위5개 및 이번 계측3개 PASS. unregister 권한거절 예외 뒤 실제 SDK release의 unbind 확인. 실제 원격 장애는 제외"
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "PleosLocationSource 기존 finally 유지, ContextWrapper 기반 실제 SDK 해제 회귀 PASS"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "기존 세션 식별/직렬화 유지. LocationTrackingTest5개, 실제 화면 ViewModel 재연결 및 REGISTERED1회 회귀 PASS"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "신규 시작명령 실패 로그는 DEBUG에서 예외 종류만 기록. 합성 좌표 로그 제한 유지"
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "분리 View 기본 화면 캡처 확인. 전체 폼팩터/정량 대비 검증 안 함"
+    },
+    {
+      "id": "DOC-e12e49cc3efc#레이아웃",
+      "status": "NOT_TESTED",
+      "evidence": "기본 2560x1440 대상에서 잘림 없음, 분할/모든 해상도 검증 아님"
+    },
+    {
+      "id": "DOC-189d894e8124#윈도",
+      "status": "PASS",
+      "evidence": "controls.png에서 기본 앱 영역 내 표시 확인, 서비스 수명과 Activity 관찰 분리 유지"
+    },
+    {
+      "id": "DOC-402de45b9f3d#권한",
+      "status": "NOT_TESTED",
+      "evidence": "접근성 자동화 타임아웃. 실제 팝업 대기 중 재생성/늦은 허용은 별도 확인 필요"
+    },
+    {
+      "id": "VEH-01",
+      "status": "NOT_TESTED",
+      "evidence": "기존 권한 정책 유지. 이번 권한 대기 중 재생성 자동화는 타임아웃으로 미검증. 실제 SDK 권한거절 정리 테스트는 별도 PASS"
+    }
+  ]
+}
