@@ -7,3 +7,5 @@
 규칙 ENV-02/VEH-03: 코드·SDK 변경 없음, 기존 합의의 문서 소유 위치 정정만 수행. 새 공식 요구 판정이나 런타임 검증 없음. 기존 PR #4의 최종 답변 및 spec-step01-review-feedback 문서 대조 근거 재사용.
 
 검증: 부모와 기능 브랜치에서 harness 및 diff 검사, 로컬 링크 확인. 최종 PR #4의 docs/plans diff가 비어 있음 확인. 빌드·기기 N/A(문서만).
+
+후속 확인: 부모 d038d8e 푸시 후 ny/spec-driven-road-notes에서 git pull --no-rebase origin spec-road-note-system 수행. 충돌 없음. SSoT 소유권을 기능 계획에도 명시. PR base 대비 docs/plans diff 부재와 양쪽 하네스/diff 검사 PASS. 런타임 실행 N/A.
