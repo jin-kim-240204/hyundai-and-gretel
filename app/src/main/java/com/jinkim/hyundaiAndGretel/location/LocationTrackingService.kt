@@ -9,6 +9,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.Binder
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
@@ -30,6 +31,7 @@ class LocationTrackingService : Service() {
             if (BuildConfig.DEBUG) Log.d("RoadLocation", message)
         },
         onFailure = { finishForeground() },
+        clock = SystemClock::elapsedRealtime,
     )
     private val binder = LocalBinder()
 

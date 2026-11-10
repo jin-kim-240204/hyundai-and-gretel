@@ -11,7 +11,7 @@ data class LocationFix(val latitude: Double, val longitude: Double, val received
 enum class TrackingStatus { STOPPED, STARTING, WAITING, RECEIVING, UNAVAILABLE, UNSUPPORTED, FAILED }
 
 interface LocationSource {
-    fun start(onLocation: (LocationFix?) -> Unit, onError: (Exception) -> Unit): Boolean
+    fun start(onLocation: (LocationFix?, Long) -> Unit, onError: (Exception) -> Unit): Boolean
     fun stop()
 }
 
@@ -21,29 +21,35 @@ class LocationTracking(
     private val createSource: () -> LocationSource,
     private val log: (String) -> Unit,
     private val onFailure: () -> Unit,
+    private val clock: () -> Long,
 ) {
     private val mutableStatus = MutableStateFlow(TrackingStatus.STOPPED)
     val status = mutableStatus.asStateFlow()
     private var source: LocationSource? = null
     private var generation = 0L
+    private val buffer = LocationBuffer()
 
     fun start() {
         if (source != null) return
+        buffer.reset()
         val session = ++generation
         update(TrackingStatus.STARTING)
         try {
             val current = createSource()
             source = current
             val supported = current.start(
-                onLocation = { fix ->
+                onLocation = { fix, receivedAt ->
                     scope.launch {
                         if (generation != session) return@launch
-                        if (fix == null || !fix.hasValidCoordinates()) {
-                            update(TrackingStatus.UNAVAILABLE)
-                            return@launch
+                        when (buffer.offer(fix, receivedAt, clock())) {
+                            LocationBuffer.Update.IGNORED -> Unit
+                            LocationBuffer.Update.INVALIDATED -> update(TrackingStatus.UNAVAILABLE)
+                            LocationBuffer.Update.ACCEPTED -> {
+                                update(TrackingStatus.RECEIVING)
+                                log("session=$session LOCATION lat=${fix?.latitude} lon=${fix?.longitude} elapsed=$receivedAt")
+                                log("session=$session BUFFER_APPEND size=${buffer.size} oldest=${buffer.oldestElapsedMillis} latest=${buffer.latestElapsedMillis}")
+                            }
                         }
-                        update(TrackingStatus.RECEIVING)
-                        log("session=$session LOCATION lat=${fix.latitude} lon=${fix.longitude} elapsed=${fix.receivedElapsedMillis}")
                     }
                 },
                 onError = { error ->
@@ -72,6 +78,7 @@ class LocationTracking(
         ++generation
         val previous = source
         source = null
+        buffer.reset()
         update(TrackingStatus.STOPPED)
         try {
             previous?.stop()
@@ -93,9 +100,8 @@ class LocationTracking(
         onFailure()
     }
 
-    private fun LocationFix.hasValidCoordinates() =
-        latitude.isFinite() && longitude.isFinite() &&
-            latitude in -90.0..90.0 && longitude in -180.0..180.0
+    /** Called on the tracking context; reading the clock and selecting never suspends. */
+    fun selectAnchor(): AnchorSelection = buffer.select(clock())
 
     private fun update(value: TrackingStatus) {
         if (mutableStatus.value == value) return

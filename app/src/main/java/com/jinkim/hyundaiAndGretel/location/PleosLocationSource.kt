@@ -11,14 +11,14 @@ class PleosLocationSource(context: Context) : LocationSource {
     private var initialized = false
     private var listener: FusedLocationListener? = null
 
-    override fun start(onLocation: (LocationFix?) -> Unit, onError: (Exception) -> Unit): Boolean {
+    override fun start(onLocation: (LocationFix?, Long) -> Unit, onError: (Exception) -> Unit): Boolean {
         if (!sdk.isSupported()) return false
         initialized = true
         sdk.initialize()
         listener = object : FusedLocationListener {
             override fun onChanged(location: LocationData?) {
                 val receivedAt = SystemClock.elapsedRealtime()
-                onLocation(location?.let { LocationFix(it.latitude, it.longitude, receivedAt) })
+                onLocation(location?.let { LocationFix(it.latitude, it.longitude, receivedAt) }, receivedAt)
             }
             override fun onError(exception: Exception) = onError.invoke(exception)
         }

@@ -33,7 +33,7 @@ class PleosLocationSourceTest {
         }
         val source = PleosLocationSource(context)
         try {
-            withContext(Dispatchers.Main) { assertTrue(source.start({}, {})) }
+            withContext(Dispatchers.Main) { assertTrue(source.start({ _, _ -> }, {})) }
             withTimeout(5_000) { bound.await() }
             withContext(Dispatchers.Main) {
                 denyPermission = true

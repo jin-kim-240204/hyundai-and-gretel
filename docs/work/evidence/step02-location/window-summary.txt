@@ -1,0 +1,6 @@
+Pleos2.1.0/API34/user10; extended TrackingLifecycleTest 53.616s PASS
+First and last real SDK buffer log entries, same process/session:
+11-11 01:06:06.161 13651 13651 D RoadLocation: session=1 BUFFER_APPEND size=1 oldest=222127 latest=222127
+11-11 01:06:07.163 13651 13651 D RoadLocation: session=1 BUFFER_APPEND size=2 oldest=222127 latest=223129
+11-11 01:06:56.326 13651 13651 D RoadLocation: session=1 BUFFER_APPEND size=45 oldest=228148 latest=272292
+11-11 01:06:57.328 13651 13651 D RoadLocation: session=1 BUFFER_APPEND size=45 oldest=229150 latest=273294

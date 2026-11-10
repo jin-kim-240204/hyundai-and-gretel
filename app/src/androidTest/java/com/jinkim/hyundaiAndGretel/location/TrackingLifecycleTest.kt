@@ -57,6 +57,24 @@ class TrackingLifecycleTest {
             withTimeout(10_000) {
                 while (status.value !in setOf(TrackingStatus.WAITING, TrackingStatus.RECEIVING)) delay(50)
             }
+            if (InstrumentationRegistry.getArguments().getString("bufferWindow") == "true") {
+                withTimeout(15_000) {
+                    while ("BUFFER_APPEND" !in registeredLogs(instrumentation).removePrefix(registrationsBefore)) delay(100)
+                }
+                delay(15_000)
+                scenario.moveToState(Lifecycle.State.CREATED)
+                delay(20_000)
+                scenario.moveToState(Lifecycle.State.RESUMED)
+                scenario.recreate()
+                delay(15_000)
+                val lines = registeredLogs(instrumentation).removePrefix(registrationsBefore)
+                val windows = Regex("BUFFER_APPEND size=(\\d+) oldest=(\\d+) latest=(\\d+)").findAll(lines).toList()
+                assertTrue("Expected real SDK buffer updates", windows.size >= 2)
+                val first = windows.first().groupValues
+                val last = windows.last().groupValues
+                assertTrue("Retention window must advance", last[2].toLong() > first[2].toLong())
+                assertTrue("Recent history survives Activity stop/recreation", last[3].toLong() - last[2].toLong() in 30_000..45_000)
+            }
             scenario.moveToState(Lifecycle.State.CREATED)
             delay(200)
             assertNotEquals(TrackingStatus.STOPPED, status.value)
