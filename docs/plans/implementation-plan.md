@@ -1,6 +1,8 @@
 # 즉시 도로 제보 프로토타입 E2E 테크스펙
 
-수정: 2026-11-09. 이 문서는 **제보 → 해당 위치에 쪽지 저장 → 뒤따르는 사용자의 접근 수신**을 구현하기 위한 현행 계획이다. 이전 Sprint 문서의 지명·후속 질문·목격 시각 역산 계획보다 이 문서를 우선한다. 아래 목표 구성은 아직 구현 완료가 아니다.
+수정: 2026-11-10. PR #4 후속 합의의 추적 수명은 아래 보강 및 [단계별 최신 계획](../specs/road-notes/00-overview.md)을 따른다. 화면 이탈 중지 정책은 폐기했으며01단계는 로그 진단으로 바꿨다. 그 밖의 과거 수치·구현 현황은 단계별 스펙과 대조한다.
+
+초기 작성: 2026-11-09. 이 문서는 **제보 → 해당 위치에 쪽지 저장 → 뒤따르는 사용자의 접근 수신**을 구현하기 위한 현행 계획이다. 이전 Sprint 문서의 지명·후속 질문·목격 시각 역산 계획보다 이 문서를 우선한다. 아래 목표 구성은 아직 구현 완료가 아니다.
 
 ## 0. 문서 소유권과 브랜치 운영
 
@@ -50,11 +52,45 @@ A/B는 실제 차량 2대가 아니라 한 앱의 가상 운전자다. Room은 �
 
 ## 3. 전체 시스템 흐름
 
-![전체 시스템 흐름](diagrams/prototype-e2e-flow.svg)
+```mermaid
+flowchart TD
+    Start[앱 시작 · 주행·정차 모두 지원] --> Gate{동의·권한·위치 소스 준비}
+    Gate -->|실패| Block[사용 불가 상태 표시]
+    Gate -->|성공| Tracking[화면 독립 추적 · FGS 요건 확인]
+    Away[홈·다른 앱·재생성] -. 수집 유지 .-> Tracking
+    Tracking --> Session[가상 사용자 A · 세션 시작]
+    SDK[Pleos FusedLocation 위치 콜백] --> Source[위치 검증 · 경로 문맥 생성]
+    Replay[합성 경로 재생 · SDK 미통과 표시] -. 테스트 대체 입력 .-> Source
+    Session --> Source
+    Source --> Buffer[추적 세션 메모리45초 버퍼 · 화면 밖 갱신]
+    Buffer --> Ready{신선한 실제 표본 확보}
+    Ready --> UI[준비 상태 표시]
+    Voice[사용자 즉시 제보] --> Gleo[Gleo · 내용 추출·카테고리 분류]
+    Gleo --> Receiver[CREATE_ROAD_NOTE 수신 · 시각·A/B·세션 고정]
+    Receiver --> Validate{필수 입력·세션 검증}
+    Validate -->|실패| Fail[fail 콜백 1회 · 종료]
+    Validate -->|통과| Anchor[버퍼 스냅샷에서 수신 30초 전 위치 선택]
+    Anchor --> Quality{이력·정확도·방향·도로 문맥 유효}
+    Quality -->|실패| Fail
+    Quality -->|통과| Tx[Room 트랜잭션 · 쪽지 ACTIVE 저장]
+    Tx -->|저장 실패| Fail
+    Tx -->|커밋 성공| Success[success 콜백 1회 · 쪽지 저장 안내]
+    Tx --> DB[(Room · 쪽지 공유 공간)]
+    Success --> Switch[같은 화면에서 B 전환 · 주행 중에도 가능]
+    Switch --> B[B 현재 위치 확보 · 주행·정차 무관]
+    B --> Matcher[유효 쪽지 조회 · 거리·동일 경로·방향·전방 판정]
+    DB -->|쪽지 변경 시 재평가| Matcher
+    Matcher --> Match{반경·경로·방향 조건 충족}
+    Match -->|아니오| B
+    Policy[속도·기어로 수신 차단 안 함] -. 판정 정책 .-> Match
+    Match -->|예| Receipt[Room · B 수신 이력 원자적 등록]
+    Receipt --> Display[미표시 수신 쪽지 화면 표시]
+    Display --> Mark[표시 완료 기록 · 동일 B 중복 방지]
+```
 
-[크게 보기](diagrams/prototype-e2e-flow.svg) · [Mermaid 원본](diagrams/prototype-e2e-flow.mmd)
+[Mermaid 원본](diagrams/prototype-e2e-flow.mmd)
 
-한 에뮬레이터에서 A와 B를 순차 실행하며 주행 중 동작을 메인 시연으로 검증한다. 정차도 지원하며 주행 유지는 기능의 필수 조건이 아니다. A/B 전환은 가상 사용자/경로의 교체이며 차량 정차나 주행 감지에 따른 화면 전환이 아니다. 역할 전환 후에도 Room 쪽지는 남고 위치 버퍼는 섞이지 않는다. 앱이 백그라운드/종료되면 이번 프로토타입의 이동 재생·위치 수집·줍기 루프는 멈추며, 복귀 후 새 버퍼를 준비한다.
+한 에뮬레이터에서 A와 B를 순차 실행하며 주행 중 동작을 메인 시연으로 검증한다. 정차도 지원하며 주행 유지는 기능의 필수 조건이 아니다. A/B 전환은 가상 사용자/경로의 교체이며 차량 정차나 주행 감지에 따른 화면 전환이 아니다. 역할 전환 후에도 Room 쪽지는 남고 위치 버퍼는 섞이지 않는다. 홈 이동·다른 앱 전환·Activity 재생성 중에도 이미 시작한 추적 세션과 위치 수집을 유지한다. 최근45초 버퍼를 화면 밖에서도 계속 갱신하고, 이후 후보 조회·접근 판정·수신 저장도 추적 수명에 연결한다. 화면 복귀는 같은 추적 상태에 재연결한다. 화면 비가시 중에는 표시 완료를 기록하지 않으며 수신된 항목은 복귀 후 표시한다. 강제 종료·프로세스 사망·차량 재시작 자동 복구와 debug 이동 재생 수명은 별도 검토한다.
 
 ## 4. 구성 요소와 인터페이스
 
@@ -246,9 +282,31 @@ B의 새 유효 위치, 활성 쪽지의 추가/변경, B 세션 시작을 트�
 
 ### 8.2 쪽지와 사용자 상태 전이
 
-![세션 상태 전이](diagrams/prototype-e2e-states.svg)
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Warming : 시연 A 시작
+    Warming --> Ready : 신선한 유효 표본 확보
+    Ready --> Ready : 홈 이동·다른 앱·재생성 시 추적 유지
+    Ready --> Planting : 유효 JSON 수신
+    Planting --> Ready : 저장 완료 및 success
+    Planting --> Ready : 처리 실패 및 fail
+    Warming --> Idle : 중단 또는 권한 철회
+    Ready --> Warming : 위치 연속성 단절
+    Ready --> Idle : 명시적 중단 또는 권한 철회
+    Ready --> Receiving : 같은 화면에서 B 전환
+    Receiving --> Receiving : 화면 밖 수집·45초 버퍼 갱신 유지
+    Receiving --> Pending : 위치 조건 충족 및 이력 INSERT 성공
+    Pending --> Displayed : 화면 표시 및 ACK
+    Displayed --> Receiving : 위치·쪽지 변경 시 재평가
+    Receiving --> Idle : 명시적 중단 또는 권한 철회
+    note right of Receiving
+        주행·정차 무관
+        위치 조건으로 수신 판정
+    end note
+```
 
-[크게 보기](diagrams/prototype-e2e-states.svg) · [Mermaid 원본](diagrams/prototype-e2e-states.mmd)
+[Mermaid 원본](diagrams/prototype-e2e-states.mmd)
 
 별도로 Room 쪽지는 생성 즉시 ACTIVE이고 TTL 이후 EXPIRED다. 수신함의 DISPLAYED는 B에게 보여줬다는 상태이며 원본 쪽지의 만료/삭제 상태와 혼합하지 않는다. B는 30초 버퍼가 찰 때까지 기다리지 않고 **현재의 유효한 위치**만 있으면 줍기를 시작한다.
 
@@ -260,7 +318,7 @@ FusedLocation 지원 확인 → 목적 동의/권한 → 초기화 → listener 
 
 앱 범위 SDK 인스턴스 1개와 세션별 listener 등록을 관리한다. 중단 시 동일 listener 해제 후 release하며, 새 세션은 새 초기화 절차를 따른다. 화면 크기 변경은 추적 세션을 중복 시작시키지 않도록 Activity보다 긴 앱 범위 소유자가 관리한다. [SDK 초기화·해제](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/initialization-and-release)
 
-이번 버전은 사용자에게 보이는 시연 세션에서만 수집한다. 다른 앱으로 완전히 가리면 수집 중단·버퍼 비움, 돌아오면 재준비한다. Gleo의 짧은 오버레이와 멀티윈도우에서 Activity 가시성 콜백이 어떻게 변하는지는 에뮬레이터에서 확인한다. 제보 순간 위치 수집이 중단되는 환경이면 주행 제보 E2E를 통과로 표시하지 않는다. 백그라운드 FGS·상시 추적은 별도 설계 전 추가하지 않는다.
+사용자가 보이는 화면에서 시작한 수집은 화면과 독립된 추적 세션이 소유한다. 포그라운드 서비스를 우선 검토하되 Android14 서비스 유형·권한·알림 요건과 Pleos 화면 밖 위치 수신을 별도 확인한다. 홈/다른 앱 전환·재생성 중에도 수집과 최근45초 메모리 버퍼 갱신을 유지한다. onStop/onCleared만으로 추적을 정리하지 않는다. 명시적 중지와 역할전환은 이전 세션 콜백 차단·정리를 수행한다. 권한 결과 대기 중의 onStop/재생성은 아직 시작하지 않은 의도를 폐기한다. 강제 종료·차량 재시작 자동 복구는 이번 범위 밖이다.
 
 ### 주행 중 동일 화면 유지와 화면 꺼짐 방지
 
@@ -328,7 +386,7 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 | 중복 콜백/위치 | 같은 B 위치를 연속 전달 | 수신 행/새 이벤트 1개 |
 | 저장 실패 | DAO 오류 주입 | success 없음, 실패 응답 1회 |
 | 역할 전환 경합 | 심기 처리 중 B 전환/리셋 시도 | 전환 차단 또는 이전 세션 실패, B 명의 오저장 없음 |
-| 주행 화면 유지 | 주행 상태 시작·유지·A/B 전환·제보·수신, 멀티윈도우·앱 이탈 | 주행 상태 변화로 별도 화면 전환/축소 없음. A/B 정보만 같은 UI에서 갱신. 비가시 시 정리·복귀 재준비 |
+| 주행 화면 유지 | 주행 상태 시작·유지·A/B 전환·제보·수신, 멀티윈도우·앱 이탈 | 주행 상태 변화로 별도 화면 전환/축소 없음. A/B 정보만 같은 UI에서 갱신. 비가시 중 수집 유지·복귀 시 같은 상태 연결. 화면 꺼짐 방지 플래그만 가시성에 따라 원복 |
 
 ## 11. 구현 순서와 단계별 완료 조건
 
@@ -353,3 +411,9 @@ NAMED_PLACE는 명시 장소 검색·후보 선택·좌표 확정 및 별도 입
 실제 도로 식별·고가/지하·방향 정확도, 위치 시간의 SDK 심볼 보장, 프라이버시 차단 UX, 공급자 인증을 통한 외부 Gleo 수신, Gleo의 자발적 접근 음성 안내는 추가 확인 과제다. 제출 프로토타입의 ‘줍기’는 화면 수신이며 음성 경고를 보장하지 않는다.
 
 설계에서 고정한 숫자는 합성 시연 정책이며 현장 측정 후 조정한다. 위치·화면·개인정보는 [Pleos 개인정보 설계](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/security-privacy) 및 공식 가이드에 따라 구현 시 다시 추적한다. 이 문서 개편의 검토/검증 기록은 [prototype-e2e-spec.md](../work/prototype-e2e-spec.md)에 남긴다.
+
+## 13. PR #4 단계별 재구현 계획 보강
+
+최신 작업 순서는 [00 전체 계획](../specs/road-notes/00-overview.md)과 [01 위치 수집](../specs/road-notes/01-current-location.md)을 따른다.01은 화면 진단 대신 debug 로그, FGS 요건·수명 확인과 실제 SDK 콜백 수신까지다.02에서 추적 세션의45초 메모리 버퍼 및 제보 신선도를 구현하고 홈 이동/재생성 중 지속 갱신을 검증한다.03~07은 Room→H3→SDK 접근·수신→debug 도구→통합 시연 순이다. Gleo 코드는 별도 PR 소유이며 재작성하지 않는다.
+
+원본·수신이력은 Room, 원시 위치는 메모리 전용이다. 화면이 숨겨져도 버퍼는 현재 시점 기준으로 갱신해야 한다. FGS는 영구 메모리 저장소가 아니며 프로세스 사망 시 버퍼는 소멸한다. 서비스 유형/권한·지속 알림·Pleos 화면 밖 콜백을 실제 환경에서 확인하기 전에는 이 목표를 구현 완료로 판정하지 않는다. 과거 가시 세션 E2E PASS는 이번 화면 독립 추적 검증이 아니다.

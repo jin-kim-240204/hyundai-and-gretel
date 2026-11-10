@@ -1,0 +1,51 @@
+{
+  "task": "spec-step01-review-feedback",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-01",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "문서 대조: 기존 앱 구조 변경 없음。새 런타임 검증이 아님"
+    },
+    {
+      "id": "VEH-01",
+      "status": "PASS",
+      "evidence": "문서 대조: FGS 유형 권한과 SDK 권한 분리, 스펙§6。새 런타임 검증이 아님"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "문서 대조: 수명 변경 목표와 미검증 구분,§4~7。새 런타임 검증이 아님"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "문서 대조: 메모리45초·debug 합성 좌표 로그·release 상세 좌표 제외。새 런타임 검증이 아님"
+    },
+    {
+      "id": "DOC-402de45b9f3d#권한",
+      "status": "PASS",
+      "evidence": "문서 대조: 스펙§4/6 권한과 보호 설정 별도。새 런타임 검증이 아님"
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "문서 대조: 스펙§5 동일 리스너 해제·release·새 인스턴스。새 런타임 검증이 아님"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "문서 대조: 스펙§5 null/오류·순서·세션 확인。새 런타임 검증이 아님"
+    },
+    {
+      "id": "DOC-ba9b83fc86f6#오류",
+      "status": "PASS",
+      "evidence": "문서 대조: 스펙§5 null 복구/오류 정리/취소 구분。새 런타임 검증이 아님"
+    }
+  ]
+}
