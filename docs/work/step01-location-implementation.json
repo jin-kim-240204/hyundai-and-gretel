@@ -1,0 +1,67 @@
+{
+  "task": "step01-location-implementation",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-01",
+    "VEH-03",
+    "PRIV-01",
+    "DES-04"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "기존 ComponentActivity/Compose 유지, 실제 worktree IDE빌드·debug/release·harness --build PASS"
+    },
+    {
+      "id": "VEH-01",
+      "status": "PASS",
+      "evidence": "SDK/COARSE 권한 허용·거절, POST거절시FGS, 스펙 요구 대조 및 대상환경 확인"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "단위5개·기기수명1개·실제 SDK 최초/재시작/화면밖수신 확인. 전체 장애 검증은 별도 미확인"
+    },
+    {
+      "id": "DOC-402de45b9f3d#권한",
+      "status": "PASS",
+      "evidence": "dangerous SDK권한·Android FGS권한 구분. MainActivity/Manifest 및 실제 권한 경로"
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "PleosLocationSource initialize직후register·동일리스너 unregister finally release, 기기 수명 1.441초"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "LocationTracking 세션유효성·직렬화·nullable 단위회귀 및 실제 화면밖 신규좌표 수신"
+    },
+    {
+      "id": "DOC-ba9b83fc86f6#오류",
+      "status": "NOT_TESTED",
+      "evidence": "가짜소스 null/error/취소/정리실패 회귀 PASS. 실제 SDK privacy/null/error/해제실패 주입 미실행"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "버퍼/DB/전송 없음, BuildConfig.DEBUG만 상세 합성좌표 로그. SDK권한 목적시작"
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "기본화면 앱영역·잘림 확인만. 전체 폼팩터·물리글자·정량대비 미검증"
+    },
+    {
+      "id": "DOC-e12e49cc3efc#레이아웃",
+      "status": "NOT_TESTED",
+      "evidence": "기본2560x1440만 캡처·검토, 전체 가로세로/분할 조합 미검증"
+    },
+    {
+      "id": "DOC-189d894e8124#윈도",
+      "status": "PASS",
+      "evidence": "Activity 영역의 Compose 최소 조작, onStop/onCleared와 추적수명 분리, 실제 STOPPED/재생성 확인"
+    }
+  ]
+}

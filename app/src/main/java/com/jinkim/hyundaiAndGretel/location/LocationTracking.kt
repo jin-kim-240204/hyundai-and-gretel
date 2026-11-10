@@ -1,0 +1,98 @@
+package com.jinkim.hyundaiAndGretel.location
+
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+data class LocationFix(val latitude: Double, val longitude: Double, val receivedElapsedMillis: Long)
+
+enum class TrackingStatus { STOPPED, STARTING, WAITING, RECEIVING, UNAVAILABLE, UNSUPPORTED, FAILED }
+
+interface LocationSource {
+    fun start(onLocation: (LocationFix?) -> Unit, onError: (Exception) -> Unit): Boolean
+    fun stop()
+}
+
+/** Commands and callback delivery are serialized on the owner's Main scope. */
+class LocationTracking(
+    private val scope: CoroutineScope,
+    private val createSource: () -> LocationSource,
+    private val log: (String) -> Unit,
+    private val onFailure: () -> Unit,
+) {
+    private val mutableStatus = MutableStateFlow(TrackingStatus.STOPPED)
+    val status = mutableStatus.asStateFlow()
+    private var source: LocationSource? = null
+    private var generation = 0L
+
+    fun start() {
+        if (source != null) return
+        val session = ++generation
+        update(TrackingStatus.STARTING)
+        try {
+            val current = createSource()
+            source = current
+            val supported = current.start(
+                { fix -> scope.launch {
+                    if (generation != session || source !== current) return@launch
+                    if (fix == null || !fix.latitude.isFinite() || !fix.longitude.isFinite() ||
+                        fix.latitude !in -90.0..90.0 || fix.longitude !in -180.0..180.0) {
+                        update(TrackingStatus.UNAVAILABLE)
+                    } else {
+                        update(TrackingStatus.RECEIVING)
+                        log("session=$session LOCATION lat=${fix.latitude} lon=${fix.longitude} elapsed=${fix.receivedElapsedMillis}")
+                    }
+                } },
+                { error -> scope.launch {
+                    if (generation == session && source === current) fail(error)
+                } },
+            )
+            if (supported) {
+                log("session=$session REGISTERED")
+                update(TrackingStatus.WAITING)
+            } else {
+                stop()
+                update(TrackingStatus.UNSUPPORTED)
+                onFailure()
+            }
+        } catch (cancelled: CancellationException) {
+            stop()
+            throw cancelled
+        } catch (error: Exception) {
+            fail(error)
+        }
+    }
+
+    fun stop() {
+        ++generation
+        val previous = source
+        source = null
+        update(TrackingStatus.STOPPED)
+        try {
+            previous?.stop()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            log("session=$generation CLEANUP_ERROR ${error.javaClass.simpleName}")
+        }
+    }
+
+    fun fail(error: Exception) {
+        if (error is CancellationException) {
+            stop()
+            throw error
+        }
+        stop()
+        update(TrackingStatus.FAILED)
+        log("session=$generation SDK_ERROR ${error.javaClass.simpleName}")
+        onFailure()
+    }
+
+    private fun update(value: TrackingStatus) {
+        if (mutableStatus.value == value) return
+        mutableStatus.value = value
+        log("session=$generation STATE $value")
+    }
+}
