@@ -1,0 +1,103 @@
+{
+  "task": "prototype-e2e-spec",
+  "selected_rules": [
+    "INT-01",
+    "VEH-01",
+    "VEH-03",
+    "SAF-01",
+    "PRIV-01",
+    "ENV-02"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "PASS",
+      "evidence": "implementation-plan 7절 현재 schema 스냅샷 동등성 및 callback JSON 파싱 PASS. 저장 후 응답과 현행 preview 구현 차이 명시."
+    },
+    {
+      "id": "VEH-01",
+      "status": "NOT_TESTED",
+      "evidence": "9절 권한/차단 설계 반영, 실제 SDK 권한 검증 미실행."
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "5/9/10절 수명·30초 버퍼·SDK 심볼 및 주입 게이트 설계. 실제 SDK/버퍼 미구현."
+    },
+    {
+      "id": "SAF-01",
+      "status": "NOT_TESTED",
+      "evidence": "사용자 정정에 따라 9/10절을 주행 중 동일 UI 유지·A/B 전환으로 변경. 기존 DO 선언 및 화면 전환 원복 존중. 실차 규제 적합성은 미검증."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "NOT_TESTED",
+      "evidence": "6절 메모리 궤적·합성 Room 제한 및 동의/정리 설계. 실제 저장 구현 미검증."
+    },
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "ComponentActivity 구조 유지, 창/가시성/재시작 정책 명시. 문서만 변경하여 구조 변경 없음."
+    },
+    {
+      "id": "DOC-24357cf5e59a#단발입력",
+      "status": "PASS",
+      "evidence": "설계 문서 검토 PASS: schema와 문서 동일, 영어 설명·string enum·3개 필수 입력 정적 확인. 기능 동작 완료 판정은 아님."
+    },
+    {
+      "id": "DOC-c6fc94252d66#저장결과",
+      "status": "PASS",
+      "evidence": "설계 문서 검토 PASS: 7절 commit 후 성공·단발 callback 설계 및 JSON data 파싱 PASS. 기능 동작 완료 판정은 아님."
+    },
+    {
+      "id": "DOC-402de45b9f3d#위치권한",
+      "status": "PASS",
+      "evidence": "설계 문서 검토 PASS: 9절 dangerous 권한·차단/거절 요구사항 명시. 기능 동작 완료 판정은 아님."
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "설계 문서 검토 PASS: 9절 지원/초기화/동일 리스너 해제/release 설계. 기능 동작 완료 판정은 아님."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#업데이트",
+      "status": "PASS",
+      "evidence": "설계 문서 검토 PASS: 5/9절 nullable 콜백/마지막 위치의 한계 및 샘플 시각 확인 게이트. 기능 동작 완료 판정은 아님."
+    },
+    {
+      "id": "DOC-ba9b83fc86f6#오류",
+      "status": "PASS",
+      "evidence": "설계 문서 검토 PASS: 5/7절 null/error 시 준비 해제·대체 위치 금지 설계. 기능 동작 완료 판정은 아님."
+    },
+    {
+      "id": "DOC-9faba42791f0#화면유지",
+      "status": "PASS",
+      "evidence": "설계 검토 PASS: 기존 DO=true/동일 UI 정책을 반영. 정식 배포 CarUxRestrictions 요구와 에뮬레이터 시연 범위를 구분. 주행 축소 UI는 재도입하지 않음."
+    },
+    {
+      "id": "DOC-72a5d7ab4ebb#최소수집",
+      "status": "PASS",
+      "evidence": "설계 문서 검토 PASS: 6절 30초 메모리·합성 영속 저장·삭제/로그 정책. 기능 동작 완료 판정은 아님."
+    },
+    {
+      "id": "DOC-e68476b79d1c#전환",
+      "status": "PASS",
+      "evidence": "설계 문서 검토 PASS: 9절 비가시 중단/복귀 버퍼 재준비, Gleo 오버레이 영향 검증 게이트. 기능 동작 완료 판정은 아님."
+    },
+    {
+      "id": "DOC-24357cf5e59a#도표검토",
+      "status": "PASS",
+      "evidence": "문서 보조 도표 3개 Mermaid CLI SVG 렌더 및 Chrome PNG 시각 검토 PASS. 이미지 삽입 및 원본 링크 확인. SDK 기능 검증과 별개."
+    },
+    {
+      "id": "DOC-e68476b79d1c#주행시연정정",
+      "status": "PASS",
+      "evidence": "MainActivity/Manifest/revert-driving-ui 기록과 비교. 주차 시연 전제 제거 및 3개 SVG 재렌더 성공. 앱 코드 변경 없음."
+    },
+    {
+      "id": "DOC-e68476b79d1c#주행정차지원",
+      "status": "PASS",
+      "evidence": "Mermaid 원본 3개 및 SVG를 주행·정차 무관한 위치 기반 판정으로 수정. 문서 8절에 위치/Room 변경/B 시작 트리거와 반경 안 정차 수신 테스트 명시. 렌더/정적 검토 PASS, 기능 동작은 미구현."
+    }
+  ]
+}

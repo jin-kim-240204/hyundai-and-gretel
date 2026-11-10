@@ -1,0 +1,30 @@
+sequenceDiagram
+    actor A as 사용자 A
+    participant G as Gleo
+    participant R as Receiver · PlantRoadNote
+    participant L as 위치 버퍼
+    participant D as Room DB
+    participant B as 사용자 B 위치 · PickupEvaluator
+    participant U as Compose 수신 화면
+    Note over L: FusedLocation 콜백으로 최근 30초 수집
+    A->>G: 현재 도로 상황 즉시 제보
+    G->>R: content · CURRENT_ROAD · category
+    R->>L: 수신 시각/사용자 고정 및 30초 전 스냅샷 조회
+    L-->>R: anchor 위치·방향·경로·품질
+    alt 입력 및 위치 유효
+        R->>D: 트랜잭션으로 RoadNote INSERT
+        D-->>R: commit 성공 · noteId
+        R-->>G: success 1회 · LOCAL_DEMO 저장 결과
+        G-->>A: 쪽지 저장 결과 안내
+    else 입력 오류 또는 버퍼 부족
+        R-->>G: fail 1회 · 질문 없이 종료
+    end
+    Note over B: 주행 중에도 동일 화면 유지 · B로 전환
+    Note over B: 위치 갱신·쪽지 변경·B 시작 때 재평가
+    B->>D: 유효 쪽지 및 B 수신 이력 조회
+    D-->>B: 미만료·미수신 후보
+    Note over B: 주행·정차 무관 · 동일 경로·방향·전방 150m 이내
+    B->>D: NoteReceipt B INSERT OR IGNORE
+    D-->>U: Flow로 PENDING 수신 쪽지 전달
+    U->>D: 표시 후 DISPLAYED ACK
+    Note over D: 원본 RoadNote는 유지 · 다른 사용자도 수신 가능

@@ -1,0 +1,21 @@
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Warming : 시연 A 시작
+    Warming --> Ready : 신선한 유효 표본 확보
+    Ready --> Ready : 홈 이동·다른 앱·재생성 시 추적 유지
+    Ready --> Planting : 유효 JSON 수신
+    Planting --> Ready : 저장 완료 및 success
+    Planting --> Ready : 처리 실패 및 fail
+    Warming --> Idle : 중단 또는 권한 철회
+    Ready --> Warming : 위치 연속성 단절
+    Ready --> Idle : 명시적 중단 또는 권한 철회
+    Ready --> Receiving : 같은 화면에서 B 전환
+    Receiving --> Receiving : 화면 밖 수집·45초 버퍼 갱신 유지
+    Receiving --> Pending : 위치 조건 충족 및 이력 INSERT 성공
+    Pending --> Displayed : 화면 표시 및 ACK
+    Displayed --> Receiving : 위치·쪽지 변경 시 재평가
+    Receiving --> Idle : 명시적 중단 또는 권한 철회
+    note right of Receiving
+        주행·정차 무관
+        위치 조건으로 수신 판정
+    end note

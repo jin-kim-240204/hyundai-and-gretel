@@ -1,0 +1,24 @@
+{
+  "task": "spec-branch-separation",
+  "selected_rules": [
+    "ENV-02",
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "origin/main에서 문서 전용 브랜치 생성. 앱/Manifest/Gradle 변경 없음."
+    },
+    {
+      "id": "INT-01",
+      "status": "PASS",
+      "evidence": "기존 schema 3필드 계약 및 단발 콜백 설계 보존. 전체 계획 JSON 및 콜백 data 배열 파싱/링크/SVG XML/하네스 PASS."
+    },
+    {
+      "id": "DOC-24357cf5e59a#문서분리",
+      "status": "PASS",
+      "evidence": "implementation-plan의 스키마 계약 보존, 기능 브랜치의 실제 schema는 불변. 문서 PR의 baseline 코드 부재와 단계별 문서 소유권 명시."
+    }
+  ]
+}
