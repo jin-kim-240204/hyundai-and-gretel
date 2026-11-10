@@ -1,0 +1,51 @@
+{
+  "task": "spec-driven-step01",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-01",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "문서만 수정, 기존 앱 구조 유지"
+    },
+    {
+      "id": "VEH-01",
+      "status": "PASS",
+      "evidence": "스펙 §4/5/6 권한 확인·거절 및 제한 요구 명시"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "스펙 §4/5/6 수명과 nullable/error 및 늦은 콜백 정책 명시"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "메모리 현재 좌표 표시만, 영속 저장·전송 없음"
+    },
+    {
+      "id": "DOC-402de45b9f3d#권한",
+      "status": "PASS",
+      "evidence": "원문 declaring-permissions 위치 데이터 권한·차단 절 → 스펙§4/5 및 AC-01。문서 대조만 PASS, 런타임 미구현"
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "원문 initialization-and-release 수명 절 → 스펙§4/5 및 AC-02/06/07。문서 대조만 PASS, 런타임 미구현"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "원문 location-data-access 위치 수신·중지 절 → 스펙§4/5 및 AC-03/04。문서 대조만 PASS, 런타임 미구현"
+    },
+    {
+      "id": "DOC-ba9b83fc86f6#오류",
+      "status": "PASS",
+      "evidence": "원문 error-handling null/error 요구 → 스펙§4/5 및 AC-04/05。문서 대조만 PASS, 런타임 미구현"
+    }
+  ]
+}
