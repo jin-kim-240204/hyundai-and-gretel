@@ -1,7 +1,6 @@
 package com.jinkim.hyundaiAndGretel.notes
 
 import kotlinx.coroutines.flow.Flow
-import kotlin.math.abs
 
 enum class Category { WARNING, INFORMATION }
 enum class Actor(val id: String) {
@@ -21,7 +20,7 @@ data class RoadNote(
         require(content == content.trim() && content.length in 1..500)
         require(latitude.isFinite() && longitude.isFinite() && latitude in -90.0..90.0 && longitude in -180.0..180.0)
         require(heading == null || heading.isFinite() && heading >= 0f && heading < 360f)
-        require(progressMeters.isFinite() && abs(offsetMillis - 30_000) <= 5_000)
+        require(progressMeters.isFinite() && offsetMillis in 0L..35_000L)
         require(expiresAt > createdAt && h3CellId.isNotBlank())
         require(routeId == DemoRoute.ID && direction in setOf("FORWARD", "REVERSE"))
     }

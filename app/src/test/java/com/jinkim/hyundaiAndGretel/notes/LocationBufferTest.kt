@@ -12,13 +12,13 @@ class LocationBufferTest {
         assertEquals(1_000L, buffer.anchor(40_000)!!.errorMillis)
         assertTrue(buffer.snapshot(40_000).any { it.elapsedMillis == 9000L })
     }
-    @Test fun notReadyStaleGapAndResetCannotUseOldHistory() {
+    @Test fun staleGapAndResetCannotUseOldHistory() {
         val buffer = LocationBuffer()
         (0L..30_000L step 1000).forEach { buffer.add(sample(it)) }
         assertNotNull(buffer.anchor(30_000))
         assertNull(buffer.anchor(35_001))
         buffer.add(sample(36_000))
-        assertNull(buffer.anchor(36_000))
+        assertEquals(0L, buffer.anchor(36_000)!!.offsetMillis)
         buffer.clear()
         assertTrue(buffer.snapshot(36_000).isEmpty())
     }
@@ -28,6 +28,16 @@ class LocationBufferTest {
         val buffer = LocationBuffer()
         (0L..60_000L step 1000).forEach { buffer.add(sample(it)) }
         assertEquals(15_000L, buffer.snapshot(60_000).first().elapsedMillis)
+    }
+    @Test fun shortHistoryAllowsImmediateReportAndPreservesActualOffset() {
+        val buffer = LocationBuffer()
+        assertNull(buffer.anchor(0))
+        buffer.add(sample(1000))
+        assertEquals(0L, buffer.anchor(1000)!!.offsetMillis)
+        buffer.add(sample(5000))
+        assertEquals(4000L, buffer.anchor(5000)!!.offsetMillis)
+        assertEquals(1000L, buffer.anchor(5000)!!.sample.elapsedMillis)
+        assertNull(selectAnchor(listOf(sample(6000)), 5000))
     }
     @Test fun routeRejectsInvalidAndOffRouteAndConvertsMeters() {
         assertNull(DemoRoute.progress(Double.NaN, 127.0))

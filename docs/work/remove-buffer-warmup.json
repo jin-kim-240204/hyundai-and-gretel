@@ -1,0 +1,18 @@
+{
+  "task": "remove-buffer-warmup",
+  "selected_rules": [
+    "VEH-03"
+  ],
+  "checks": [
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "첫SDK표본후즉시저장,실제offset기록. 단위9개및StartPositionTest PASS. 기존위치수명/세션/신선도검증유지."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#표본",
+      "status": "PASS",
+      "evidence": "selectAnchor는실제콜백표본만선택,빈/만료/미래위치거절. 짧은이력은가장오래된표본,30초이력은기존선택."
+    }
+  ]
+}

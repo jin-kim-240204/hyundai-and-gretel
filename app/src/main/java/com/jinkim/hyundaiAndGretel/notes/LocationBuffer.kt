@@ -50,7 +50,9 @@ class LocationBuffer {
 }
 
 fun selectAnchor(samples: List<LocationSample>, now: Long): Anchor? {
-    if (samples.isEmpty() || now - samples.first().elapsedMillis < 30_000 || now - samples.last().elapsedMillis !in 0..5_000) return null
+    if (samples.isEmpty() || now - samples.last().elapsedMillis !in 0..5_000) return null
+    // A short session can report immediately using its oldest available real sample.
+    if (now - samples.first().elapsedMillis < 30_000) return Anchor(samples.first(), now - samples.first().elapsedMillis)
     val target = now - 30_000
     val sample = samples.minWith(compareBy<LocationSample> { abs(it.elapsedMillis - target) }.thenBy { it.elapsedMillis })
     return Anchor(sample, now - sample.elapsedMillis).takeIf { it.errorMillis <= 5_000 }

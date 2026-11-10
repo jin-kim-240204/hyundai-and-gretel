@@ -8,6 +8,13 @@ class PickupTest {
         DemoRoute.LATITUDE, DemoRoute.longitudeAt(300.0), 90f, 30000, "cell", 300.0)
     private fun location(progress: Double, direction: String = "FORWARD") =
         LocationSample(DemoRoute.LATITUDE, DemoRoute.longitudeAt(progress), 1000, progress, 90f, direction)
+    @Test fun coldStartOffsetCanBeStoredWithoutWeakeningBounds() {
+        assertEquals(0L, note.copy(offsetMillis=0).offsetMillis)
+        assertEquals(4000L, note.copy(offsetMillis=4000).offsetMillis)
+        for (invalid in listOf(-1L,35001L)) {
+            try { note.copy(offsetMillis=invalid); fail("invalid offset accepted") } catch (_: IllegalArgumentException) { }
+        }
+    }
     @Test fun excludesBehindExpiredSelfStaleAndOppositeDirection() {
         assertTrue(eligible(note, Actor.B, location(200.0), 1000, 1000))
         assertFalse(eligible(note, Actor.B, location(100.0), 1000, 1000))

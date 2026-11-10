@@ -22,7 +22,7 @@ class DemoFlowTest {
             withContext(Dispatchers.Main) { controller.reset(); controller.start() }
             delay(2000)
             Log.i("RoadNoteE2E", "$token A_READY")
-            withTimeout(55_000) { while (!controller.state.value.canReport) delay(100) }
+            withTimeout(55_000) { while (!controller.state.value.canReport || controller.state.value.bufferSeconds < 30) delay(100) }
             val oldContext = withContext(Dispatchers.Main) { controller.capture() }
             val result = withContext(Dispatchers.Main) {
                 controller.report("도로에 구덩이가 있어요", Category.WARNING, oldContext)
