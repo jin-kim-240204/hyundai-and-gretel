@@ -24,6 +24,7 @@ fun NotesScreen(model: NotesViewModel, onStart: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("도로 쪽지", style = MaterialTheme.typography.headlineLarge)
             Text(state.status)
+            if (state.debugGpsIssue.isNotEmpty()) Text(state.debugGpsIssue, color = MaterialTheme.colorScheme.error)
             if (!state.running) {
                 Text("합성 GPS로 위치를 수집하고 쪽지를 이 기기에 저장하는 시연입니다.")
                 Text("실제 위치는 주입하지 마세요. 앱을 벗어나면 수집을 중단합니다.")
@@ -37,7 +38,7 @@ fun NotesScreen(model: NotesViewModel, onStart: () -> Unit) {
                 Text(when {
                     state.actor == Actor.B -> "주변 쪽지 대기 중 · 접근하면 자동으로 수신합니다"
                     state.canReport -> "제보 준비 완료"
-                    else -> "위치 수집 중 · 제보는 약30초 이력 필요"
+                    else -> "위치 수신 대기 · 위치를 받으면 바로 제보할 수 있어요"
                 })
                 Button(onClick = model::stop, modifier = Modifier.heightIn(min = 56.dp)) { Text("시연 중지") }
             }

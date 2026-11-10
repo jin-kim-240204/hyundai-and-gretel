@@ -1,0 +1,30 @@
+{
+  "task": "fix-console-gps-mode",
+  "selected_rules": [
+    "VEH-01",
+    "VEH-03",
+    "DES-04"
+  ],
+  "checks": [
+    {
+      "id": "VEH-01",
+      "status": "PASS",
+      "evidence": "SDK권한과mock app-op분리. deny회귀0.062초PASS,allow복구후실제SDK자동시작/이동PASS."
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "동일소스StartPositionTest+SessionGuardTest8.481초PASS. B전환연동복구/600m뒤/외부복귀확인."
+    },
+    {
+      "id": "DOC-402de45b9f3d#권한",
+      "status": "PASS",
+      "evidence": "권한차단사전확인및별도오류상태유지,위치정지로조용히대체안함. 실제deny/allow경로검증."
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "Pleos2560x1440/density160UI정상및사용자확인. 전체폼팩터/실차인증은범위밖미검증."
+    }
+  ]
+}

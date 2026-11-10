@@ -28,10 +28,14 @@ fun DebugPanel(state: DemoState, onActor: (Actor) -> Unit, onReset: () -> Unit, 
                         Text(if (actor == Actor.A) "A 시작 위치로 초기화" else "B 시작 위치로 초기화 · 쪽지 600m 뒤")
                     }
                 }
+                Text(if (state.consoleGpsSelected) "GPS 입력: 웹콘솔 연동" else "GPS 입력: 외부 GPS · 웹콘솔만으로 좌표가 이동하지 않습니다")
+                if (state.debugGpsIssue.isNotEmpty()) {
+                    Text("PC 설정: adb shell appops set --user 10 com.jinkim.hyundaiAndGretel android:mock_location allow")
+                }
                 if (state.debugGpsActive) {
                     Text("웹콘솔 속도 연동 GPS · ${state.debugSpeedKph.toInt()}km/h")
-                    OutlinedButton(onClick = onExternalGps) { Text("외부 GPS 사용 · ADB 경로 재생") }
                 }
+                OutlinedButton(onClick = onExternalGps) { Text("외부 GPS 사용 · ADB 경로 재생") }
                 Text("위치 초기화는 쪽지와 수신 이력을 삭제하지 않습니다.")
                 Text("버퍼 ${state.bufferSeconds}초 · 표시 쪽지 ${state.plotNotes.size} · 주변 쪽지 ${state.noteCount} · 후보 ${state.candidateCount}")
                 Text("접근 등록 ${state.registeredCount} · 초과 ${state.overflowCount} · 최근 ${state.lastEvent}")

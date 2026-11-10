@@ -25,7 +25,7 @@
 | 목표 위치 | 테스트 제보 처리 시작 단조시각 -30초 | 디버그 입력은 내용·분류, 위치는 앱에서 결정 |
 | 보관 | 최근45초, 추가·조회 때 정리 | 경계 앞 표본 보존.45초 미만 수집이어도30초 조건이면 사용 가능 |
 | 선택 | 목표와 단조시각 차이가 가장 작은 표본, 동률이면 과거 표본 | 보간 생략. 실제 offset과 오차 기록 |
-| 준비 | 현재 세션에서30초 이상 수집 + 목표 오차5초 이내 + 최신 콜백5초 이내 | 초기5초 표본만으로 준비 완료 처리하지 않음 |
+| 준비 | 신선한 위치 표본1개 이상 | 30초 대기 없음. 이력이 짧으면 가장 오래된 표본 사용, 실제 offset 저장 |
 | 수신 공백 | 5초 초과면 STALE, 이력 비우고 재준비 | 타이머로 판단, 새 콜백이 와야만 만료시키지 않음 |
 | 샘플 시간 | 앱 callbackElapsedNanos 사용, `timeBasis=CALLBACK_RECEIVED` 명시 | 실제 측정시각이라고 부르지 않음. SDK timestampMillis는 진단값 |
 | SDK 시각 역행 | 콜백 순서는 앱 단조시각으로 관리, SDK시각 역행 감지 시 오류 표시·세션 재준비 | 반복 좌표는 허용. 동일SDK시각의 반복 전달은 진단해 신규 표본 채택 여부 S1 확인 |
@@ -98,8 +98,8 @@ DB명 `road-notes-demo.db`, version1, exportSchema=true. 합성시연 전용 저
 | h3_cell_id | TEXT / String | anchor 좌표에서 산출한 고정 해상도의 H3 ID, 검색용 파생값 |
 | h3_resolution | INTEGER / Int | 시연 환경에서 고정한 해상도. 셀 ID 자체와 일치 검증 |
 | anchor_heading_degrees | REAL nullable / Float? | 유효값0이상360미만만 보관 |
-| anchor_offset_ms | INTEGER / Long | receivedElapsed-anchorCallbackElapsed, 제안25000~35000 |
-| anchor_time_error_ms | INTEGER / Long | abs(anchorOffset-30000), 제안0~5000 |
+| anchor_offset_ms | INTEGER / Long | receivedElapsed-anchorCallbackElapsed, 0~35000 |
+| anchor_time_error_ms | INTEGER / Long | abs(anchorOffset-30000), 이력이 충분할 때0~5000, 짧은 이력은 실제 오차 기록 |
 | time_basis | TEXT / enum | CALLBACK_RECEIVED, 측정시각으로 위장 안 함 |
 | route_id | TEXT / String | fixture 버전포함 ID, 예 demo-r1-v1 |
 | direction | TEXT / enum | FORWARD / REVERSE, fixture 진행축 기준 |
@@ -293,3 +293,10 @@ S5: H3 경계 양쪽 쪽지 조회, 다른 셀 안150m 쪽지,150m 밖 후보 �
 이모드에서앱은같은에뮬레이터웹콘솔의속도/기어를읽어합성GPS를움직인다. D전진/R후진/P·N정지. 별도주행시작·액셀UI를만들지않는다. 외부GPS버튼/시연중지/비가시때모의provider를해제해ADB입력과충돌하지않게한다. debug전용이며최초mock app-op설정이필요하다. 서버나실차의공개API보장으로일반화하지않는다.
 
 시연도식은전체로컬쪽지조회와H3접근후보조회를분리한다. 공통거리축에서파란현재위치가이동하고빨간쪽지는저장좌표에남는다. 두종류마커를상하로나눠겹침을피하고좌표·거리차를텍스트로표시한다. 과거상대좌표중앙고정Canvas와근접후보에종속된마커정책을대체한다.
+
+
+## 14. 즉시 심기와 GPS 모드 유지
+
+30초 준비제한을제거했다. 위치표본1개부터심기가능하며30초전이력이없으면버퍼의가장오래된위치를사용한다. 빈/오래된위치는여전히금지하고저장offset은0~35초로검증한다. 장시간이력이있으면기존30초전선택을유지한다.
+
+사용자용시연시작은debug에서웹콘솔GPS를기본으로시작하며선택모드를기억한다. 연동중A/B역할전환은해당시작위치로재배치하고연동을재시작한다. 외부GPS를선택한경우에는웹콘솔만으로좌표가이동하지않는다고명시한다. 권한이deny면고정외부좌표로조용히대체하지않고모의위치설정오류를표시한다.

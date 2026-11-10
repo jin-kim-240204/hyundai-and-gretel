@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val controller get() = (application as RoadNoteApplication).controller
     private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) controller.start() else controller.stop("위치 권한이 필요합니다")
+        if (granted) lifecycleScope.launch { controller.startDemo() } else controller.stop("위치 권한이 필요합니다")
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -44,7 +44,8 @@ class DemoController(
     private var lastSdkTime: Long? = null
     private var lastDeliveredSdkTime: Long? = null
     private var clockDelta = System.currentTimeMillis() - SystemClock.elapsedRealtime()
-    private val _state = MutableStateFlow(DemoState(keepScreenOn = preferences.getBoolean("keepScreenOn", true)))
+    private val _state = MutableStateFlow(DemoState(keepScreenOn = preferences.getBoolean("keepScreenOn", true),
+        consoleGpsSelected = debugGps.available && preferences.getBoolean("consoleGpsSelected", true)))
     val state = _state.asStateFlow()
     val actor get() = _state.value.actor
     init {
@@ -68,6 +69,10 @@ class DemoController(
         }
     }
 
+    suspend fun startDemo() = mutex.withLock {
+        if (_state.value.running) return@withLock
+        if (_state.value.consoleGpsSelected) startConsolePosition(actor) else start()
+    }
     fun start() {
         if (_state.value.running) return
         val token = ++generation
@@ -132,6 +137,7 @@ class DemoController(
     suspend fun switchActor(next: Actor) = mutex.withLock {
         if (next == actor) return@withLock
         val running = _state.value.running
+        if (running && _state.value.debugGpsActive) { startConsolePosition(next); return@withLock }
         stop()
         allInbox = emptyList()
         _state.update { it.copy(actor = next, inbox = emptyList(), lastResult = "") }
@@ -144,7 +150,8 @@ class DemoController(
         val next = UUID.randomUUID().toString()
         check(preferences.edit().putString("scenario", next).commit()) { "RESET_FAILED" }
         scenario = next
-        _state.value = DemoState(keepScreenOn = preferences.getBoolean("keepScreenOn", true))
+        _state.value = DemoState(keepScreenOn = preferences.getBoolean("keepScreenOn", true),
+        consoleGpsSelected = debugGps.available && preferences.getBoolean("consoleGpsSelected", true))
         allInbox = emptyList()
         plotNotes = emptyList()
         observeInbox()
@@ -154,10 +161,19 @@ class DemoController(
     }
     suspend fun resetStartPosition(next: Actor) = mutex.withLock {
         if (!_state.value.running) { operationFailed("먼저 합성 위치 시연을 시작하세요"); return@withLock }
+        startConsolePosition(next)
+    }
+    private suspend fun startConsolePosition(next: Actor) {
+        if (!debugGps.permissionGranted()) {
+            _state.update { it.copy(debugGpsIssue = "모의 위치 권한이 꺼져 있어 웹콘솔과 GPS를 연결할 수 없습니다.") }
+            operationFailed("모의 위치 권한 필요 · 디버그 패널의 설정 명령을 확인하세요")
+            return
+        }
         val startMeters = if (next == Actor.A) 0.0 else (notes.latest(scenario, System.currentTimeMillis())?.progressMeters ?: 0.0) - 600.0
         stop()
+        preferences.edit().putBoolean("consoleGpsSelected", true).apply()
         allInbox = emptyList()
-        _state.update { it.copy(actor = next, inbox = emptyList(), lastResult = "") }
+        _state.update { it.copy(actor = next, inbox = emptyList(), lastResult = "", consoleGpsSelected = true, debugGpsIssue = "") }
         observeInbox()
         try {
             debugGps.setPosition(startMeters)
@@ -188,6 +204,8 @@ class DemoController(
         }
     }
     suspend fun useExternalGps() = mutex.withLock {
+        preferences.edit().putBoolean("consoleGpsSelected", false).apply()
+        _state.update { it.copy(consoleGpsSelected = false, debugGpsIssue = "") }
         val running = _state.value.running
         stop("외부 GPS 사용")
         if (running) start()
@@ -338,6 +356,7 @@ class DemoController(
 data class DemoState(val actor: Actor = Actor.A, val running: Boolean = false, val location: LocationSample? = null,
     val status: String = "합성 위치 시연 준비", val h3Cell: String = "", val keepScreenOn: Boolean = true, val bufferSeconds: Long = 0, val canReport: Boolean = false,
     val noteCount: Int = 0, val candidateCount: Int = 0, val registeredCount: Int = 0, val overflowCount: Int = 0,
+    val consoleGpsSelected: Boolean = false, val debugGpsIssue: String = "",
     val debugGpsActive: Boolean = false, val debugSpeedKph: Double = 0.0, val plotNotes: List<RoadNote> = emptyList(),
     val nearbyNotes: List<RoadNote> = emptyList(), val inbox: List<InboxItem> = emptyList(), val lastResult: String = "", val lastEvent: String = "")
 data class ReportContext(val generation: Long, val scenario: String, val actor: Actor, val utc: Long,

@@ -1,5 +1,7 @@
 package com.jinkim.hyundaiAndGretel.demo
 
+import android.app.AppOpsManager
+import android.os.Process
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
@@ -18,6 +20,11 @@ import java.net.URL
 
 /** Only compiled into debug; matches Pleos's official sample's mock-GPS mechanism. */
 class DebugGps(context: Context) {
+    private val appContext = context.applicationContext
+    val available = Build.HARDWARE in setOf("ranchu", "goldfish") || Build.FINGERPRINT.contains("crp_avd")
+    @Suppress("DEPRECATION")
+    fun permissionGranted() = appContext.getSystemService(AppOpsManager::class.java)
+        .checkOpNoThrow("android:mock_location", Process.myUid(), appContext.packageName) == AppOpsManager.MODE_ALLOWED
     private val manager = context.getSystemService(LocationManager::class.java)
     private val marker = File(context.noBackupFilesDir, "road-note-mock-gps")
     private var active = false
@@ -28,7 +35,7 @@ class DebugGps(context: Context) {
     @SuppressLint("InlinedApi")
     @Suppress("DEPRECATION")
     fun setPosition(progress: Double) {
-        check(Build.HARDWARE in setOf("ranchu", "goldfish") || Build.FINGERPRINT.contains("crp_avd")) { "EMULATOR_ONLY" }
+        check(available) { "EMULATOR_ONLY" }
         require(progress.isFinite())
         if (!active) {
             manager.addTestProvider(LocationManager.GPS_PROVIDER, false, true, false, false, true, true, true, ProviderProperties.POWER_USAGE_LOW, ProviderProperties.ACCURACY_FINE)

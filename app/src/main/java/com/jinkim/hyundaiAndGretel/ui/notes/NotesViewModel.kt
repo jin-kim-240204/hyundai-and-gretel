@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 class NotesViewModel(private val controller: DemoController) : ViewModel() {
     val state = controller.state
     fun keepScreenOn(enabled: Boolean) = controller.keepScreenOn(enabled)
-    fun start() = controller.start()
+    fun start() { viewModelScope.launch { controller.startDemo() } }
     fun stop() = controller.stop()
     fun actor(actor: Actor) { viewModelScope.launch { controller.switchActor(actor) } }
     fun reset() { viewModelScope.launch { runCatching { controller.reset() }.onFailure { controller.operationFailed("초기화 실패") } } }
