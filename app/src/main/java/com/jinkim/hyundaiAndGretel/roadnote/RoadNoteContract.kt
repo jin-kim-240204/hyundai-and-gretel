@@ -12,8 +12,10 @@ data class RoadNoteInput(
     val placeQuery: String? = null,
     val directionMode: DirectionMode = DirectionMode.UNKNOWN,
     val directionDescription: String? = null,
-    val utteranceRecordedAt: Instant? = null,
+    // Retained only to read and preserve previously saved drafts.
+    val observedAt: Instant? = null,
     val draftId: String? = null,
+    val category: String? = null,
 )
 
 data class RoadNoteDraft(

@@ -1,3 +1,11 @@
+> 현재 E2E 구현 정본은 [즉시 도로 제보 프로토타입 테크스펙](implementation-plan.md)이다. 수신 30초 전 위치 버퍼·Room A/B 심기/줍기·단발 3필드 스키마는 해당 문서를 따른다. 이 문서의 이후 상세 예시 중 정본과 다른 지명·후속 대화·목격 시각 정책은 과거 설계 기록이다.
+
+> 현행 단발 계약: 입력은 content/locationMode/category. draftId·asking·후속 대화 문맥 없음. 아래 추가 정보/지명/보류 예시는 과거 설계다.
+
+> 최신 프로토타입: observedAt 입력/시간 질문/10분 검증 제거. 앱 수신 receivedAt을 기준으로 한다. 아래 과거 시각 시나리오는 현행 요구사항에서 제외한다.
+
+> 2026-11-09 현재 계약: CREATE_ROAD_NOTE, Gleo 노출 locationMode는 CURRENT_ROAD만 지원한다. 아래 지명·보류 시나리오는 향후 기능 설계이며 이번 주 구현 범위에서 제외한다. 방향 조회는 아직 미구현이다.
+
 # 이번 브랜치: Gleo 음성 명령 연동 설계
 
 수정·관련 공식 원문 재확인: 2026-11-08. 상태: Sprint 1 로컬 구현 반영, 실제 Gleo 외부 연동 검증 전. 저장소 현황 대조: 2026-11-08.
@@ -25,7 +33,7 @@
 
 소스 package/Gradle namespace/applicationId와 패키지 예제는 모두 `com.jinkim.hyundaiAndGretel`로 정합했다. versionName=1.0이다. release Receiver는 exported=false다. 현재 debug는 사용자 요청에 따라 외부 Gleo 테스트 Action을 받아 저장 없이 검증/Callback만 수행하고, 설치 확인한 ai.umos.ambientai로 응답을 제한한다. Action 발신자 인증과 실제 Gleo 수신/음성 E2E는 미검증이다. debug 화면과 GleoProbe logcat에서 최근 입력·출력을 확인한다. 실제 Manifest는 빌드 타입 placeholder로 debug=true/release=false를 분리한다. 아래 exported=true XML은 외부 테스트 수신 형식의 예시다. 실제 구현/담당·확인 범위는 [Sprint 1 명세](sprint-1-gleo-drafts.md)와 [자비스 기록](../work/sprint-1-jarvis.md)을 따른다.
 
-공식 의무와 프로젝트 설계안을 구분한다. 아래 `CREATE_ROAD_NOTE_DRAFT`, 필드명, 입력 제한, 앱 내부 함수 시그니처는 프로젝트가 정한 제안이다. Gleo가 제공하는 SDK 클래스나 등록된 공식 도로 제보 API가 아니다.
+공식 의무와 프로젝트 설계안을 구분한다. 아래 `CREATE_ROAD_NOTE`, 필드명, 입력 제한, 앱 내부 함수 시그니처는 프로젝트가 정한 제안이다. Gleo가 제공하는 SDK 클래스나 등록된 공식 도로 제보 API가 아니다.
 
 ## 3. App Schema 초안
 
@@ -34,15 +42,16 @@ Sprint 1에서 `app/src/main/assets/schema.json`에 구현했다. 아래 예시�
 ```json
 {
   "packageName": "com.jinkim.hyundaiAndGretel",
-  "appDescription": "An app for preparing and sharing road condition reports with approaching drivers.",
+  "invokeWord": "제보",
+  "appDescription": "An app for reporting road conditions and sharing them with other drivers.",
   "version": "1.0",
   "actionCalls": [
     {
       "type": "function",
       "function": {
         "component": "service",
-        "name": "CREATE_ROAD_NOTE_DRAFT",
-        "description": "Prepare a road condition report draft without publishing it to other drivers.",
+        "name": "CREATE_ROAD_NOTE",
+        "description": "Report a road condition the user has just observed on the current road.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -52,32 +61,25 @@ Sprint 1에서 `app/src/main/assets/schema.json`에 구현했다. 아래 예시�
             },
             "locationMode": {
               "type": "string",
-              "enum": ["CURRENT_ROAD", "NAMED_PLACE", "NEEDS_CLARIFICATION", "DEFERRED"],
-              "description": "The location handling intent: nearby current road for an immediate observation, an explicitly named place, an unclear location requiring clarification, or explicit deferral for later placement."
+              "enum": [
+                "CURRENT_ROAD"
+              ],
+              "description": "The current road where the user has just observed the reported condition."
             },
-            "placeQuery": {
+            "category": {
               "type": "string",
-              "description": "The explicitly named place and its spatial qualifiers for location lookup."
-            },
-            "directionMode": {
-              "type": "string",
-              "enum": ["CURRENT_VEHICLE", "USER_DESCRIPTION", "UNKNOWN"],
-              "description": "The direction reference: the reporting vehicle's current travel direction, a direction explicitly described by the user, or an unknown direction."
-            },
-            "directionDescription": {
-              "type": "string",
-              "description": "The user's explicit description of the affected road's travel direction."
-            },
-            "utteranceRecordedAt": {
-              "type": "string",
-              "description": "The original report utterance start time captured by the speech system, in ISO 8601 UTC format, when available as measured metadata."
-            },
-            "draftId": {
-              "type": "string",
-              "description": "The app-issued identifier returned for an existing draft being continued."
+              "enum": [
+                "WARNING",
+                "INFORMATION"
+              ],
+              "description": "The report category classified from the content: WARNING for road hazards or conditions requiring safety precautions, or INFORMATION for other road condition information."
             }
           },
-          "required": ["content", "locationMode"]
+          "required": [
+            "content",
+            "locationMode",
+            "category"
+          ]
         }
       }
     }
@@ -89,20 +91,20 @@ Sprint 1에서 `app/src/main/assets/schema.json`에 구현했다. 아래 예시�
 |---|---|
 | packageName / version | namespace/applicationId와 일치하는 com.jinkim.hyundaiAndGretel 및 versionName=1.0 사용. 마켓 등록 버전은 미검증 |
 | 함수 한 개 | 이번 브랜치에 필요한 초안 생성만 노출. 공식 최대 3개를 채우기 위한 기능은 만들지 않음 |
-| CREATE_ROAD_NOTE_DRAFT | 대문자·밑줄 규칙을 지키고 게시와 초안을 명확히 구분 |
+| CREATE_ROAD_NOTE | 대문자·밑줄 규칙을 지키고 게시와 초안을 명확히 구분 |
 | component=service | UI를 열지 않는 명령 수신. 공식적으로 이 값은 startService가 아니라 sendBroadcast를 뜻함 |
 | content | 원문 전체 녹취 대신 사용자 관찰 내용만 전달받음. 실제 원문과 동일하다고 가정하지 않음 |
 | locationMode | Gleo가 위치 처리 의도를 분류. 사용자는 enum이나 초를 말할 필요 없음 |
 | placeQuery | NAMED_PLACE에서 필요한 지명·출구·전후 관계. 실제 좌표는 앱의 장소 검색으로 결정 |
-| directionMode | 실시간은 CURRENT_VEHICLE로 앱이 현재 차량 진행 방향을 사용. 명시 방향은 USER_DESCRIPTION, 불명은 UNKNOWN |
+| directionMode | CURRENT_VEHICLE로 앱이 발견 시각의 차량 진행방향 이력을 사용. 명시 방향은 USER_DESCRIPTION, 불명은 UNKNOWN |
 | directionDescription | 사용자 명시 방향을 보존. USER_DESCRIPTION에서 필요하며 실제 도로 방향과 대조 |
-| utteranceRecordedAt | 음성 시스템이 실제 관측한 원제보 발화 시작 시각. UTC ISO 8601, 제공 불가 시 생략 |
+| observedAt | Gleo가 실제 현재 시각에서 사용자 상대 시간을 빼서 계산한 발견 시각(UTC ISO 8601). 방금은 현재 시각. CURRENT_ROAD에서는 필수이며 센서 실측 시각으로 보장하지 않음 |
 | draftId | 기존 초안 후속 수정에만 사용. 앱 발급값을 확인하며 임의로 생성하지 않음 |
 | content + locationMode 필수 | 내용과 처리 분기만 공통 필수. 지명/ID의 조건부 검증은 앱에서 수행 |
 
 S2에 따라 description은 영어이며 구체적인 발화 예시를 넣지 않았다. 파라미터는 모두 string, enum도 문자열만 쓴다. nullable union·중첩 object·조건부 JSON Schema 기능은 사용하지 않는다. 선택값이 없으면 키를 생략하고 빈 문자열/null로 대체하지 않는다. 필수값 충족도 보장되지 않으므로 앱이 재검증한다.
 
-`invokeWord`는 공식 예시에 있지만 필드 명세에서 의미·필수 여부·호출 트리거 보장이 설명되지 않는다. 앱명 음성 인식과 호출 문구는 실제 환경/공급자 확인 후 결정하고 지금 스키마에는 넣지 않는다. 앱 이름을 포함해 말한다고 반드시 이 함수가 선택되는 것은 아니다.
+사용자 요청으로 공식 예시의 `invokeWord` 필드에 `제보`를 시험 적용한다. 의도한 발화 시작은 “제보할게”이며, 공개 필드 명세에는 이 필드의 의미·일치 방식·강제 라우팅 보장이 없다. 함수 선택 효과는 실제 classifier/Action 로그로 확인하기 전 NOT_TESTED다.
 
 위험/경고/안내/정보 분류는 후속 작업이다. secondsBeforeUtterance 등 초 수치화 필드는 사용하지 않는다. 위치 분기와 근사 배치 기준은 11절을 따른다.
 
@@ -112,37 +114,37 @@ S2에 따라 description은 영어이며 구체적인 발화 예시를 넣지 �
 
 Gleo가 구성할 논리적 Action 형태는 S4를 따른다. 실제 LLM의 표현·함수 선택은 실기기에서 확인한다.
 
-locationMode는 사용자 표현을 앱 처리 분기로 바꾸는 프로젝트 계약이다. LLM이 좌표·반경·정확한 관측 시각을 생성하지 않는다.
+locationMode는 사용자 표현을 앱 처리 분기로 바꾸는 프로젝트 계약이다. LLM은 좌표·반경을 생성하지 않는다. 발견 시각은 실제 현재 시각과 상대 시간으로 계산하며 센서 실측값으로 간주하지 않는다.
 
 ### 목격 직후: 현재 도로 주변
 
 ```json
 {
   "packageName": "com.jinkim.hyundaiAndGretel",
-  "action": "CREATE_ROAD_NOTE_DRAFT",
+  "action": "CREATE_ROAD_NOTE",
   "actionParameters": {
     "content": "도로에 구덩이가 있음",
     "locationMode": "CURRENT_ROAD",
     "directionMode": "CURRENT_VEHICLE",
-    "utteranceRecordedAt": "2026-11-08T03:00:00Z"
+    "observedAt": "2026-11-08T03:00:00Z"
   }
 }
 ```
 
-“10초 전”도 목격 직후 문맥에서는 같은 CURRENT_ROAD로 분류한다. 시간 표현을 별도 필드로 전달하거나 초를 역산하지 않는다. directionMode=CURRENT_VEHICLE은 수치 방향을 Gleo가 계산하는 의미가 아니라 앱이 차량 센서에서 채우라는 뜻이다. 위 utteranceRecordedAt은 **시스템 관측 시각을 전달할 수 있는 경우의 제안 예시**이며 현재 Gleo가 이 메타데이터를 제공한다는 증거가 아니다. 사용자에게 시각을 말하게 하거나 LLM이 현재 시각을 지어내게 하지 않는다.
+“10초 전”은 Gleo가 실제 현재 시각에서 10초를 뺀 발견 시각을 observedAt으로 전달한다. 10분 미만만 CURRENT_ROAD이며 정확히 10분부터는 지명이 있으면 NAMED_PLACE, 없어도 NAMED_PLACE로 보내 지명을 질문한다. CURRENT_VEHICLE은 앱이 해당 발견 시각의 차량 위치·방향 이력을 찾는 의도이며 Gleo가 각도를 생성하지 않는다.
 
 ### 명시 지명: 해당 장소 주변
 
 ```json
 {
   "packageName": "com.jinkim.hyundaiAndGretel",
-  "action": "CREATE_ROAD_NOTE_DRAFT",
+  "action": "CREATE_ROAD_NOTE",
   "actionParameters": {
     "content": "도로에 낙하물이 있음",
     "locationMode": "NAMED_PLACE",
     "placeQuery": "역삼역 4번출구 쪽",
     "directionMode": "UNKNOWN",
-    "utteranceRecordedAt": "2026-11-08T03:00:00Z"
+    "observedAt": "2026-11-08T03:00:00Z"
   }
 }
 ```
@@ -154,24 +156,24 @@ locationMode는 사용자 표현을 앱 처리 분기로 바꾸는 프로젝트 
 ```json
 {
   "packageName": "com.jinkim.hyundaiAndGretel",
-  "action": "CREATE_ROAD_NOTE_DRAFT",
+  "action": "CREATE_ROAD_NOTE",
   "actionParameters": {
     "content": "도로에 낙하물이 있었음",
-    "locationMode": "NEEDS_CLARIFICATION",
+    "locationMode": "NAMED_PLACE",
     "directionMode": "UNKNOWN",
-    "utteranceRecordedAt": "2026-11-08T03:00:00Z"
+    "observedAt": "2026-11-08T03:00:00Z"
   }
 }
 ```
 
-앱은 먼저 위치 미정 초안을 저장하고 asking으로 장소를 묻는다. “아까 뱅뱅사거리”처럼 지명이 있으면 NAMED_PLACE이며, 단어 하나보다 전체 문맥을 우선한다.
+앱은 기존 내용을 pendingReport에 보존한 asking으로 장소를 묻고 완성 전에는 최종 저장하지 않는다. “아까 뱅뱅사거리”처럼 지명이 있으면 NAMED_PLACE이며, 단어 하나보다 전체 문맥을 우선한다.
 
 ### 모름/나중에 지정: 저장 후 대화 종료
 
 ```json
 {
   "packageName": "com.jinkim.hyundaiAndGretel",
-  "action": "CREATE_ROAD_NOTE_DRAFT",
+  "action": "CREATE_ROAD_NOTE",
   "actionParameters": {
     "content": "도로에 낙하물이 있었음",
     "locationMode": "DEFERRED",
@@ -190,7 +192,7 @@ locationMode는 사용자 표현을 앱 처리 분기로 바꾸는 프로젝트 
     android:name=".gleo.GleoActionReceiver"
     android:exported="true">
     <intent-filter>
-        <action android:name="com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE_DRAFT" />
+        <action android:name="com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE" />
     </intent-filter>
 </receiver>
 ```
@@ -199,7 +201,7 @@ locationMode는 사용자 표현을 앱 처리 분기로 바꾸는 프로젝트 
 
 ### 문서 불일치와 파싱 원칙
 
-실기기 로그에서 Gleo는 Android Action에 패키지명을 붙여 `com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE_DRAFT`로 전송했다. Manifest/Receiver는 이 관측 형식을 사용하고 Schema/Callback 함수명은 기본 이름을 유지한다. [단계별 로그 확인](gleo-debugging.md)을 참고한다.
+실기기 로그에서 Gleo는 Android Action에 패키지명을 붙여 `com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE`로 전송했다. Manifest/Receiver는 이 관측 형식을 사용하고 Schema/Callback 함수명은 기본 이름을 유지한다. [단계별 로그 확인](gleo-debugging.md)을 참고한다.
 
 
 S4 본문은 파라미터를 개별 extra로 넣는다고 설명하지만 코드 예시는 문자열 extra `ACTION_PARAM` 안의 JSON을 읽는다. 송신 예시는 바깥 따옴표도 혼재한다. 이번 설계는 수신 코드 예시의 `ACTION_PARAM` JSON 객체 문자열을 기준안으로 잡되, 구현 첫 단계에서 실제 Gleo Intent의 타입·키·인코딩을 확인한다.
@@ -209,14 +211,14 @@ S4 본문은 파라미터를 개별 extra로 넣는다고 설명하지만 코드
 수신 처리 규칙(프로젝트 선택):
 
 1. 허용 발신자와 정확한 Action을 확인한다. 인증되지 않은 요청에는 저장하거나 Callback을 보내지 않는다.
-2. ACTION_PARAM이 JSON 객체 문자열인지 확인한다. 프로젝트 제한은 UTF-8 8 KiB, content 1~500자, placeQuery 1~200자, draftId 1~128자, directionDescription 1~200자, utteranceRecordedAt 최대 40자다. 문자열은 trim 후 Kotlin String.length 기준이며 선택값은 미제공 시 생략한다.
+2. ACTION_PARAM이 JSON 객체 문자열인지 확인한다. 프로젝트 제한은 UTF-8 8 KiB, content 1~500자, placeQuery 1~200자, draftId 1~128자, directionDescription 1~200자, observedAt 최대 40자다. 문자열은 trim 후 Kotlin String.length 기준이며 선택값은 미제공 시 생략하며 빈 문자열/공백도 미제공으로 정규화한다.
 3. content/locationMode 누락은 asking, 잘못된 타입·enum·형식·한도 초과는 fail이다. 누락값을 CURRENT_ROAD로 기본 설정하지 않는다. 알 수 없는 입력 키는 실행·위치 판단에 쓰지 않는다.
-4. NAMED_PLACE는 placeQuery가 있어야 한다. 누락되면 내용과 지명 의도만 미정 초안으로 보관하고 asking한다. 다른 모드에 placeQuery가 함께 있으면 모순 입력으로 fail 처리하며 무시하고 현위치로 게시하지 않는다. NEEDS_CLARIFICATION은 지명이 없는 불명 위치, DEFERRED는 사용자의 명시적인 보류/모름 의도다.
+4. NAMED_PLACE는 placeQuery가 있어야 한다. 누락되면 내용과 지명 의도를 pendingReport에 담아 asking하며 최종 저장/성공 데이터 반환은 보류한다. 다른 모드에 비어 있지 않은 placeQuery가 함께 있으면 모순 입력으로 fail 처리하며 무시하고 현위치로 게시하지 않는다. 지명이 없는 과거 제보도 NAMED_PLACE로 분류하고, DEFERRED는 사용자의 명시적인 보류/모름 의도다.
 5. draftId가 있으면 인증된 호출 경로·현재 사용자 소유·미게시·미만료 여부를 검증하고 해당 초안만 갱신한다. 유효하지 않으면 fail이며 새 초안으로 조용히 대체하지 않는다. ID는 권한 증명이 아니다.
-6. 유효한 내용을 로컬에 내구성 있게 저장한 뒤 초안 상태에 맞춰 success/asking 중 한 번 응답한다. 저장 실패 시 fail이며 “저장했다”고 알리지 않는다.
+6. 필수값이 미완성이면 질문·missingField·pendingReport를 담은 asking을 즉시 반환한다. 필수값 완성 후에만 로컬 저장 및 success와 최종 데이터를 반환한다. 저장 실패 시 fail이며 “저장했다”고 알리지 않는다.
 7. directionMode 생략 시 CURRENT_ROAD는 CURRENT_VEHICLE, 나머지는 UNKNOWN으로 처리한다. CURRENT_VEHICLE은 CURRENT_ROAD에서만 허용한다. USER_DESCRIPTION은 directionDescription이 있어야 하며 없으면 내용을 보관하고 방향을 확인한다. 다른 모드에 directionDescription이 있으면 모순 입력으로 fail이다. 방향 미정은 11절의 기존 미확정 경로를 따른다.
-8. utteranceRecordedAt은 실제 시스템 관측값이라는 전달 계약 확인이 선행되어야 한다. 값이 있으면 시간대 포함 ISO 8601을 파싱해 UTC로 정규화한다. 잘못된 형식은 fail이며, 신뢰 출처가 확인되지 않은 시각은 확정 발화 시각으로 채택하지 않는다. 미래 시각·시계 불일치도 검증하고 신뢰할 수 없으면 원발화 시각 미상으로 남긴다. 누락되면 제보를 거부하지 않고 앱 receivedAt만 기록한다.
-9. CURRENT_ROAD는 최초 수신 때 사용 가능한 신선한 위치를 한 번 고정한다. 후속 질문·재시도 시 이동한 현위치로 초안을 옮기지 않는다. 정확한 발화 위치라고 설명하지 않는다. 위치가 없거나 오래됐으면 위치 미정으로 보관한다. 모드별 정책과 수신 지역은 11절을 따른다.
+8. observedAt은 이름을 호환 유지한 발견 시각이다. 시간대 포함 ISO 8601을 UTC로 정규화하고 형식 오류/미래 시각은 fail이다. CURRENT_ROAD에서 누락 또는 빈 값이면 asking(observedAt), 수신 대비 10분 이상인 CURRENT_ROAD는 모드를 바꾸거나 지명을 묻지 않고 fail(STALE_CURRENT_ROAD)로 반환한다. 오래된 제보는 Gleo가 NAMED_PLACE로 분류해야 한다. 유효 시각은 receivedAt과 별도로 저장한다.
+9. CURRENT_ROAD는 발견 시각의 차량 위치·진행방향 이력을 기준으로 근사 영역을 고정한다. 이후 이동한 현재 위치로 대체하지 않는다. 이력/품질이 부족하면 위치를 확인하거나 미정 초안으로 남긴다. 실제 이력 조회·배포는 후속 구현이다.
 
 ## 5. 앱 처리 함수와 Callback function interface
 
@@ -235,7 +237,7 @@ fun saveRoadNoteDraft(
     draftId: String? = null,
     directionMode: String? = null,
     directionDescription: String? = null,
-    utteranceRecordedAt: String? = null
+    observedAt: String? = null
 ): String
 
 // receivedAt 및 차량 방향/측정 시각은 수신·위치 처리에서 앱이 확보한다.
@@ -272,7 +274,7 @@ S3에 따라 functionName은 수신 Action/Schema 함수명과 일치하고 stat
 
 ```json
 {
-  "functionName": "CREATE_ROAD_NOTE_DRAFT",
+  "functionName": "CREATE_ROAD_NOTE",
   "status": "success",
   "message": "The report draft was saved; location processing is pending and it has not been published.",
   "mode": "voice",
@@ -286,7 +288,7 @@ CURRENT_ROAD/NAMED_PLACE의 위치 준비가 아직 안 끝난 경우다. succes
 
 ```json
 {
-  "functionName": "CREATE_ROAD_NOTE_DRAFT",
+  "functionName": "CREATE_ROAD_NOTE",
   "status": "asking",
   "message": "The report draft was saved; which place or landmark was it near?",
   "mode": "voice",
@@ -294,13 +296,13 @@ CURRENT_ROAD/NAMED_PLACE의 위치 준비가 아직 안 끝난 경우다. succes
 }
 ```
 
-“아까”만 말하거나 장소 후보가 여러 개면 정확한 지명/주변 기준물을 묻는다. 사용자에게 초를 말하도록 요구하지 않는다. CURRENT_ROAD에서 유효 위치를 얻지 못했을 때도 이 경로를 쓴다. content 자체가 없으면 저장 없이 필요한 내용을 묻고 draftId를 반환하지 않는다.
+“아까”만 말하거나 장소 후보가 여러 개면 정확한 지명/주변 기준물을 묻는다. 사용자에게 초를 말하도록 요구하지 않는다. CURRENT_ROAD에서는 지명을 묻지 않으며 시각/명시 방향의 누락 항목만 요청한다. content 자체가 없으면 저장 없이 필요한 내용을 묻고 draftId를 반환하지 않는다.
 
 ### 모름/보류: 나중에 UI에서 지정
 
 ```json
 {
-  "functionName": "CREATE_ROAD_NOTE_DRAFT",
+  "functionName": "CREATE_ROAD_NOTE",
   "status": "success",
   "message": "The report draft was saved without a location for later placement in the app; it has not been published.",
   "mode": "voice",
@@ -316,7 +318,7 @@ DEFERRED에는 다시 위치를 묻지 않는다. 사용자가 답하지 않거�
 
 ```json
 {
-  "functionName": "CREATE_ROAD_NOTE_DRAFT",
+  "functionName": "CREATE_ROAD_NOTE",
   "status": "fail",
   "message": "The report draft could not be saved.",
   "mode": "voice",
@@ -332,7 +334,7 @@ S3의 Gleo 취소 기한은 7초다. 프로젝트 내부 목표는 수신 후 �
 
 저장 상태는 PENDING_LOCATION(위치 처리 대기), AWAITING_LOCATION(사용자 위치 지정 필요), READY(앱 위치 정책 검증 완료)로 구분한다. 모두 미게시 상태다. 별도 게시 단계가 서버 저장을 확정해야 published=true가 된다. 위치 처리가 실패하면 AWAITING_LOCATION으로 남기고 UI에서 복구한다. 백그라운드 처리가 끝났다는 이유만으로 Gleo를 다시 발화시키지 않는다.
 
-“나중에 UI” 요구 때문에 메모리 전용 저장은 폐기한다. 앱 전용 로컬 저장소에 사용자별로 초안 ID·내용·모드·장소 표현·상태·생성/수정 시각을 저장한다. CURRENT_ROAD에는 확보한 최초 위치 기준·진행 방향과 그 측정 시각·품질 정보를 필요한 만큼만 더한다. 발화 기록 시각(제공될 때), 최초 수신 시각, 생성/수정/게시 시각은 서로 구분한다. 후속 질문이나 UI 편집 때 원제보 발화 시각·최초 수신 시각을 덮어쓰지 않으며, 연결된 후속 발화 시각도 원제보 시각으로 대체하지 않는다. 앱 재시작 후에도 목록에서 확인·위치 지정·삭제할 수 있어야 한다. 로그/분석에 내용·좌표를 남기지 않고 원시 음성·전체 이동 이력은 수집하지 않는다. 민감 초안의 저장 보호와 백업 제외, 운전자별 접근 분리 및 동의 철회/계정 삭제 시 삭제를 설계한다. 보유기간과 자동 만료 기간은 구현 전 결정·고지해야 하며 무기한 보존하지 않는다. 사용자가 보관 중인 초안을 운전자 전환만으로 지우는 대신 다른 운전자에게 보이지 않게 격리한다.
+“나중에 UI” 요구 때문에 메모리 전용 저장은 폐기한다. 앱 전용 로컬 저장소에 사용자별로 초안 ID·내용·모드·장소 표현·상태·생성/수정 시각을 저장한다. CURRENT_ROAD에는 확보한 최초 위치 기준·진행 방향과 그 측정 시각·품질 정보를 필요한 만큼만 더한다. 계산된 발견 시각, 최초 수신 시각, 생성/수정/게시 시각은 서로 구분한다. 후속 질문이나 UI 편집 때 원제보 발견 시각·최초 수신 시각을 덮어쓰지 않으며, 연결된 후속 발화 시각도 원제보 시각으로 대체하지 않는다. 앱 재시작 후에도 목록에서 확인·위치 지정·삭제할 수 있어야 한다. 로그/분석에 내용·좌표를 남기지 않고 원시 음성·전체 이동 이력은 수집하지 않는다. 민감 초안의 저장 보호와 백업 제외, 운전자별 접근 분리 및 동의 철회/계정 삭제 시 삭제를 설계한다. 보유기간과 자동 만료 기간은 구현 전 결정·고지해야 하며 무기한 보존하지 않는다. 사용자가 보관 중인 초안을 운전자 전환만으로 지우는 대신 다른 운전자에게 보이지 않게 격리한다.
 
 공식 예시에는 요청 상관 ID·취소 이벤트 계약이 없다. 유효한 draftId 갱신은 같은 초안을 대상으로 하지만 최초 요청 재전달과 새로운 제보를 완벽히 구분하지 못한다. 동일 텍스트만으로 제보를 삭제하지 않는다. 실제 게시에는 별도 멱등 키·서버 중복 방지가 필요하다.
 
@@ -369,35 +371,35 @@ S3의 Gleo 취소 기한은 7초다. 프로젝트 내부 목표는 수신 후 �
 | 후속 대화 | 정확한 ID 갱신, 모름이면 질문 종료, 중단해도 UI 복구 | NOT_TESTED |
 | 기한/중복 | 콜드 스타트 포함 7초 내 응답, 중복 게시 없음 | NOT_TESTED |
 | 위치/배포 | 신선도·지명 후보·도로 맥락·반경 상한·만료·오프라인 처리 | NOT_TESTED: 후속 단계 |
-| 방향/시각 | 실시간 차량 방향 고정, 정차/오래된 방향 미정, 발화 시각과 수신 시각 구분·누락·시간대·미래값 처리 | NOT_TESTED |
+| 방향/시각 | 발견 시각의 차량 방향 이력, 정차/오래된 방향 미정, 발견 시각과 수신 시각 구분·누락·시간대·미래값 처리 | NOT_TESTED |
 | 규제/UI | 주행 중 위치 지정 제한·접근성·차량 폼팩터 확인 | NOT_TESTED: UI 구현 전 |
 
 harness·문서 JSON·보고 형식 검사와 실제 Gleo/차량/서버 기능 검증을 구분한다. 수동 Intent 주입은 앱 수신 테스트일 뿐 음성 연동 완료 증거가 아니다.
 
 ## 11. 위치 처리 정책: 현도로 주변·지명·질문·보류
 
-2026-11-08 사용자 결정. 이전의 발화 시각 기반 초 역산·최근 2분 이동 이력 필수 제안을 대체한다. 위치를 모른다고 내용을 버리거나 반복 질문하지 않는다.
+2026-11-08 사용자 후속 결정. Gleo의 상대 시간 역산과 발견 시각 기준 위치·방향 이력 정책으로 갱신한다. 위치를 모른다고 내용을 버리거나 반복 질문하지 않는다.
 
 | 사용자 표현/문맥 | locationMode | 앱 처리 |
 |---|---|---|
-| 방금, 막, 여기, 목격 직후 문맥의 10초 전 | CURRENT_ROAD | 최초 수신 시 신선한 현위치와 주행 도로를 기준으로 넉넉한 주변 구역 준비 |
+| 방금, 막, 여기, 목격 직후 문맥의 10초 전 | CURRENT_ROAD | 수신 대비 10분 미만의 발견 시각과 차량 위치·방향 이력으로 도로 주변 구역 준비 |
 | 뱅뱅사거리, 역삼역 4번출구 쪽 | NAMED_PLACE | 지명과 수식어로 실제 장소 후보 검색, 해당 지역에 배치 |
-| 아까, 어디였더라, 위치 없는 과거 제보 | NEEDS_CLARIFICATION | 내용 저장 → 지명/주변 기준물 질문 |
+| 아까, 어디였더라, 위치 없는 과거 제보 | NAMED_PLACE | 내용 저장 → 지명/주변 기준물 질문 |
 | 위치 모름, 나중에 지정, 일단 저장 | DEFERRED | 위치 없이 보관 → 대화 종료 → 나중에 UI 배치 |
 
-시간 숫자를 요구하거나 “방금”을 특정 초로 변환하지 않는다. 목격 직후이고 위치 언급이 없는 문맥은 CURRENT_ROAD로 분류할 수 있지만, 과거/불명 문맥을 현위치로 억지 분류하지 않는다. “아까 역삼역 4번출구”는 NAMED_PLACE, “방금 뱅뱅사거리”도 명시 장소 우선이다. 서로 다른 장소가 충돌하면 질문한다. 긴 과거 시간이나 이미 도로를 이탈했다는 단서가 있으면 현재 도로 기준으로 넓게 배치하지 않는다. 경계 사례는 실발화 평가로 조정한다.
+사용자에게 시간 숫자를 요구하지 않는다. “방금”은 실제 현재 시각, 명시적 상대 시간은 현재 시각에서 차감한다. 정확히 10분 이상은 지명 확인 대상이다. 목격 직후이고 위치 언급이 없는 문맥은 CURRENT_ROAD로 분류할 수 있지만, 과거/불명 문맥을 현위치로 억지 분류하지 않는다. “아까 역삼역 4번출구”는 NAMED_PLACE, “방금 뱅뱅사거리”도 명시 장소 우선이다. 서로 다른 장소가 충돌하면 질문한다. 긴 과거 시간이나 이미 도로를 이탈했다는 단서가 있으면 현재 도로 기준으로 넓게 배치하지 않는다. 경계 사례는 실발화 평가로 조정한다.
 
-### CURRENT_ROAD: 현위치 기반 근사 구역
+### CURRENT_ROAD: 발견 시각의 도로 이력 기반 근사 구역
 
-앱이 최초 Action을 받을 때 확보한 신선한 위치·측정 시각·사용 가능한 방향/품질을 기준으로 도로 주변 영역을 만든다. 이후 처리 중 차량이 이동해도 쪽지 영역이 따라 움직이지 않게 고정한다. 실제 관측 좌표가 아니라 **수신 시점 현도로 주변의 근사 제보**라는 제품 선택이다. 이전 도로를 특정하는 별도 설명이 있으면 그 단서를 확인하고 무시하지 않는다.
+발견 시각의 차량 위치·방향 이력으로 방금 지나온 도로의 근사 영역을 정하고 고정한다. CURRENT_ROAD는 수신 대비 10분 미만만 허용한다. 지명은 필요 없으며 이력이 없으면 현위치에 임의 배치하지 않고 확인한다. 현재 Sprint에서는 시각/모드 검증과 초안 저장까지만 구현한다.
 
 단일 원형 반경만으로 전 차량에 보내기보다는 현재 도로의 주변 구간을 후보로 두고 수신 차량의 도로·접근 방향을 비교한다. 단순 원형 조회는 서버 후보 조회에 쓸 수 있으나 최종 수신 판정과 구분한다. 길/방향이 확인되지 않으면 반대 차로를 추측하거나 모든 인접 도로로 확대하지 않고 위치 확인/미정 초안으로 남긴다. 반대편이라는 명시 표현은 별도 확인 없이 차량 진행 방향으로 바꾸지 않는다. directionMode=USER_DESCRIPTION과 directionDescription에 보존하고 앱이 해당 도로 방향을 검증한다.
 
-반경/구간 길이는 Gleo 인자가 아니라 앱 정책이다. 도로 특성·위치 품질·지연 평가로 상한을 정하고, 오차가 크다고 무제한 넓히지 않는다. 시내/고속도로·교차로 직후·평행도로·고가/지하에서 검증한다. 예를 들어 100km/h로 30초 이동하면 약 833m이므로 “넉넉한 반경”만으로 원목격 지점 포함을 보장하지 않는다. 지연이 알려져 상한을 넘거나 도로 문맥이 깨지면 질문/보류한다. 원발화 시각이 없으면 전달 지연 자체를 앱이 완전히 검출할 수 없다는 위험을 유지한다. utteranceRecordedAt 전달 필드를 추가하지만 실제 시스템 시각 제공이 확인되지 않으면 생략하며, 메인 흐름의 선행 필수조건으로 강제하지 않는다.
+반경/구간 길이는 앱 정책이다. 도로·이력 품질로 상한을 정하며 오차가 크다고 무제한 넓히지 않는다. 발견 시각 없이 원목격 위치를 추측하지 않는다. 위치 이력 조회와 도로 정합성 검증은 후속 구현이다.
 
 ### 진행 방향과 시각 데이터 계약
 
-CURRENT_ROAD의 기본 진행 방향은 **최초 수신 시점 현재 차량의 신선한 이동 방향**이다. 위치와 함께 한 번 고정하고 차량이 회전/유턴하거나 후속 답변을 해도 쪽지 방향이 따라 바뀌지 않게 한다. 차량 이동 방향은 수신 대상 도로 흐름에 대한 근사 기준이며 위험물이 놓인 차로를 확정하는 값이 아니다. 정차/저속·터널·센서 결측·오래된 샘플에서 유효 방향을 얻지 못하면 0도(북쪽)로 채우지 않고 미정으로 보관한다. 명시적으로 반대편 등을 말하면 USER_DESCRIPTION으로 보존하고 도로를 검증한다. NAMED_PLACE/과거/보류 제보는 현차량 방향을 자동으로 적용하지 않고 명시 방향 또는 나중에 UI에서 확인한 도로 방향을 사용한다.
+CURRENT_ROAD의 기본 방향은 발견 시각의 차량 진행방향 이력이다. 사용자 명시 방향은 USER_DESCRIPTION으로 보존한다. 정차·저속·센서 결측·과거 샘플 부재 시 0도나 현재 방향으로 대체하지 않고 미정 처리한다.
 
 Gleo Action은 방향의 기준/설명과 전달 가능한 실제 발화 기록 시각을 보내고, 앱은 아래처럼 관측 데이터를 보강해 저장한다. 다음은 **앱 내부 초안 JSON 예시**이며 Gleo가 생성하거나 Callback으로 돌려보낼 JSON이 아니다.
 
@@ -409,7 +411,7 @@ Gleo Action은 방향의 기준/설명과 전달 가능한 실제 발화 기록 
   "directionMode": "CURRENT_VEHICLE",
   "travelHeadingDegrees": 135.0,
   "directionCapturedAt": "2026-11-08T03:00:19Z",
-  "utteranceRecordedAt": "2026-11-08T03:00:00Z",
+  "observedAt": "2026-11-08T03:00:00Z",
   "receivedAt": "2026-11-08T03:00:20Z",
   "draftState": "PENDING_LOCATION",
   "published": false
@@ -420,10 +422,10 @@ Gleo Action은 방향의 기준/설명과 전달 가능한 실제 발화 기록 
 |---|---|
 | travelHeadingDegrees | 앱의 수치 방향 계약: 진북 0°, 동 90°, 남 180°, 서 270°, 유한수 0 이상 360 미만. SDK 단위/북 기준을 확인한 뒤 정규화하며 LLM이 생성하지 않음 |
 | directionCapturedAt | 방향 샘플의 실제 측정 시각, UTC ISO 8601. 방향값과 함께 저장하며 측정 시각을 모르면 수신 시각으로 위장하지 않음 |
-| utteranceRecordedAt | 음성 시스템이 원제보 발화 시작을 기록한 시각, UTC ISO 8601. 목격 시각·쪽지 게시 시각과 다름. 검증된 전달 경로가 없으면 생략 |
-| receivedAt | 앱이 최초 제보 Action을 받은 시각, 앱이 항상 기록. 발화 시각 결측을 이 값으로 대체하지 않음 |
+| observedAt | Gleo가 실제 현재 시각에서 사용자 상대 시간을 빼서 계산한 발견 시각(UTC ISO 8601). 방금은 현재 시각. CURRENT_ROAD에서는 필수이며 센서 실측 시각으로 보장하지 않음 |
+| receivedAt | 앱이 최초 Action을 수신한 시각. 발견 시각과 별도로 기록 |
 
-사용자는 날짜/시각/각도를 말할 필요가 없다. 원발화 시각은 App Schema에 이름만 추가한다고 확보되지 않으므로, 실제 시스템 관측 메타데이터를 Action에 넣는 방법을 Gleo 공급자/실기기에서 확인해야 한다. 전달 가능 여부가 확인되기 전에는 utteranceRecordedAt을 선택값으로 유지한다. 기기 시계 차이 허용치는 구현 전 정하며, 시각만으로 지연을 확정하려면 두 시계가 비교 가능한지도 확인한다. 앱 내부 대기 시간 측정은 단조 시계를 사용한다.
+사용자는 절대 날짜/시각/각도를 말할 필요가 없다. Gleo는 실제 현재 시각과 사용자의 상대 시간으로 발견 시각을 계산한다. 현재 시각을 제공받지 못하면 날짜를 생성하지 않는다. 스키마만으로 Gleo의 시계 접근/계산 정확성이 보장되지 않으므로 실제 JSON을 검증해야 한다. 앱은 receivedAt을 별도 보관하고 미래값을 거부한다.
 
 ### NAMED_PLACE: 명시 장소 중심 구역
 
@@ -431,12 +433,23 @@ Gleo Action은 방향의 기준/설명과 전달 가능한 실제 발화 기록 
 
 ### 임시저장과 나중에 배치
 
-불명확한 제보는 질문 전에 AWAITING_LOCATION으로 저장한다. 사용자가 모르면 DEFERRED로 끝내고 초안 목록에서 위치를 선택하게 한다. 앱이 종료돼도 복구되어야 하며, 나중에 위치를 정한 뒤 내용의 현재 유효성을 확인하고 별도 게시 절차를 거친다. 주행 중 지도 핀 조작은 규제 검토 전 허용한다고 가정하지 않는다.
+미완성 제보는 pendingReport로 질문 문맥을 반환하며 최종 저장은 보류한다. 사용자가 모르면 DEFERRED로 끝내고 초안 목록에서 위치를 선택하게 한다. 앱이 종료돼도 복구되어야 하며, 나중에 위치를 정한 뒤 내용의 현재 유효성을 확인하고 별도 게시 절차를 거친다. 주행 중 지도 핀 조작은 규제 검토 전 허용한다고 가정하지 않는다.
 
 ### 공식 API·운영 경계
 
-공개 Gleo 계약은 발화 시각·주행 이력 제공을 보장하지 않는다. 이것으로 Gleo 내부가 이력을 저장하지 않는다고 단정하지 않는다. 이 설계에서는 과거 궤적 수집을 필수로 하지 않는다.
+공개 Gleo 계약은 발화 시각·주행 이력 제공을 보장하지 않는다. 이것으로 Gleo 내부가 이력을 저장하지 않는다고 단정하지 않는다. CURRENT_ROAD의 과거 위치 배치에는 발견 시각의 차량 위치·방향 이력이 필요하다. 확보 방법·최소 수집 범위·동의·보유기간은 후속 위치 구현에서 검증한다.
 
 [FusedLocation 위치 접근](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/location-data-access)의 getLastKnownLocation은 새 측정이 아니며 null일 수 있다. 앱은 신선한 위치인지 확인하고, 필요한 경우 업데이트 콜백으로 위치를 받으며 null/onError를 처리한다. LocationData의 시각 단위·시계/품질 의미·콜백 빈도는 설치 SDK에서 확인한다. 수신 시각을 측정 시각으로 바꾸거나 신뢰도를 임의의 m 단위 정확도로 해석하지 않는다.
 
 [권한](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/declaring-permissions)과 지원 환경을 확인하고 initialize 후 사용하며 동일 listener 해제와 release를 지킨다. 권한 거절·차단·미지원·오래된 위치는 미정 초안 경로다. Google Fused Location 동작이나 백그라운드 상시 수집을 Pleos 보장으로 해석하지 않는다. [개인정보 설계](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/security-privacy)에 따라 목적·저장 항목·보유기간·삭제·공유를 고지하고 동의받는다. 전체 경로 수집·외부 전송은 추가하지 않는다.
+
+## 최신 응답 정책 — 2026-11-08 후속 수정
+
+CURRENT_ROAD에서는 지명을 묻거나 다른 모드로 자동 전환하지 않는다. 필수 정보가 유효하면 즉시 success와 검증된 제보 데이터(content/locationMode/directionMode/observedAt)를 반환한다. 지명 asking은 NAMED_PLACE에서 placeQuery가 없을 때만 발생한다. 기타 실제 필수 필드 누락(content/locationMode/발견 시각/명시 방향 설명)은 해당 필드만 요청한다. 오래된 CURRENT_ROAD는 STALE_CURRENT_ROAD fail이다. Gleo 노출 enum은 CURRENT_ROAD/NAMED_PLACE/DEFERRED이며 기존 NEEDS_CLARIFICATION은 저장 호환용으로 남기되 새 입력은 fail이다.
+Callback data는 기존 JSON 배열 문자열 형식을 유지하고 success에 검증된 제보 필드를 추가한다. 실제 서버 게시/배포 경로는 없으므로 published=false이며 debug는 무저장이다. success는 제보 입력 접수 성공을 의미한다.
+
+## 후속 답변과 최종 데이터 반환 — 2026-11-08
+
+asking은 즉시 반환하는 중간 Callback이며 최종 제보 JSON이 아니다. data 배열 항목에는 missingField와 pendingReport(내용/모드/방향/이미 확보한 시각·지명)를 담는다. Gleo가 이 문맥과 답변을 결합한 완전한 Action을 다시 보내야 한다. 시각 질문은 내부 필드 이름을 읽는 대신 제보를 발견한 경과 시간을 묻는다. 필수값이 완성되기 전에는 report/최종 저장/게시를 하지 않는다. 완성 후에는 한 번의 호출에 success와 최종 report 데이터를 반환한다. 사용자에게 재확인하는 승인 질문은 추가하지 않는다.
+
+공식 status는 success/asking/fail이며 answer는 없다. Callback 자체를 사용자 답변까지 보류하면 timeout이므로 각 Action에 응답한다. 짧은 후속 발화를 datetime agent 대신 앱으로 재분류하는 것은 Gleo 담당이며 이 문맥 전달로 해결되는지는 실제 음성 E2E 검증 전 NOT_TESTED다. 앱이 받지 못한 발화를 임의로 처리하지 않는다. draftId 없는 후속 Action의 연결은 Gleo가 전달한 전체 문맥에 의존하며 앱이 최근 초안을 추측하지 않는다. 현재 무저장 debug에서는 프로세스 종료 후 대화 복구를 보장하지 않는다.

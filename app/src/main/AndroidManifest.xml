@@ -14,7 +14,7 @@
             android:name=".gleo.GleoActionReceiver"
             android:exported="${gleoReceiverExported}">
             <intent-filter>
-                <action android:name="com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE_DRAFT" />
+                <action android:name="com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE" />
             </intent-filter>
         </receiver>
         <activity

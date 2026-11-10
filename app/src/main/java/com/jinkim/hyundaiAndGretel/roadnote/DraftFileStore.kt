@@ -55,8 +55,8 @@ internal class DraftFileStore(
         val draft = RoadNoteDraft(
             id = id,
             input = input.copy(draftId = id,
-                utteranceRecordedAt = if (previous != null) previous.input.utteranceRecordedAt
-                    else input.utteranceRecordedAt),
+                observedAt = if (previous != null) previous.input.observedAt
+                    else input.observedAt),
             receivedAt = firstReceived,
             updatedAt = current,
             state = if (input.locationMode in setOf(LocationMode.NEEDS_CLARIFICATION, LocationMode.DEFERRED) ||
@@ -109,7 +109,8 @@ internal class DraftFileStore(
         try {
             if (file.length() > 2_000_000) throw IOException("Local draft store is too large")
             DataInputStream(ByteArrayInputStream(decode(file.readBytes()))).use { data ->
-                if (data.readInt() != VERSION) throw IOException("Unsupported local draft format")
+                val version = data.readInt()
+                if (version !in 1..VERSION) throw IOException("Unsupported local draft format")
                 val consent = data.readBoolean()
                 val count = data.readInt()
                 if (count !in 0..MAX_DRAFTS || (!consent && count != 0)) {
@@ -122,13 +123,17 @@ internal class DraftFileStore(
                     val place = data.readNullable()
                     val direction = DirectionMode.valueOf(data.readUTF())
                     val description = data.readNullable()
-                    val utterance = data.readNullable()?.let(Instant::parse)
+                    val observed = data.readNullable()?.let(Instant::parse)
                     val received = Instant.parse(data.readUTF())
                     val updated = Instant.parse(data.readUTF())
                     val state = DraftState.valueOf(data.readUTF())
+                    val category = if (version >= 2) data.readNullable() else null
+                    if (category != null && category !in setOf("WARNING", "INFORMATION")) {
+                        throw IOException("Invalid report category")
+                    }
                     if (UUID.fromString(id).toString() != id) throw IOException("Invalid local draft ID")
                     RoadNoteDraft(id, RoadNoteInput(content, location, place, direction,
-                        description, utterance, id), received, updated, state)
+                        description, observed, id, category), received, updated, state)
                 }
                 if (data.read() != -1 || drafts.map { it.id }.toSet().size != count) {
                     throw IOException("Invalid local draft store")
@@ -156,10 +161,11 @@ internal class DraftFileStore(
                     data.writeNullable(draft.input.placeQuery)
                     data.writeUTF(draft.input.directionMode.name)
                     data.writeNullable(draft.input.directionDescription)
-                    data.writeNullable(draft.input.utteranceRecordedAt?.toString())
+                    data.writeNullable(draft.input.observedAt?.toString())
                     data.writeUTF(draft.receivedAt.toString())
                     data.writeUTF(draft.updatedAt.toString())
                     data.writeUTF(draft.state.name)
+                    data.writeNullable(draft.input.category)
                 }
             }
             buffer.toByteArray()
@@ -183,7 +189,7 @@ internal class DraftFileStore(
     }
 
     companion object {
-        private const val VERSION = 1
+        private const val VERSION = 2
         private const val MAX_DRAFTS = 100
         private val RETENTION = Duration.ofDays(7)
         private val mutex = Mutex()

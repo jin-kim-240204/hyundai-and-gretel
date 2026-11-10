@@ -1,14 +1,15 @@
 {
   "packageName": "com.jinkim.hyundaiAndGretel",
-  "appDescription": "An app for preparing and sharing road condition reports with approaching drivers.",
+  "invokeWord": "제보",
+  "appDescription": "An app for reporting road conditions and sharing them with other drivers.",
   "version": "1.0",
   "actionCalls": [
     {
       "type": "function",
       "function": {
         "component": "service",
-        "name": "CREATE_ROAD_NOTE_DRAFT",
-        "description": "Prepare a road condition report draft without publishing it to other drivers.",
+        "name": "CREATE_ROAD_NOTE",
+        "description": "Report a road condition the user has just observed on the current road.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -19,42 +20,23 @@
             "locationMode": {
               "type": "string",
               "enum": [
-                "CURRENT_ROAD",
-                "NAMED_PLACE",
-                "NEEDS_CLARIFICATION",
-                "DEFERRED"
+                "CURRENT_ROAD"
               ],
-              "description": "The location handling intent: nearby current road for an immediate observation, an explicitly named place, an unclear location requiring clarification, or explicit deferral for later placement."
+              "description": "The current road where the user has just observed the reported condition."
             },
-            "placeQuery": {
-              "type": "string",
-              "description": "The explicitly named place and its spatial qualifiers for location lookup."
-            },
-            "directionMode": {
+            "category": {
               "type": "string",
               "enum": [
-                "CURRENT_VEHICLE",
-                "USER_DESCRIPTION",
-                "UNKNOWN"
+                "WARNING",
+                "INFORMATION"
               ],
-              "description": "The direction reference: the reporting vehicle's current travel direction, a direction explicitly described by the user, or an unknown direction."
-            },
-            "directionDescription": {
-              "type": "string",
-              "description": "The user's explicit description of the affected road's travel direction."
-            },
-            "utteranceRecordedAt": {
-              "type": "string",
-              "description": "The original report utterance start time captured by the speech system, in ISO 8601 UTC format, when available as measured metadata."
-            },
-            "draftId": {
-              "type": "string",
-              "description": "The app-issued identifier returned for an existing draft being continued."
+              "description": "The report category classified from the content: WARNING for road hazards or conditions requiring safety precautions, or INFORMATION for other road condition information."
             }
           },
           "required": [
             "content",
-            "locationMode"
+            "locationMode",
+            "category"
           ]
         }
       }

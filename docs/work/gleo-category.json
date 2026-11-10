@@ -1,0 +1,23 @@
+{
+  "task": "gleo-category",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "스키마/코드/빌드 검증 PASS. 실제 LLM 분류 정확도/음성 호출 미검증."
+    },
+    {
+      "id": "DOC-24357cf5e59a#카테고리",
+      "status": "PASS",
+      "evidence": "schema category string enum WARNING/INFORMATION 및 required 단정 PASS. GleoActionTest enum/누락/타입 검증 PASS. 하네스 --build/IDE 빌드 PASS."
+    },
+    {
+      "id": "DOC-c6fc94252d66#응답데이터",
+      "status": "PASS",
+      "evidence": "GleoJson.putReport에서 category 출력. GleoActionTest final/pendingReport 보존 및 LocalDraftStoreTest v1→v2 호환/재시작 보존 포함 전체 단위 테스트 PASS."
+    }
+  ]
+}

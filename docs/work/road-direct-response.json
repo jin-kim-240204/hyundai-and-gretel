@@ -1,0 +1,33 @@
+{
+  "task": "road-direct-response",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "새 Callback JSON의 실제 Gleo 수신/음성 E2E 미실행."
+    },
+    {
+      "id": "DOC-24357cf5e59a#함수파라미터",
+      "status": "PASS",
+      "evidence": "schema 노출 enum/파서 동기화, CURRENT_ROAD 자동 모드 전환 제거. 테스트 {'tests': 42, 'failures': 0, 'errors': 0}"
+    },
+    {
+      "id": "DOC-c6fc94252d66#응답",
+      "status": "PASS",
+      "evidence": "GleoJson.kt status/message/mode/data 배열 문자열 유지, success에 검증된 report 추가. Studio 및 assembleDebug/lintDebug PASS."
+    },
+    {
+      "id": "DOC-c6fc94252d66#실제응답",
+      "status": "NOT_TESTED",
+      "evidence": "실제 Gleo 수신 및 확장 data의 runtime JSON 검증 미실행. 단위 테스트는 processor/probe의 반환 report를 검증."
+    },
+    {
+      "id": "DOC-c6fc94252d66#게시",
+      "status": "NOT_TESTED",
+      "evidence": "서버/수신 차량 배포 미구현. published=false 유지. 실배포 요청은 미완료."
+    }
+  ]
+}

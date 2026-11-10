@@ -1,3 +1,5 @@
+> 2026-11-09 현행 프로토타입: CREATE_ROAD_NOTE 단발 호출. 입력은 content/locationMode(CURRENT_ROAD)/category(WARNING 또는 INFORMATION)이며 모두 필수다. observedAt·draftId·방향 입력·asking은 제거했다. 앱 수신 receivedAt 기준을 사용하고, 필수값 오류는 추가 질문 없이 fail로 끝낸다. 아래 지명·보류·후속 대화·과거 목격 시각 설계는 향후 검토용 이전 기록이며 현재 구현 요구사항이 아니다. 차량 동선 조회·서버 게시·Gleo 음성 E2E는 미완료다.
+
 # Sprint 1: Gleo 도로 제보 초안
 
 2026-11-08. 현재 브랜치 `gm/feat-speech-to-text`에서 작업한다. 브랜치명은 과거 이름이며 STT SDK를 구현한다는 뜻이 아니다. 사용자가 지정한 3명은 **자비스(이 세션, 메인테이너/조율자), 프라이데이, 이디스**다. 다른 AI는 사용자가 별도 세션에서 호출한다. 각 담당자는 이 문서와 AGENTS.md, pleos-connect 스킬에서 시작한다.
@@ -116,10 +118,10 @@ fun DraftScreen(
 ### 자비스 상세 명세
 
 - 위 공통 타입을 우선 제공하고 Schema를 assets/schema.json으로 옮긴다. 제거된 위치 설명 필드는 재도입하지 않는다.
-- 파서는 JSONObject 경계 뒤 순수 Kotlin 검증 함수를 두어 단위 테스트한다. 잘못된 타입/한도/enum·공백·모드 충돌·시각 형식/미래값을 검증한다. 방향 기본값은 CURRENT_ROAD→CURRENT_VEHICLE, 나머지 UNKNOWN. 필수 content/locationMode 누락은 asking, 선택값 누락은 허용한다.
+- 파서는 JSONObject 경계 뒤 순수 Kotlin 검증 함수를 두어 단위 테스트한다. 잘못된 타입/한도/enum·공백·모드 충돌·시각 형식/미래값을 검증한다. 방향 기본값은 CURRENT_ROAD→CURRENT_VEHICLE, 나머지 UNKNOWN. 필수 content/locationMode 누락은 asking, 선택값 누락과 빈 문자열/공백은 미제공으로 허용한다. CURRENT_ROAD는 발견 시각이 필요하며 누락 시 asking(utteranceRecordedAt). 수신 대비 정확히 10분 이상 CURRENT_ROAD는 모드 전환/지명 질문 없이 fail(STALE_CURRENT_ROAD)이다. 오래된 제보는 Gleo가 NAMED_PLACE로 보내며 지명 질문은 그 모드에서만 한다.
 - 지명/방향 누락으로 질문해야 하는 경우 유효 내용은 저장한다. Callback status와 저장 성공을 분리하고 DEFERRED는 추가 질문을 하지 않는다. Callback은 최소 ID/상태/미게시만 포함한다.
 - 실제 Gleo 발신자 인증/수신 대상 패키지/권한은 공급자 계약 확인 전 확정하지 않는다. 외부에 무방비 exported Receiver를 열지 않는다. release Receiver는 **exported=false**로 유지한다. 사용자 요청의 debug 관측 빌드에서만 exported=true로 테스트 입력을 받고 저장·차량·게시 작업을 하지 않는다. 실제 Gleo 호출은 사용자가 직접 검증한다. schema 파일 존재와 외부 연동 활성화를 구분한다. 실제 보안 계약 확보 후 자비스만 외부 수신/대상 제한을 변경한다.
-- 실제 시각 제공 계약이 없으므로 utteranceRecordedAt을 LLM 문자열만 보고 신뢰하지 않는다. 형식 검증 후라도 앱 경계에서 검증되지 않은 시각은 채택하지 않고 receivedAt만 기록한다. SDK 방향값은 Sprint 2이며 임의 각도/현재 위치를 생성하지 않는다.
+- utteranceRecordedAt은 Gleo가 실제 현재 시각에서 사용자의 상대 시간을 빼서 계산한 발견 시각으로 의미를 변경한다(기존 이름/저장 포맷 유지). 방금은 현재 시각. 형식/미래값을 검증해 receivedAt과 별도로 저장하며 센서 실측값으로 표시하지 않는다. 현재 시각 제공과 Gleo 계산 정확성은 실제 연동 검증이 필요하다. SDK 위치·방향 이력 조회는 Sprint 2이며 임의 각도/현재 위치를 생성하지 않는다.
 - 프라이데이 저장소와 이디스 UI가 준비되면 MainActivity·Receiver·처리 엔진을 연결한다. `goAsync`/IO·응답 1회/5초 내부 목표·저장 실패/미동의 처리를 검증한다. 시스템 Gleo는 7초 취소이며 앱 내부 시간만으로 준수를 판정하지 않는다.
 
 ## 병렬 작업·커밋·통합
@@ -137,3 +139,8 @@ fun DraftScreen(
 필수 자동 검사: `:app:testDebugUnitTest`, harness `--build`(assembleDebug/lintDebug), Studio MCP build_project. 저장/수신 연결 후 정상·미동의·네 모드·후속 ID·손상/삭제·프로세스 재시작 확인. 자비스는 최종 변경 전체와 규칙별 보고를 확인한다.
 
 필수 실환경 증거: Gleo 발신자/응답 대상 제한, 승인/스캔/실제 음성→Callback, 7초 내 응답, UI 폼팩터·삭제/동의, Android 사용자 격리. 없으면 기능의 검증 완료를 주장하지 않는다. 내부 수신 테스트는 실제 Gleo E2E를 대체하지 않는다.
+
+최신 Callback 정책: 필수 정보가 갖춰지면 즉시 success와 검증된 제보 JSON 필드를 data에 반환한다. 실제 배포 미구현으로 published=false를 유지한다. NEEDS_CLARIFICATION은 신규 입력에서 제외하고 저장 호환용 enum만 유지한다.
+
+### 후속 답변 정책(이전 asking 전 저장 정책 대체)
+필수값 미완성은 asking + missingField + pendingReport로 기존 문맥을 반환하고 저장/최종 report 반환은 보류한다. 모드별 필수값이 완성되면 바로 success와 최종 제보 데이터를 반환한다. 시각 질문은 자연어 경과 시간 질문을 사용한다. Gleo의 후속 발화 재분류와 전체 문맥 재전달은 runtime 검증 항목이며 앱 단독으로 보장하지 않는다.

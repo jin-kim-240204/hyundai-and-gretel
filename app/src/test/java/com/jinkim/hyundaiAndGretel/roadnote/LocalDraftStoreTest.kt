@@ -20,6 +20,32 @@ class LocalDraftStoreTest {
     private fun store() = DraftFileStore(file, { clock })
     private fun input(mode: LocationMode = LocationMode.DEFERRED) = RoadNoteInput("도로 낙하물", mode)
 
+    @Test fun legacyDraftRemainsUnclassifiedAndNewCategoriesSurviveRestart() = runBlocking {
+        val id = java.util.UUID.randomUUID().toString()
+        java.io.DataOutputStream(file.outputStream()).use { data ->
+            data.writeInt(1)
+            data.writeBoolean(true)
+            data.writeInt(1)
+            data.writeUTF(id)
+            data.writeUTF("legacy road report")
+            data.writeUTF("CURRENT_ROAD")
+            data.writeBoolean(false)
+            data.writeUTF("CURRENT_VEHICLE")
+            data.writeBoolean(false)
+            data.writeBoolean(false)
+            data.writeUTF(clock.toString())
+            data.writeUTF(clock.toString())
+            data.writeUTF("PENDING_LOCATION")
+        }
+        assertNull(store().list().single().input.category)
+        for (category in listOf("WARNING", "INFORMATION")) {
+            val saved = store().save(input().copy(category = category), clock)
+            assertEquals(category, store().list().first { it.id == saved.id }.input.category)
+        }
+        assertNull(store().list().first { it.id == id }.input.category)
+        assertEquals(3, store().list().size)
+    }
+
     @Test fun consentRecoveryClearAndRevocation() = runBlocking {
         val store = store()
         assertFalse(store.hasConsent())
@@ -41,23 +67,23 @@ class LocalDraftStoreTest {
     @Test fun updatesPreserveOriginalTimesAndResolveAllModes() = runBlocking {
         val store = store()
         store.setConsent(true)
-        val original = store.save(input().copy(utteranceRecordedAt = clock.minusSeconds(3)), clock)
+        val original = store.save(input().copy(observedAt = clock.minusSeconds(3)), clock)
         clock = clock.plusSeconds(100)
         LocationMode.entries.forEach { mode ->
             val updated = store.save(input(mode).copy(draftId = original.id,
                 placeQuery = if (mode == LocationMode.NAMED_PLACE) "뱅뱅사거리" else null,
-                utteranceRecordedAt = clock), clock)
+                observedAt = clock), clock)
             assertEquals(original.id, updated.id)
             assertEquals(original.id, updated.input.draftId)
             assertEquals(original.receivedAt, updated.receivedAt)
-            assertEquals(original.input.utteranceRecordedAt, updated.input.utteranceRecordedAt)
+            assertEquals(original.input.observedAt, updated.input.observedAt)
             assertEquals(clock, updated.updatedAt)
             assertEquals(if (mode in listOf(LocationMode.CURRENT_ROAD, LocationMode.NAMED_PLACE))
                 DraftState.PENDING_LOCATION else DraftState.AWAITING_LOCATION, updated.state)
         }
         val nullTime = store.save(input(), clock)
         assertNull(store.save(input().copy(draftId = nullTime.id,
-            utteranceRecordedAt = clock), clock).input.utteranceRecordedAt)
+            observedAt = clock), clock).input.observedAt)
         assertEquals(2, store.list().size)
     }
 

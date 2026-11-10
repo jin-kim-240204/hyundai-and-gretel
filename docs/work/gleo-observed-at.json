@@ -1,0 +1,23 @@
+{
+  "task": "gleo-observed-at",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "정적 계약 및 빌드/전체 단위 테스트 PASS. Gleo 재등록/실발화 미실행."
+    },
+    {
+      "id": "DOC-24357cf5e59a#입력",
+      "status": "PASS",
+      "evidence": "schema observedAt 존재 및 directionMode/directionDescription 부재 단정 PASS. app/src 옛 이름 참조 없음. 하네스 빌드/린트 및 IDE 빌드 PASS."
+    },
+    {
+      "id": "DOC-c6fc94252d66#콜백",
+      "status": "PASS",
+      "evidence": "파서 missingField, GleoJson report 필드 observedAt으로 동기화. 전체 testDebugUnitTest PASS. 저장 필드 순서/버전 유지."
+    }
+  ]
+}

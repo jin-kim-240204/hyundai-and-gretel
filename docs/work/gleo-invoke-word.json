@@ -1,0 +1,23 @@
+{
+  "task": "gleo-invoke-word",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "invokeWord 후보 적용. 실제 Gleo 인식/함수 선택 효과 미검증."
+    },
+    {
+      "id": "DOC-24357cf5e59a#호출어예시",
+      "status": "PASS",
+      "evidence": "공식 예시와 같은 최상위 문자열 필드. JSON 파싱 및 계획 동기화."
+    },
+    {
+      "id": "DOC-24357cf5e59a#설명",
+      "status": "PASS",
+      "evidence": "영어 설명 유지, 강제 라우팅 지시·타 앱 억제 문구 미추가."
+    }
+  ]
+}
