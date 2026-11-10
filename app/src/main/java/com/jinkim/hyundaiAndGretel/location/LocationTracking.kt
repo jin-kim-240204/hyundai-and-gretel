@@ -6,14 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class LocationFix(val latitude: Double, val longitude: Double, val receivedElapsedMillis: Long)
-
 enum class TrackingStatus { STOPPED, STARTING, WAITING, RECEIVING, UNAVAILABLE, UNSUPPORTED, FAILED }
-
-interface LocationSource {
-    fun start(onLocation: (LocationFix?, Long) -> Unit, onError: (Exception) -> Unit): Boolean
-    fun stop()
-}
 
 /** Commands and callback delivery are serialized on the owner's Main scope. */
 class LocationTracking(

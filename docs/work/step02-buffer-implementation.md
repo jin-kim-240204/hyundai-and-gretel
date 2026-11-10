@@ -27,3 +27,5 @@ NOT_TESTED: 실제 SDK privacy차단/null/error/서비스강제끊김 주입, �
 마무리: 기능 diff의 docs/plans는 부모와 동일함 확인. 최종 단위17개·diff 재확인 PASS, 보고서 exit2는 실제 장애 미검증을 보존한다. 수명 계측 종료 후 수집 중지, 이번 실행의 에뮬레이터 종료. 기존 임시polling과 사용자 작업 기록은 유지했다.
 
 커밋 요청: 사용자 승인으로02스펙 반영·구현·검증을 feat:- 커밋1개로 묶어 푸시. 임시 폴링을 /tmp/step02-source-with-local-polling.kt에 백업하고 HEAD 어댑터에 이번 콜백 계약2줄만 적용한 정확한 커밋 상태에서 단위17/debug/release/계측컴파일/lint 재실행PASS(2초). 해당2줄만 stage 후 임시 폴링 원본을 로컬 작업 파일에 복원했다. pr4-implementation-feedback.md의 기존 수정도 미포함. 실제 SDK 장시간 증거는 앞서 명시한 로컬 폴링 포함 상태이며 캐시 경로는 버퍼 입력에 사용하지 않았다.
+
+2026-11-11 중간리뷰 정정: 앞선53.616초 테스트의 최종 보관창과 등록유지 assertion만으로 CREATED 구간내 수집까지 입증할 수는 없었다. 과거 PASS는 그 범위로 제한한다. location-midpoint-refactor.md에서 구간 진입의 단조시각보다 새로운 실제 콜백을 복귀 전에 확인하는 검사를 추가했고, 보강된54.191초 실행 결과를 별도로 기록했다.

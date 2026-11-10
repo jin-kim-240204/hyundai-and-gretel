@@ -1,0 +1,40 @@
+{
+  "task": "location-midpoint-refactor",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "현재 Activity/Compose/서비스구조 유지, 운영공유계약만 동일패키지 파일분리. 기존MVVM/파생Flow 유지. IDE/debug/release/harness PASS"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "기존SDK수명회귀3개2.473초 및 구간보강1개54.191초 PASS. 정책변경 없음"
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "SDK어댑터 호출/정리 코드는 변경하지 않음. 동일listener unregister finally release 회귀 PASS"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "버퍼정책 단위10개 그대로PASS, CREATED/재생성 각기준시각보다 새 SDK콜백 확인"
+    },
+    {
+      "id": "DOC-ba9b83fc86f6#오류",
+      "status": "NOT_TESTED",
+      "evidence": "기존 null/error/취소/정리실패 가짜회귀PASS, 실제SDK privacy/null/error 강제주입 미실행"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "새위치수집/전송/저장없음. 추가테스트로그는 단조시각메타데이터만. 사용자로컬polling 유지"
+    }
+  ]
+}

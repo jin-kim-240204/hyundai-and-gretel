@@ -1,0 +1,3 @@
+Pleos2.1.0/API34/user10; strengthened profile PASS54.191s
+11-11 01:41:34.716 27097 27183 I RoadLocation: TEST_BUFFER_WINDOW phase=CREATED boundary=164192 latest=184291
+11-11 01:41:50.057 27097 27183 I RoadLocation: TEST_BUFFER_WINDOW phase=RECREATED boundary=184550 latest=199586

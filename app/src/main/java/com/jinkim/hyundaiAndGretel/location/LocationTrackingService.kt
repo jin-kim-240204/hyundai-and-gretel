@@ -73,17 +73,17 @@ class LocationTrackingService : Service() {
 
     private fun startTrackingForeground() {
         val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(NotificationChannel(CHANNEL, "위치 수집", NotificationManager.IMPORTANCE_LOW))
+        manager.createNotificationChannel(NotificationChannel(CHANNEL, getString(R.string.location_channel_name), NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(this, 1,
             Intent(this, LocationTrackingService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
         val notification = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("도로 제보 위치 수집 중")
-            .setContentText("앱을 벗어나도 위치 수집을 유지합니다.")
+            .setContentTitle(getString(R.string.location_notification_title))
+            .setContentText(getString(R.string.location_notification_text))
             .setContentIntent(open)
             .setOngoing(true)
-            .addAction(0, "중지", stop)
+            .addAction(0, getString(R.string.location_notification_stop), stop)
             .build()
         val type = if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
         ServiceCompat.startForeground(this, 1, notification, type)

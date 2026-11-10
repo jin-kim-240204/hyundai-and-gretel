@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
             permissionMessage = ""
             viewModel.start()
         } else {
-            permissionMessage = "위치 권한이 필요합니다. 거절한 경우 앱 설정에서 허용한 뒤 다시 시작해주세요."
+            permissionMessage = getString(R.string.location_permission_required)
         }
     }
 

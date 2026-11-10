@@ -17,21 +17,21 @@ class LocationBuffer {
 
     private val samples = ArrayDeque<LocationFix>()
     // Retained across pruning/invalidations so a delayed callback cannot restore older data.
-    private var lastEventAt = -1L
+    private var lastEventElapsedMillis = -1L
     val size get() = samples.size
     val oldestElapsedMillis get() = samples.firstOrNull()?.receivedElapsedMillis
     val latestElapsedMillis get() = samples.lastOrNull()?.receivedElapsedMillis
 
     fun offer(fix: LocationFix?, receivedAt: Long, now: Long): Update {
-        if (receivedAt < 0 || receivedAt > now || receivedAt < lastEventAt) return Update.IGNORED
+        if (receivedAt < 0 || receivedAt > now || receivedAt < lastEventElapsedMillis) return Update.IGNORED
         if (fix != null && fix.receivedElapsedMillis != receivedAt) return Update.IGNORED
         if (fix == null || !fix.hasValidCoordinates()) {
-            lastEventAt = receivedAt
+            lastEventElapsedMillis = receivedAt
             samples.clear()
             return Update.INVALIDATED
         }
-        if (receivedAt == lastEventAt) return Update.IGNORED
-        lastEventAt = receivedAt
+        if (receivedAt == lastEventElapsedMillis) return Update.IGNORED
+        lastEventElapsedMillis = receivedAt
         prune(now)
         if (now - receivedAt > RETENTION_MILLIS) return Update.IGNORED
         samples.addLast(fix)
@@ -39,25 +39,30 @@ class LocationBuffer {
     }
 
     fun select(now: Long): AnchorSelection {
-        if (now < 0 || now < lastEventAt) return AnchorSelection.Unavailable.INVALID_TIME
+        if (now < 0 || now < lastEventElapsedMillis) return AnchorSelection.Unavailable.INVALID_TIME
         prune(now)
         val oldest = samples.firstOrNull() ?: return AnchorSelection.Unavailable.EMPTY
         val latest = samples.last()
         if (now - latest.receivedElapsedMillis > FRESHNESS_MILLIS) return AnchorSelection.Unavailable.STALE
-        val sample = if (now - oldest.receivedElapsedMillis < TARGET_MILLIS) oldest else {
-            samples.minWith(compareBy<LocationFix> { abs(now - it.receivedElapsedMillis - TARGET_MILLIS) }
-                .thenBy { it.receivedElapsedMillis })
+        val historyCoversTarget = now - oldest.receivedElapsedMillis >= TARGET_MILLIS
+        val targetElapsedMillis = now - TARGET_MILLIS
+        val sample = when {
+            !historyCoversTarget -> oldest
+            else -> samples.minWith(
+                compareBy<LocationFix> { abs(it.receivedElapsedMillis - targetElapsedMillis) }
+                    .thenBy { it.receivedElapsedMillis },
+            )
         }
-        val anchor = LocationAnchor(sample, now)
-        if (now - oldest.receivedElapsedMillis >= TARGET_MILLIS && abs(anchor.offsetMillis - TARGET_MILLIS) > TARGET_TOLERANCE_MILLIS) {
-            return AnchorSelection.Unavailable.NO_TARGET_SAMPLE
+        val targetErrorMillis = abs(sample.receivedElapsedMillis - targetElapsedMillis)
+        return when {
+            historyCoversTarget && targetErrorMillis > TARGET_TOLERANCE_MILLIS -> AnchorSelection.Unavailable.NO_TARGET_SAMPLE
+            else -> AnchorSelection.Selected(LocationAnchor(sample, now))
         }
-        return AnchorSelection.Selected(anchor)
     }
 
     fun reset() {
         samples.clear()
-        lastEventAt = -1L
+        lastEventElapsedMillis = -1L
     }
 
     private fun prune(now: Long) {
@@ -72,5 +77,5 @@ class LocationBuffer {
     }
 }
 
-internal fun LocationFix.hasValidCoordinates() = latitude.isFinite() && longitude.isFinite() &&
+private fun LocationFix.hasValidCoordinates() = latitude.isFinite() && longitude.isFinite() &&
     latitude in -90.0..90.0 && longitude in -180.0..180.0

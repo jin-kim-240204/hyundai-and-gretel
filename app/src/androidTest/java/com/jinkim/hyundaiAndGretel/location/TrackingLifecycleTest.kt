@@ -3,6 +3,8 @@ package com.jinkim.hyundaiAndGretel.location
 import android.app.NotificationManager
 import android.app.Application
 import android.os.Build
+import android.os.SystemClock
+import android.util.Log
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -63,10 +65,14 @@ class TrackingLifecycleTest {
                 }
                 delay(15_000)
                 scenario.moveToState(Lifecycle.State.CREATED)
+                val stoppedAt = SystemClock.elapsedRealtime()
                 delay(20_000)
+                assertBufferAdvanced(stoppedAt, registeredLogs(instrumentation), "CREATED")
                 scenario.moveToState(Lifecycle.State.RESUMED)
                 scenario.recreate()
+                val recreatedAt = SystemClock.elapsedRealtime()
                 delay(15_000)
+                assertBufferAdvanced(recreatedAt, registeredLogs(instrumentation), "RECREATED")
                 val lines = registeredLogs(instrumentation).removePrefix(registrationsBefore)
                 val windows = Regex("BUFFER_APPEND size=(\\d+) oldest=(\\d+) latest=(\\d+)").findAll(lines).toList()
                 assertTrue("Expected real SDK buffer updates", windows.size >= 2)
@@ -170,6 +176,18 @@ class TrackingLifecycleTest {
             withContext(Dispatchers.Main) { store.clear() }
             context.unbindService(connection)
         }
+    }
+
+    private fun assertBufferAdvanced(boundaryElapsedMillis: Long, logs: String, phase: String) {
+        val latest = latestBufferTime(logs)
+        assertTrue("$phase must receive a new SDK sample", latest > boundaryElapsedMillis)
+        Log.i("RoadLocation", "TEST_BUFFER_WINDOW phase=$phase boundary=$boundaryElapsedMillis latest=$latest")
+    }
+
+    private fun latestBufferTime(logs: String): Long {
+        val latest = Regex("BUFFER_APPEND .*latest=(\\d+)").findAll(logs).lastOrNull()
+            ?: error("No SDK buffer sample in logs")
+        return latest.groupValues[1].toLong()
     }
 
     private fun registeredLogs(instrumentation: android.app.Instrumentation): String =
