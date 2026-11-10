@@ -42,7 +42,7 @@ A/B는 실제 차량 2대가 아니라 한 앱의 가상 운전자다. Room은 �
 |---|---|---|
 | 앱 | ComponentActivity/Compose 유지 | 구조 유지, 시연 세션·상태 표시 추가 |
 | Gleo | 3개 입력 검증, debug는 무저장 preview, release는 내부 수신·로컬 초안 | 시연 빌드에서 실제 Room 심기 처리로 연결. preview와 실행 모드는 명확히 분리 |
-| 시간 | Receiver가 receivedAt 기록 | 동시에 receivedElapsedNanos 기록, 30초 버퍼 조회에 전달 |
+| 시간 | Receiver가 receivedAt 기록 | 외부 수신 시각과 별도로 Main 직렬 선택 진입에서 selectedElapsedMillis를 읽어45초 버퍼 조회 |
 | 위치 | FusedLocation 의존성/권한/초기화/수집 미구현 | 지원 확인·동의·권한·콜백·버퍼·정리 구현 |
 | 저장 | Keystore/AES-GCM 바이너리 DraftStore, 기존 초안 보존 | 합성 시연 전용 Room에 쪽지와 사용자별 수신 이력 저장 |
 | 수신 | 접근 판정 없음 | 위치 업데이트마다 후보 쪽지 필터링 및 수신 처리 |
@@ -102,7 +102,7 @@ flowchart TD
 | LocationSource | FusedLocation 또는 명시적 합성 재생 → LocationSample | 두 소스를 동시에 섞지 않음. source와 측정 품질을 전달 |
 | LocationBuffer | 검증된 샘플 → 상태·불변 스냅샷 | 세션별45초 보관, 수신 순간 과거 위치 조회 |
 | RoadContextResolver | 좌표·방향 → routeId, direction, progressMeters | 시연 경로 투영. 실제 도로 식별 API로 오해하지 않음 |
-| Gleo Receiver/Parser | ACTION_PARAM → 유효 content/category/locationMode | 수신 UTC·단조시각·사용자/세션·버퍼 스냅샷을 즉시 고정 |
+| Gleo Receiver/Parser | ACTION_PARAM → 유효 content/category/locationMode | 외부 수신 UTC·사용자/세션 전달, Main 선택 시각은 별도 고정 |
 | PlantRoadNote | 검증 입력 + 수신 문맥 → 저장된 noteId 또는 오류 | 위치 선택·품질·Room 트랜잭션. 이후 콜백 생성 |
 | NoteRepository/DAO | 생성/유효 후보 조회 → Room 결과·Flow | 로컬 공유 쪽지와 수신 이력, 만료·초기화 관리 |
 | PickupEvaluator | B 현재 샘플 + 후보 → 수신 대상 | 동일 도로·방향·전방·거리·자기 제보 제외·중복 제외 |
@@ -223,7 +223,7 @@ Room 저장 대상은 합성 시연 데이터로 제한한다. source(SDK/REPLAY
 
 ### 7.2 심기 처리 순서
 
-1. Receiver에서 ACTION_PARAM, 수신 UTC/단조시각, actorId, sessionId, generation, 위치 버퍼 스냅샷을 잡고 앱 내부 requestId를 만든다. 외부가 actorId/noteId를 지정하지 못한다.
+1. Receiver에서 ACTION_PARAM과 외부 수신 UTC, actorId/sessionId/generation을 전달하고 앱 내부 requestId를 만든다. Main 직렬 처리 진입에서 단조시각을 읽고 suspend 없이 위치를 선택한다. 외부 도착 시각의 스냅샷을 사용한다고 설명하지 않는다. 외부가 actorId/noteId를 지정하지 못한다.
 2. 시연 모드 실행·역할 A·동의·권한·유효 입력을 확인한다. B에서 심기를 요청하면 시연 범위 오류로 fail한다.
 3. 30초 전 위치를 선택한다. 경로 밖/저품질/버퍼 미준비면 저장 없이 종료한다.
 4. Room 트랜잭션에서 유효 세션 generation을 다시 확인하고 RoadNote를 INSERT한다. 역할 변경/리셋과 쓰기는 같은 세션 직렬화 구간에서 실행한다.
@@ -249,7 +249,7 @@ Room 저장 대상은 합성 시연 데이터로 제한한다. source(SDK/REPLAY
 | INVALID_INPUT | 필수값/타입/enum 오류 | 저장 안 함, 누락값 질문 안 함 |
 | SESSION_NOT_READY | 실행 전·B 역할·세션 변경 | 저장 안 함, 세션 상태 표시 |
 | LOCATION_PERMISSION_DENIED / LOCATION_UNAVAILABLE | 권한·프라이버시 차단·미지원·SDK 오류 | 저장 안 함, 적절한 상태 표시 |
-| LOCATION_BUFFER_NOT_READY | 30초 연속 이력 없음 | 현재 위치로 대체하지 않음 |
+| LOCATION_BUFFER_NOT_READY | 유효 이력 없음 | 첫 신선한 표본부터 허용. 없는 좌표를 만들지 않음 |
 | LOCATION_QUALITY_LOW / ROAD_CONTEXT_UNKNOWN | 오차·신선도·도로/방향 미확정 | 임의 위치/방향 채우지 않음 |
 | SAVE_FAILED / TIMEOUT | DB 오류/처리 기한 초과 | 성공 안내 안 함, 자동 재호출 안 함 |
 
@@ -340,7 +340,7 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 | 순서 | 조작/입력 | 앱 내부 예상 데이터 | 화면·로그 확인 |
 |---|---|---|---|
 | 1. 초기화 | 같은 UI에서 새 시연 시작 · 메인 재현은 주행 상태 | 새 scenarioId, DB 기존 시연 삭제, A/B 수신 이력·버퍼 없음 | 쪽지 0 / B 수신 0 |
-| 2. A 준비 | A 경로를 x=0에서 시작 | t=30초 x=300, t=60초 x=600, 최근 30초 버퍼 | 준비 중 → 30초 확보 후 준비 완료 |
+| 2. A 준비 | A 경로를 x=0에서 시작 | t=30초 x=300, t=60초 x=600, 최근45초 버퍼 | 첫 신선한 표본부터 준비.30초 경과는 과거 배치 시연용 |
 | 3. 제보 | A가 계속 이동하는 중 Gleo에 ‘도로에 구덩이가 있어, 제보해줘’ | 로직 전용 재현은 t=60초에 테스트 JSON을 예약 주입. 실제 Gleo는 JSON 수신 순간 r을 기록 | 주행 상태와 같은 UI 유지, 경로 재생을 멈추지 않음 |
 | 4. 심기 | 유효 JSON 수신 | 현재 x≈600, 목표 30초 전 x≈300. RoadNote 1행 | 콜백 success, 쪽지 표식 x≈300, offset≈30초 |
 | 5. 역할 전환 | 같은 화면에서 A 가상 경로를 종료하고 B 시작 · 주행/정차 모두 가능 | A listener/버퍼 폐기. 쪽지는 유지. B는 x=0에서 시작 | 역할 B, 원본 쪽지 1 / B 수신 0 |
@@ -368,7 +368,7 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 
 | 테스트 | 재현 | 기대 결과 |
 |---|---|---|
-| 버퍼 부족 | A 시작 10초 안에 제보 | fail 1회, 쪽지 0개, 추가 질문 없음 |
+| 짧은 이력 | A 시작10초 안에 신선한 표본으로 제보 | 가장 오래된 실제 표본 선택, 실제 offset 기록.30초 대기 없음 |
 | 위치 품질/단절 | null/error/3초 공백/accuracy 50m 입력 | 준비 해제 또는 fail, 현재 위치 대체 없음 |
 | 자기 제보 | A로 쪽지 부근 이동 | A는 자기 쪽지를 새로 줍지 않음 |
 | 정차 수신 | B가 반경 안의 유효 위치에서 정차한 상태로 시작하거나 새 쪽지 생성 | 속도 0이어도 위치·경로·방향 조건이 맞으면 1회 수신 |
@@ -387,7 +387,7 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 | 순서 | 구현할 것 | 선행 입력 / 산출물 | 완료 증거 |
 |---|---|---|---|
 | 1 | FusedLocation·에뮬레이터 spike, 화면 규제 확인 | 실제 SDK 버전·LocationData 필드·권한·위치 주입 경로·Gleo 가시성 영향 확인 | 합성 경로 변화가 실제 SDK 콜백에 도착한 로그. 안 되면 명시적 대체 경로와 미검증 표시 |
-| 2 | 세션·시계·위치 샘플 계약·30초 메모리 버퍼 | 동의/권한/수집 수명, LIVE와 REPLAY 분리 | 30초/28초 경계·공백·재시작·시간 변경·동시 스냅샷 단위 테스트 |
+| 2 | 세션·시계·위치 샘플 계약·45초 메모리 버퍼 | 동의/권한/수집 수명, LIVE와 REPLAY 분리 | 45초/5초 경계·공백 이력 유지·null 역전·Main 선택 시각·재시작 단위 테스트 |
 | 3 | Room 쪽지/수신 이력·fixture 경로 문맥 | RoadNote/NoteReceipt/DAO, 세션 초기화, TTL·트랜잭션 | 저장/재조회/만료/복합키 중복/cascade/재시작 테스트 |
 | 4 | A 심기 유스케이스와 Gleo 연결 | 기존 Parser 유지, Receiver 수신 문맥 → 버퍼 anchor → Room | 실제 저장 후 success, 준비 부족 fail, timeout·콜백 실패 구분. debug preview와 실행 모드 구분 |
 | 5 | B 접근 판정·수신함·표시 ACK | 위치 + Room 후보 + 경로 진행값 | 전방 150m·정차/이미 반경 안·쪽지 변경 트리거·동방향·자기 제외·다른 도로·만료·이미 수신 제외 테스트 |
