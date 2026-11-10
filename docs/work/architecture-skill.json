@@ -1,0 +1,21 @@
+{
+  "task": "공모전 설계 스킬 작성 — 문서 범위 검증",
+  "selected_rules": ["ENV-02"],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "현재 main의 MainActivity·Manifest·Gradle을 읽고 Automotive ComponentActivity/Compose 구조를 설계 스킬 2·3절에 반영. 앱 코드와 설정 변경 없음."
+    },
+    {
+      "id": "DOC-e68476b79d1c#화면과복원",
+      "status": "PASS",
+      "evidence": "2026-11-11 공식 원문의 화면 크기/방향 및 프로세스 재생성 상태 복원 요구를 확인. 스킬 5·7절에 관련 스킬 검토, UI 수명/영속 상태 구분을 문서화. 이 PASS는 요구사항 반영 확인이며 실제 화면 구현 검증이 아님."
+    },
+    {
+      "id": "DOC-e68476b79d1c#백그라운드",
+      "status": "PASS",
+      "evidence": "공식 원문의 백그라운드 전환 및 불필요한 센서 수집 중단 요구를 스킬 5·7절의 Lifecycle 수집, producer 중단 정책, awaitClose 규칙에 반영. 실제 수집 동작은 이번 문서 작업 대상 아님."
+    }
+  ]
+}
