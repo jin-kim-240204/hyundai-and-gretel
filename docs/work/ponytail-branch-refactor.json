@@ -1,0 +1,11 @@
+{
+  "task": "ponytail-branch-refactor",
+  "selected_rules": ["ENV-02", "VEH-03"],
+  "checks": [
+    {"id": "ENV-02", "status": "PASS", "evidence": "ComponentActivity/Compose 및 Manifest 구조 유지. debug/release assemble, harness --build, Studio build_project PASS"},
+    {"id": "VEH-03", "status": "PASS", "evidence": "이번 변경 범위: SDK 수명 코드 유지, 후보 선택 함수 분리 후 실제 Pleos DemoFlowTest 59.055초 PASS. 오류 실주입은 별도 NOT_TESTED"},
+    {"id": "DOC-9844e9eaad3c#콜백", "status": "PASS", "evidence": "공식 위치 업데이트 수신/중지 절 2026-11-10 확인. PleosLocationSource의 동일 listener 등록/해제 유지, 실제 SDK E2E FLOW_PASS. docs/work/ponytail-branch-review.md"},
+    {"id": "DOC-1ba06876919b#수명", "status": "PASS", "evidence": "공식 SDK 생명주기 절 재확인. isSupported/initialize/unregister/release 및 새 인스턴스 재시작 코드 유지. 실제 E2E A/B 전환과 stop PASS"},
+    {"id": "DOC-ba9b83fc86f6#오류", "status": "NOT_TESTED", "evidence": "null/error 차단 구현은 유지했고 SessionGuardTest의 LOCATION_UNAVAILABLE 차단 PASS. 실제 SDK privacy/null/error 주입은 이번에 실행하지 않음"}
+  ]
+}

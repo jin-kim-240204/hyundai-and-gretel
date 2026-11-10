@@ -33,6 +33,9 @@ data class NoteEntity(
 data class ReceiptEntity(val noteId: String, val recipientId: String, val receivedAt: Long,
                          val distanceMeters: Double, val displayedAt: Long? = null)
 
+internal data class InboxRow(@Embedded val note: NoteEntity, val recipientId: String,
+                             val receiptReceivedAt: Long)
+
 @Dao
 internal interface NoteDao {
     @Insert suspend fun insert(note: NoteEntity)
@@ -48,8 +51,8 @@ internal interface NoteDao {
     @Query("DELETE FROM road_notes WHERE scenarioId=:scenario") suspend fun deleteScenario(scenario: String)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertReceipt(receipt: ReceiptEntity): Long
     @Query("SELECT COUNT(*) FROM note_receipts WHERE noteId=:id AND recipientId=:recipient") suspend fun receiptCount(id: String, recipient: String): Int
-    @Query("SELECT note_receipts.* FROM note_receipts INNER JOIN road_notes ON road_notes.id=noteId WHERE road_notes.scenarioId=:scenario AND recipientId=:recipient ORDER BY receivedAt, noteId")
-    fun receipts(scenario: String, recipient: String): Flow<List<ReceiptEntity>>
+    @Query("SELECT road_notes.*, note_receipts.recipientId, note_receipts.receivedAt AS receiptReceivedAt FROM note_receipts INNER JOIN road_notes ON road_notes.id=noteId WHERE road_notes.scenarioId=:scenario AND recipientId=:recipient ORDER BY note_receipts.receivedAt, noteId")
+    fun receipts(scenario: String, recipient: String): Flow<List<InboxRow>>
     @Query("UPDATE note_receipts SET displayedAt=:at WHERE noteId=:id AND recipientId=:recipient AND displayedAt IS NULL")
     suspend fun markDisplayed(id: String, recipient: String, at: Long)
     @Query("SELECT COUNT(*) FROM road_notes WHERE scenarioId=:scenario") suspend fun noteCount(scenario: String): Int

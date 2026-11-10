@@ -252,13 +252,8 @@ class DemoController(
     private fun reconcile() {
         if (!ready || !_state.value.running) return
         val now = SystemClock.elapsedRealtime()
-        val current = _state.value.location?.takeIf { now - it.elapsedMillis in 0..5_000 }
         val received = allInbox.map { it.note.id }.toSet()
-        val wanted = if (actor != Actor.B || current == null) emptyList() else candidates.filter {
-            it.authorId != actor.id && it.id !in received && it.expiresAt > System.currentTimeMillis() &&
-                it.routeId == DemoRoute.ID && it.direction == current.direction &&
-                (it.progressMeters - current.progressMeters) * (if (current.direction == "FORWARD") 1 else -1) >= 0
-        }.sortedBy { it.progressMeters - current!!.progressMeters }
+        val wanted = proximityCandidates(candidates, actor, _state.value.location, received, System.currentTimeMillis(), now)
         // shortcut: cap the small demo registry at 16; expose overflow until the SDK's supported limit is verified.
         val limited = wanted.take(16)
         val ids = limited.map { it.id }.toSet()

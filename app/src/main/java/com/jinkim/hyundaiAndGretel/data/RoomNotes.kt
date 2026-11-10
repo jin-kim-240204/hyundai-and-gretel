@@ -37,7 +37,7 @@ class ReceiptStore(private val db: NoteDatabase) {
             DemoRoute.distance(location.latitude, location.longitude, note.latitude, note.longitude))) != -1L
     }
     fun observe(scenario: String, actor: Actor) = dao.receipts(scenario, actor.id).map { rows ->
-        rows.mapNotNull { r -> dao.byId(r.noteId)?.toDomain()?.let { note -> InboxItem(note, r.recipientId, r.receivedAt) } }
+        rows.map { InboxItem(it.note.toDomain(), it.recipientId, it.receiptReceivedAt) }
     }
     suspend fun markDisplayed(id: String, actor: Actor, at: Long) = dao.markDisplayed(id, actor.id, at)
 }

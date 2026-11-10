@@ -33,8 +33,20 @@ interface RoadNoteRepository {
 
 data class InboxItem(val note: RoadNote, val recipientId: String, val receivedAt: Long)
 
+fun distanceAhead(note: RoadNote, location: LocationSample): Double =
+    (note.progressMeters - location.progressMeters) * (if (location.direction == "FORWARD") 1 else -1)
+
+fun proximityCandidates(notes: List<RoadNote>, actor: Actor, location: LocationSample?,
+                        received: Set<String>, now: Long, elapsed: Long): List<RoadNote> {
+    if (actor != Actor.B || location == null || elapsed - location.elapsedMillis !in 0..5_000) return emptyList()
+    return notes.filter {
+        it.authorId != actor.id && it.id !in received && it.expiresAt > now &&
+            it.routeId == DemoRoute.ID && it.direction == location.direction && distanceAhead(it, location) >= 0
+    }.sortedBy { distanceAhead(it, location) }
+}
+
 fun eligible(note: RoadNote, actor: Actor, location: LocationSample, now: Long, elapsed: Long): Boolean =
     note.authorId != actor.id && note.expiresAt > now && elapsed - location.elapsedMillis in 0..5_000 &&
         note.routeId == DemoRoute.ID && note.direction == location.direction &&
-        (note.progressMeters - location.progressMeters) * (if (note.direction == "FORWARD") 1 else -1) in 0.0..150.0 &&
+        distanceAhead(note, location) in 0.0..150.0 &&
         DemoRoute.distance(location.latitude, location.longitude, note.latitude, note.longitude) <= 150

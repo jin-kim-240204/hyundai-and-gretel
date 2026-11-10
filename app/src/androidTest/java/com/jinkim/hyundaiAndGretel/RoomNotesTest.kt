@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.jinkim.hyundaiAndGretel.data.*
 import com.jinkim.hyundaiAndGretel.notes.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -30,8 +31,16 @@ class RoomNotesTest {
             assertEquals(1, db.notes().receiptCount(n.id, Actor.B.id))
             assertEquals(1, db.notes().noteCount("scenario"))
             receipts.markDisplayed(n.id, Actor.B, 2500)
+            val second = n.copy(id = "second", requestId = "second-request")
+            notes.create(second)
+            assertTrue(receipts.record(second.id, "scenario", Actor.B, loc, 3000, 2000))
+            assertEquals(listOf(InboxItem(n, Actor.B.id, 2000), InboxItem(second, Actor.B.id, 3000)),
+                receipts.observe("scenario", Actor.B).first())
+            assertTrue(receipts.observe("other-scenario", Actor.B).first().isEmpty())
+            assertTrue(receipts.observe("scenario", Actor.A).first().isEmpty())
             notes.deleteScenario("scenario")
             assertEquals(0, db.notes().receiptCount(n.id, Actor.B.id))
+            assertTrue(receipts.observe("scenario", Actor.B).first().isEmpty())
         } finally { db.close() }
     }
     @Test fun spatialCoverIncludesBoundaryAndAheadPoints() {
