@@ -33,11 +33,11 @@ Android SDK의platform-tools를PATH에두거나아래스크립트의`--adb`로ad
 
 Room·H3 계측만 실행: `adb shell am instrument --user 10 -w -e class com.jinkim.hyundaiAndGretel.RoomNotesTest com.jinkim.hyundaiAndGretel.test/androidx.test.runner.AndroidJUnitRunner`
 
-`ProximityTest`는 별도 실행 후 RoadNoteTest의 READY 신호를 보고 경도127.0276, 위도37.4940→37.4979→37.4940을 각각 몇초간 주입하는 opt-in 시험이다. 일반connectedAndroidTest 전체실행은 이 외부주입대기를 포함하므로 사용하지 않는다.
+`DemoFlowTest`는 외부 GPS 재생이 필요하므로 `verify_location_demo.py`로 실행한다. GPS 재생 없이 일반 `connectedAndroidTest` 전체 실행을 하면 해당 테스트가 시간 초과로 실패한다.
 
 ## 로그
 
-`adb logcat -s RoadNotes:I RoadNoteE2E:I RoadNoteTest:I '*:S'`
+`adb logcat -s RoadNotes:I RoadNoteE2E:I '*:S'`
 
 RoadNotes: PROXIMITY_REGISTERED / PROXIMITY_ENTER / PROXIMITY_EXIT / NOTE_SAVED / NOTE_RECEIVED. 기본로그는위경도·발화원문을출력하지않는다. 화면의좌표는합성시연진단용이다. 음성 연동은 기존 Gleo PR의 별도 작업이다. 이 브랜치에서는 디버그 제보→위치 저장→수신을 검증한다.
 

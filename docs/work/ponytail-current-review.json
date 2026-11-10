@@ -1,0 +1,8 @@
+{
+  "task": "ponytail-current-review",
+  "selected_rules": ["ENV-02"],
+  "checks": [
+    {"id": "ENV-02", "status": "N/A", "evidence": "미커밋 변경은 테스트 삭제와 실행 문서 정리이며 Activity/Manifest/의존성 변경 없음. docs/work/ponytail-current-review.md 참고"},
+    {"id": "DOC-eb1428718f0c#앱구조", "status": "N/A", "evidence": "Activity 구조 변경이나 공식 적합성 판단을 포함하지 않는 테스트 삭제 리뷰"}
+  ]
+}
