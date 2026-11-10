@@ -1,0 +1,10 @@
+{
+  "task": "spec-driven-road-notes",
+  "selected_rules": ["ENV-02", "VEH-03", "PRIV-01"],
+  "checks": [
+    {"id":"ENV-02","status":"PASS","evidence":"문서만 추가, 기존 ComponentActivity 구조 유지. git diff 및 verify_harness 확인"},
+    {"id":"VEH-03","status":"N/A","evidence":"새 SDK 구현 없음. 과거 관측 기록과 향후 단계별 검증을 분리"},
+    {"id":"DOC-9844e9eaad3c#콜백","status":"PASS","evidence":"공식 위치 데이터 접근의 nullable/error 및 동일 listener 해제 요구를 overview 단계01/세션 정책에 반영. 런타임 통과 주장이 아닌 문서 대조"},
+    {"id":"PRIV-01","status":"PASS","evidence":"합성 위치만 시연, 위치 버퍼 메모리·서버 업로드 없음 명시. 신규 데이터 수집 코드 없음"}
+  ]
+}
