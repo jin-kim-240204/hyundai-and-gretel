@@ -1,6 +1,7 @@
 # hyundai-and-gretel 에이전트 진입점
 
 이 저장소의 모든 구현·설계·리뷰는 `.agents/skills/pleos-connect/SKILL.md`에서 시작한다. 한국어로 소통한다.
+코드 리뷰 요청 시 `.agents/skills/clean-code-review/SKILL.md`도 함께 읽고 적용한다.
 
 ## 작업 루프
 1. 요청과 현재 코드를 확인하고 해당 스킬·공식 원문을 읽는다.
