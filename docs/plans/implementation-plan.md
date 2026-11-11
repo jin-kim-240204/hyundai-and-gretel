@@ -411,3 +411,15 @@ NAMED_PLACE는 명시 장소 검색·후보 선택·좌표 확정 및 별도 입
 최신 작업 순서는 [00 전체 계획](https://github.com/jin-kim-240204/hyundai-and-gretel/blob/625a1fb/docs/specs/road-notes/00-overview.md)과 [01 위치 수집](https://github.com/jin-kim-240204/hyundai-and-gretel/blob/625a1fb/docs/specs/road-notes/01-current-location.md)을 따른다.01은 화면 진단 대신 debug 로그, FGS 요건·수명 확인과 실제 SDK 콜백 수신까지다.02에서 추적 세션의45초 메모리 버퍼 및 제보 신선도를 구현하고 홈 이동/재생성 중 지속 갱신을 검증한다.03~07은 Room→H3→SDK 접근·수신→debug 도구→통합 시연 순이다. Gleo 코드는 별도 PR 소유이며 재작성하지 않는다.
 
 원본·수신이력은 Room, 원시 위치는 메모리 전용이다. 화면이 숨겨져도 버퍼는 현재 시점 기준으로 갱신해야 한다. FGS는 영구 메모리 저장소가 아니며 프로세스 사망 시 버퍼는 소멸한다. 서비스 유형/권한·지속 알림·Pleos 화면 밖 콜백을 실제 환경에서 확인하기 전에는 이 목표를 구현 완료로 판정하지 않는다. 과거 가시 세션 E2E PASS는 이번 화면 독립 추적 검증이 아니다.
+
+
+## 03단계 저장 구현의 확정 범위 (2026-11-12)
+
+이 절은 위 최종 설계의 원본 필드·중복 처리·서비스 종료에 대한 최신 단계별 적용 기준이다. 후속 H3/접근/시연 필드는 해당 단계에서 migration과 기존 행 처리를 정한 뒤 도입한다.
+
+- 현재 원본은 noteId(UUID, PK), authorId, content, category, latitude/longitude, anchorOffsetMillis, createdAtUtcMillis, expiresAtUtcMillis다. noteId 하나를 요청·원본 식별에 함께 사용하며 별도 requestId는 만들지 않는다. scenarioId 및 시나리오/만료 인덱스는06단계로 미루고 기존 행 소속·초기화 정책을 그때 정한다. source/isSynthetic은 현재 사용처가 없어 저장하지 않는다. 합성 시연 전용·실위치 영속화 비활성·서버 자동 업로드 없음이라는 범위는 유지한다.
+- 단순 생성만 제공한다. 같은 noteId는 내용과 무관하게 중복 거절하고 기존 원본을 성공으로 반환하거나 덮어쓰지 않는다. 단일 INSERT와 PK로 동시 중복을 막는다. 앱의 연타 차단은 DB 고유성 보장과 별개다. 제약 오류 뒤 같은 ID가 있으면 Duplicate로 분류하는 것은 SQL 원인이 PK임을 엄밀히 판별한다는 뜻이 아니며, 추가 제약 도입 시 재검토한다.
+- 사용자/자동 재시도·영속 재시도 큐는 없다. 실패 후 새 제보는 새 ID다. Main에서 과거 anchor와 생성 UTC를 고정하며 만료는 생성+600초다. DB 대기도 TTL에 포함한다. content는 trim 후 Unicode 코드 포인트1~500, 초과 절삭 없이 거절한다. 내부 시간 단위는ms이고 정책 기간은 초에서ms로 명시 변환한다.
+- 수집 중지/SDK 오류는 SDK·신규 제보를 막되 수락한 저장1건은 최종결과까지 서비스 수명 안에서 처리한다. 마지막 화면이 해제돼도 저장 동안 foreground/‘제보 저장 중’ 알림을 유지하고 결과 정리 후 종료한다. 강제 종료 뒤 완료·자동 재제출은 보장하지 않는다.
+- Saved는 로컬 Room 커밋 완료다. 서버 공유 완료가 아니다. 서버 전환 시 성공 기준·작성자 식별/인증/권한·시각 권위·Room 역할·데이터 이관을 별도 결정한다. 클라이언트가 보낸 작성자 문자열이나 noteId를 안다는 사실을 권한으로 신뢰하지 않는다.
+- 실제 생성/사용 DB가 없다는 사용자 확인에 따라03-a 리뷰의 isSynthetic 삭제는 v1 스키마 자체를 정리한다. 버전 증가·migration·destructive fallback은 추가하지 않는다. 영속 DB를 사용하기 시작한 이후 스키마 변경은 명시적 migration을 별도로 설계한다.
