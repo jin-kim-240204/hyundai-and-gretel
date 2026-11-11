@@ -1,6 +1,6 @@
 # 03. 과거 위치에 쪽지를 Room으로 저장하기
 
-상태: **03-a 리뷰 반영·03-b 구현 후 코드 리뷰 대기 / 03-c 구현 전**. [03-a 작업 기록](../../work/step03a-room-storage.md).
+상태: **03-a/b 구현·리뷰 반영 / 03-c 독립 스펙 리뷰 대기**. [03-a 작업 기록](../../work/step03a-room-storage.md).
 선행:01위치 수집·02버퍼·중간 리팩터링46f427a. [전체 계획](00-overview.md) · [공통 정본](../../plans/implementation-plan.md) · [02 버퍼 계약](02-location-buffer.md).
 
 ## 1. 이번에 만들 결과
@@ -146,3 +146,7 @@ sample 수신 단조시각 자체는 저장하지 않는다. 재부팅을 넘겨
 후속 리뷰: 보존할 기존 DB가 없다는 사용자 확인에 따라 isSynthetic 없는 v1으로 정리한다. 버전 증가·migration·destructive fallback은 추가하지 않는다. 시간 정책은 초로 선언해 TimeUnit.SECONDS.toMillis로 변환하며 SDK/버퍼/DB의 내부 ms 계약은 유지한다.
 
 03-b 구현 결과와 검증 범위는 [작업 기록](../../work/step03-review-and-submission.md)을 참조한다. 화면 ViewModel의 제출 연결과 테스트 버튼은03-c에서 구현한다.
+
+## 9. 다음 검토: 03-c
+
+[03-c debug 제보·결과 연결 스펙](03c-debug-submission-ui.md)을 독립 리뷰한다. 현재 코드 기준03-a/b가 구현되어 있으며 이전의 구현 전/검토 대기 문장은 당시 이력이다. 이번 자율 SDD 운영에서는 독립 스펙 리뷰·리뷰이 판단·반영·재검토 전 구현하지 않는다. 앱/Studio/adb/에뮬레이터/계측 실행은 금지하고 JVM·빌드·정적 검사만 허용한다. 과거 기기 PASS를 새 단계 PASS로 재사용하지 않는다.

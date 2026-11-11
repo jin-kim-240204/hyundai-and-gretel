@@ -1,0 +1,47 @@
+{
+  "task": "spec-step03c-debug-submission",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01",
+    "DES-01",
+    "DES-02"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "문서만변경, 기존Automotive/Activity/source/Gradle변경없음. HEAD/PR8b9504e기준 확인."
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "스펙: 서비스소유저장·UI구독분리·새제출/수락저장수명보존계획, 실제서비스실행검증아님."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "합성debugfixture한정, 새좌표/원문로그·서버업로드·원시버퍼DB저장없음으로계획."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "N/A",
+      "evidence": "스펙만작성, SDK코드변경/기기실행없음. 기존계약보존·Fake오류검증계획, 이번런타임주장없음."
+    },
+    {
+      "id": "DOC-d771e574367a#버튼상태",
+      "status": "PASS",
+      "evidence": "공식States대조,03-c§4/5에저장중비활성·Loading과순수검증계획명시. 실제크기·조작측정아님."
+    },
+    {
+      "id": "DES-01",
+      "status": "NOT_TESTED",
+      "evidence": "03-c미구현. 사용자금지로앱/UI/기기실행없음; 대비·물리터치/0.25초실측미실행. 문서에요구와검증제한기록."
+    },
+    {
+      "id": "DES-02",
+      "status": "NOT_TESTED",
+      "evidence": "문구매핑·3줄제한계획만작성. 실제잘림/언어별레이아웃/물리글자높이측정은사용자제한으로미실행."
+    }
+  ]
+}
