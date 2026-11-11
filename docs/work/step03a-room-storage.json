@@ -1,0 +1,30 @@
+{
+  "task": "step03a-room-storage",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "하네스 --build, Debug/Release assemble, lintDebug, Studio build_project 통과. 기존 Activity 구조 변경 없음."
+    },
+    {
+      "id": "VEH-03",
+      "status": "N/A",
+      "evidence": "03-a 저장 경계만 추가. SDK/서비스 수명 연결은03-b 범위이며 기존 위치 단위19개 통과."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "원시 위치 버퍼 저장/전송·로그 추가 없음. 합성 좌표만 Room 계측 fixture 사용, 서버·자동 업로드 없음. 앱 UI 연결 전."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "N/A",
+      "evidence": "03-a는 저장 경계만 추가하며 SDK 콜백/등록/해제 코드는 변경하지 않음. 기존 위치 단위19개 회귀 통과. Room 원문 검증 근거는 작업 기록에 별도 기록."
+    }
+  ]
+}
