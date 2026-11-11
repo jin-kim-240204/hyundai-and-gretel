@@ -1,0 +1,30 @@
+{
+  "task": "pr4-refactor-feedback",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "Debug/Release assemble, androidTest compile, lintDebug, verify_harness.py --build 및 Studio build_project PASS. Activity 구조 유지."
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "수집 여부 계산을 공통화, 7상태 결과 검증. 위치시각과처리시각명명, 기존위치19·새상태1 포함 단위30 PASS. 수명/취소정책 변경없음."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "SDK처리 실행문맥·세션검사·등록/해제 변경없음. 버퍼시각인자명명후지연/미래시각경계단위통과."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "새 진단은 BuildConfig.DEBUG에서 STORE_UNEXPECTED_ERROR와예외타입만 기록. 메시지·내용·좌표 미포함, 스키마/전송변경없음."
+    }
+  ]
+}

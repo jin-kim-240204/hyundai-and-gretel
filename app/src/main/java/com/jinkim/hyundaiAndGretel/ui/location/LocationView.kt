@@ -29,8 +29,7 @@ fun LocationView(
     onStop: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    val collecting = status in setOf(TrackingStatus.STARTING, TrackingStatus.WAITING,
-        TrackingStatus.RECEIVING, TrackingStatus.UNAVAILABLE)
+    val collecting = status.isCollecting
     HyundaiAndGretelTheme {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.padding(24.dp).verticalScroll(rememberScrollState()),

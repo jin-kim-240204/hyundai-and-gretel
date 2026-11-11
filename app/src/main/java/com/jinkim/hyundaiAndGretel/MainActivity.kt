@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         lifecycle.addObserver(LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (requiredPermissions.all(::granted)) permissionMessage = ""
+                if (hasRequiredLocationPermissions()) permissionMessage = ""
                 completePermissionRequest()
             }
         })
@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
 
     private fun requestStart() {
         if (pendingStart != PendingStart.NONE) return
-        if (requiredPermissions.all(::granted)) {
+        if (hasRequiredLocationPermissions()) {
             permissionMessage = ""
             viewModel.start()
         } else {
@@ -77,13 +77,15 @@ class MainActivity : ComponentActivity() {
     private fun completePermissionRequest() {
         if (pendingStart != PendingStart.PERMISSION_RESULT_READY || !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
         pendingStart = PendingStart.NONE
-        if (requiredPermissions.all(::granted)) {
+        if (hasRequiredLocationPermissions()) {
             permissionMessage = ""
             viewModel.start()
         } else {
             permissionMessage = getString(R.string.location_permission_required)
         }
     }
+
+    private fun hasRequiredLocationPermissions() = requiredPermissions.all(::granted)
 
     private fun granted(permission: String) = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 

@@ -83,12 +83,15 @@ class RoadNoteRepositoryTest {
             assertTrue(finished)
         }
         var finished = false
-        val repo = RoadNoteRepository(this, Store { throw IllegalStateException("test") },
-            { anchor() }, { 1_000 }, { finished = true })
+        val diagnostics = mutableListOf<String>()
+        val repo = RoadNoteRepository(this, Store { throw IllegalStateException("private message") },
+            { anchor() }, { 1_000 }, { finished = true },
+            onUnexpectedError = { diagnostics += it.javaClass.simpleName })
         repo.submit("구덩이", NoteCategory.WARNING)
         advanceUntilIdle()
         assertEquals(SubmissionState.Failed(SubmissionFailure.STORAGE), repo.state.value)
         assertTrue(finished)
+        assertEquals(listOf("IllegalStateException"), diagnostics)
     }
 
     @Test fun cancellationPropagatesAndReleasesSubmissionState() = runTest {

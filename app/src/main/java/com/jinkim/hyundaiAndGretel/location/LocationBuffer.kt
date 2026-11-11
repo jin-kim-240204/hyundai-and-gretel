@@ -23,18 +23,18 @@ class LocationBuffer {
     val oldestElapsedMillis get() = samples.firstOrNull()?.receivedElapsedMillis
     val latestElapsedMillis get() = samples.lastOrNull()?.receivedElapsedMillis
 
-    fun offer(fix: LocationFix?, receivedAt: Long, now: Long): Update {
-        if (receivedAt < 0 || receivedAt > now || receivedAt < lastEventElapsedMillis) return Update.IGNORED
-        if (fix != null && fix.receivedElapsedMillis != receivedAt) return Update.IGNORED
+    fun offer(fix: LocationFix?, receivedElapsedMillis: Long, nowElapsedMillis: Long): Update {
+        if (receivedElapsedMillis < 0 || receivedElapsedMillis > nowElapsedMillis || receivedElapsedMillis < lastEventElapsedMillis) return Update.IGNORED
+        if (fix != null && fix.receivedElapsedMillis != receivedElapsedMillis) return Update.IGNORED
         if (fix == null || !fix.hasValidCoordinates()) {
-            lastEventElapsedMillis = receivedAt
+            lastEventElapsedMillis = receivedElapsedMillis
             samples.clear()
             return Update.INVALIDATED
         }
-        if (receivedAt == lastEventElapsedMillis) return Update.IGNORED
-        lastEventElapsedMillis = receivedAt
-        prune(now)
-        if (now - receivedAt > RETENTION_MILLIS) return Update.IGNORED
+        if (receivedElapsedMillis == lastEventElapsedMillis) return Update.IGNORED
+        lastEventElapsedMillis = receivedElapsedMillis
+        prune(nowElapsedMillis)
+        if (nowElapsedMillis - receivedElapsedMillis > RETENTION_MILLIS) return Update.IGNORED
         samples.addLast(fix)
         return Update.ACCEPTED
     }

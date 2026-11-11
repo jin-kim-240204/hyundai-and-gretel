@@ -25,6 +25,7 @@ class RoadNoteRepository(
     private val utcMillis: () -> Long,
     private val onFinished: () -> Unit,
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    private val onUnexpectedError: (Exception) -> Unit = {},
 ) {
     private val mutableState = MutableStateFlow<SubmissionState>(SubmissionState.Idle)
     val state = mutableState.asStateFlow()
@@ -61,8 +62,9 @@ class RoadNoteRepository(
             } catch (cancelled: CancellationException) {
                 mutableState.value = SubmissionState.Failed(SubmissionFailure.CANCELLED)
                 throw cancelled
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 mutableState.value = SubmissionState.Failed(SubmissionFailure.STORAGE)
+                onUnexpectedError(error)
             } finally {
                 onFinished()
             }

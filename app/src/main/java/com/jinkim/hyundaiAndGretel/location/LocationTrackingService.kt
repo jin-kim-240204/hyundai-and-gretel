@@ -44,11 +44,12 @@ class LocationTrackingService : Service() {
             captureAnchor = tracking::selectAnchor,
             utcMillis = System::currentTimeMillis,
             onFinished = { if (!isTracking) stopForegroundAndRequestServiceStop() },
+            onUnexpectedError = { error ->
+                if (BuildConfig.DEBUG) Log.d("RoadNote", "STORE_UNEXPECTED_ERROR ${error.javaClass.simpleName}")
+            },
         )
     }
-    private val isTracking get() = tracking.status.value in setOf(
-        TrackingStatus.STARTING, TrackingStatus.WAITING, TrackingStatus.RECEIVING, TrackingStatus.UNAVAILABLE,
-    )
+    private val isTracking get() = tracking.status.value.isCollecting
     private val binder = LocalBinder()
 
     inner class LocalBinder : Binder() {

@@ -29,10 +29,10 @@ enum class InvalidNote { ID, AUTHOR, CONTENT, COORDINATES, OFFSET, TIME }
 internal fun RoadNote.validationError(): InvalidNote? = when {
     !noteId.isCanonicalUuid() -> InvalidNote.ID
     authorId.isBlank() -> InvalidNote.AUTHOR
-    content.codePointCount(0, content.length) !in 1..500 -> InvalidNote.CONTENT
+    content.codePointCount(0, content.length) !in 1..MAX_CONTENT_CODE_POINTS -> InvalidNote.CONTENT
     !latitude.isFinite() || latitude !in -90.0..90.0 ||
         !longitude.isFinite() || longitude !in -180.0..180.0 -> InvalidNote.COORDINATES
-    anchorOffsetMillis !in 0L..TimeUnit.SECONDS.toMillis(35) -> InvalidNote.OFFSET
+    anchorOffsetMillis !in 0L..MAX_ANCHOR_OFFSET_MILLIS -> InvalidNote.OFFSET
     createdAtUtcMillis > Long.MAX_VALUE - RoadNote.TTL_MILLIS ||
         expiresAtUtcMillis != createdAtUtcMillis + RoadNote.TTL_MILLIS -> InvalidNote.TIME
     else -> null
@@ -43,3 +43,6 @@ private fun String.isCanonicalUuid(): Boolean = try {
 } catch (_: IllegalArgumentException) {
     false
 }
+
+private const val MAX_CONTENT_CODE_POINTS = 500
+private val MAX_ANCHOR_OFFSET_MILLIS = TimeUnit.SECONDS.toMillis(35)

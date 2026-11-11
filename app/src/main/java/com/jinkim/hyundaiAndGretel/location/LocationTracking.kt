@@ -6,7 +6,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-enum class TrackingStatus { STOPPED, STARTING, WAITING, RECEIVING, UNAVAILABLE, UNSUPPORTED, FAILED }
+enum class TrackingStatus {
+    STOPPED, STARTING, WAITING, RECEIVING, UNAVAILABLE, UNSUPPORTED, FAILED;
+
+    val isCollecting: Boolean get() = when (this) {
+        STARTING, WAITING, RECEIVING, UNAVAILABLE -> true
+        STOPPED, UNSUPPORTED, FAILED -> false
+    }
+}
 
 /** Commands and callback delivery are serialized on the owner's Main scope. */
 class LocationTracking(
@@ -67,7 +74,7 @@ class LocationTracking(
 
     private fun handleLocation(session: Long, fix: LocationFix?, receivedElapsedMillis: Long) {
         if (generation != session) return
-        when (buffer.offer(fix, receivedElapsedMillis, clock())) {
+        when (buffer.offer(fix = fix, receivedElapsedMillis = receivedElapsedMillis, nowElapsedMillis = clock())) {
             LocationBuffer.Update.IGNORED -> Unit
             LocationBuffer.Update.INVALIDATED -> update(TrackingStatus.UNAVAILABLE)
             LocationBuffer.Update.ACCEPTED -> {
