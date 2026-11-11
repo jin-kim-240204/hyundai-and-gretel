@@ -12,7 +12,7 @@
 
 - notes/RoadNote.kt: Room과 독립된 불변 원본·category enum, TTL·활성 경계, 저장 경계의 검증. UUID 정규 표기와 비어 있지 않은 작성자도 검사한다. content는 저장 진입에서 trim 후 코드 포인트 검증. offset이 실제02선택 결과인지 확인하는 연결은03-b 책임이다.
 - RoadNoteStore: create와 findById만 노출. 정상 입력 거절은 예외가 아닌 Invalid/Duplicate, 저장 실패는 StorageFailure로 반환한다. Result를 무조건 감싸지 않고 UI에 필요한 명시적 결과만 둔다. 조회 실패는 호출자에게 전파한다. CancellationException/Error를 포착하는 범용 catch/runCatching은 없다.
-- notes/storage: Entity/DAO/Database/Room 구현. PK ABORT INSERT가 원자적 생성/중복 거절을 보장. 제약 오류 후 ID 존재를 확인해 PK 중복만 Duplicate로 분류한다. 다른 제약·SQLite 오류는 실패. 갱신·삭제·원본 반환 성공·시나리오 인덱스 없음. 파일 DB는 applicationContext로 앱 범위 단일 인스턴스.
+- notes/storage: Entity/DAO/Database/Room 구현. PK ABORT INSERT가 원자적 생성/중복 거절을 보장. 제약 오류 후 ID가 있으면 Duplicate로 분류한다. PK가 실제 원인임을 판별하지 않으며 다른 제약과 기존 ID가 겹치면 Duplicate가 우선한다. ID가 없거나 조회 SQLite 오류면 StorageFailure. 후속 리뷰에서 설명을 정정했다. 갱신·삭제·원본 반환 성공·시나리오 인덱스 없음. 파일 DB는 applicationContext로 앱 범위 단일 인스턴스.
 - DI/서비스/버튼·제출 상태는03-b/c에서 연결. 이번에는 위치 서비스·폴링·기존 미커밋 기록을 수정하지 않았다. 전체 설계 정본의 최종 모델은 단계별 도입 범위와 다르며, 구현 연결 전 정본의 단계별 계약 동기화는 별도 확인이 필요하다.
 
 ## 검증 결과

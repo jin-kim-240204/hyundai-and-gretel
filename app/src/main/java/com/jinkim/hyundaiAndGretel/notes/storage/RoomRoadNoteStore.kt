@@ -24,7 +24,7 @@ class RoomRoadNoteStore internal constructor(private val database: NoteDatabase)
         }
     }
 
-    // Only a conflicting primary key is a duplicate; other constraints remain failures.
+    // After a constraint error, an existing ID means Duplicate; revisit if adding other constraints.
     private suspend fun classifyConstraint(noteId: String): CreateNoteResult = try {
         if (database.notes().findById(noteId) != null) CreateNoteResult.Duplicate
         else CreateNoteResult.StorageFailure

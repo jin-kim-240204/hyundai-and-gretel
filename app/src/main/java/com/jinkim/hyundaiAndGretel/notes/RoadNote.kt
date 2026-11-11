@@ -1,6 +1,7 @@
 package com.jinkim.hyundaiAndGretel.notes
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 enum class NoteCategory { WARNING, INFORMATION }
 
@@ -14,12 +15,11 @@ data class RoadNote(
     val anchorOffsetMillis: Long,
     val createdAtUtcMillis: Long,
     val expiresAtUtcMillis: Long,
-    val isSynthetic: Boolean,
 ) {
     fun isActiveAt(nowUtcMillis: Long): Boolean = nowUtcMillis < expiresAtUtcMillis
 
     companion object {
-        const val TTL_MILLIS = 600_000L
+        val TTL_MILLIS = TimeUnit.SECONDS.toMillis(600)
     }
 }
 
@@ -32,7 +32,7 @@ internal fun RoadNote.validationError(): InvalidNote? = when {
     content.codePointCount(0, content.length) !in 1..500 -> InvalidNote.CONTENT
     !latitude.isFinite() || latitude !in -90.0..90.0 ||
         !longitude.isFinite() || longitude !in -180.0..180.0 -> InvalidNote.COORDINATES
-    anchorOffsetMillis !in 0L..35_000L -> InvalidNote.OFFSET
+    anchorOffsetMillis !in 0L..TimeUnit.SECONDS.toMillis(35) -> InvalidNote.OFFSET
     createdAtUtcMillis > Long.MAX_VALUE - RoadNote.TTL_MILLIS ||
         expiresAtUtcMillis != createdAtUtcMillis + RoadNote.TTL_MILLIS -> InvalidNote.TIME
     else -> null

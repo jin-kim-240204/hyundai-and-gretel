@@ -16,13 +16,12 @@ internal data class RoadNoteEntity(
     val anchorOffsetMillis: Long,
     val createdAtUtcMillis: Long,
     val expiresAtUtcMillis: Long,
-    val isSynthetic: Boolean,
 ) {
     fun toNote() = RoadNote(
         noteId = noteId, authorId = authorId, content = content,
         category = NoteCategory.valueOf(category), latitude = latitude, longitude = longitude,
         anchorOffsetMillis = anchorOffsetMillis, createdAtUtcMillis = createdAtUtcMillis,
-        expiresAtUtcMillis = expiresAtUtcMillis, isSynthetic = isSynthetic,
+        expiresAtUtcMillis = expiresAtUtcMillis,
     )
 }
 
@@ -30,5 +29,5 @@ internal fun RoadNote.toEntity() = RoadNoteEntity(
     noteId = noteId, authorId = authorId, content = content,
     category = category.name, latitude = latitude, longitude = longitude,
     anchorOffsetMillis = anchorOffsetMillis, createdAtUtcMillis = createdAtUtcMillis,
-    expiresAtUtcMillis = expiresAtUtcMillis, isSynthetic = isSynthetic,
+    expiresAtUtcMillis = expiresAtUtcMillis,
 )

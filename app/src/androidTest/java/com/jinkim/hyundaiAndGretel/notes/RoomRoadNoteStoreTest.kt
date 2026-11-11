@@ -14,7 +14,7 @@ class RoomRoadNoteStoreTest {
         noteId = "00000000-0000-0000-0000-000000000001", authorId = "A",
         content = "  도로에 구덩이가 있어요 🚀  ", category = NoteCategory.WARNING,
         latitude = 37.4979, longitude = 127.0276, anchorOffsetMillis = 10_000,
-        createdAtUtcMillis = 1_000, expiresAtUtcMillis = 601_000, isSynthetic = true,
+        createdAtUtcMillis = 1_000, expiresAtUtcMillis = 601_000,
     )
 
     @Test fun concurrentDuplicateIdsNeverReturnExistingAsSuccess() = runBlocking {
@@ -93,6 +93,18 @@ class RoomRoadNoteStoreTest {
             assertEquals(CreateNoteResult.StorageFailure, store.create(note()))
             assertNull(store.findById(note().noteId))
             assertEquals(0, rowCount(db))
+        }
+    }
+
+    @Test fun existingIdAndTriggerFailureFollowDocumentedDuplicatePrecedence() = runBlocking {
+        Room.inMemoryDatabaseBuilder(context, NoteDatabase::class.java).build().withDatabase { db ->
+            val store = RoomRoadNoteStore(db)
+            val original = (store.create(note()) as CreateNoteResult.Created).note
+            db.openHelper.writableDatabase.execSQL(
+                "CREATE TRIGGER reject_note BEFORE INSERT ON road_notes BEGIN SELECT RAISE(ABORT, 'test'); END",
+            )
+            assertEquals(CreateNoteResult.Duplicate, store.create(note()))
+            assertEquals(original, store.findById(original.noteId))
         }
     }
 

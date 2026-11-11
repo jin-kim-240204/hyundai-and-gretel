@@ -1,6 +1,7 @@
 package com.jinkim.hyundaiAndGretel.location
 
 import kotlin.math.abs
+import java.util.concurrent.TimeUnit
 
 data class LocationAnchor(val sample: LocationFix, val selectedElapsedMillis: Long) {
     val offsetMillis get() = selectedElapsedMillis - sample.receivedElapsedMillis
@@ -70,10 +71,10 @@ class LocationBuffer {
     }
 
     private companion object {
-        const val RETENTION_MILLIS = 45_000L
-        const val FRESHNESS_MILLIS = 5_000L
-        const val TARGET_MILLIS = 30_000L
-        const val TARGET_TOLERANCE_MILLIS = 5_000L
+        val RETENTION_MILLIS = TimeUnit.SECONDS.toMillis(45)
+        val FRESHNESS_MILLIS = TimeUnit.SECONDS.toMillis(5)
+        val TARGET_MILLIS = TimeUnit.SECONDS.toMillis(30)
+        val TARGET_TOLERANCE_MILLIS = TimeUnit.SECONDS.toMillis(5)
     }
 }
 

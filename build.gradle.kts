@@ -1,5 +1,5 @@
 plugins {
-    id("com.google.devtools.ksp") version "2.3.12" apply false
+    alias(libs.plugins.ksp) apply false
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.compose) apply false
 }
