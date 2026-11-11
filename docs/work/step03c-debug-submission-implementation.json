@@ -1,0 +1,47 @@
+{
+  "task": "step03c-debug-submission-implementation",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01",
+    "DES-01",
+    "DES-02"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "Automotive/ComponentActivity유지. debug/release/계측APKcompile·lint·하네스--build PASS, Studio는사용자금지로미실행."
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "JVM35개통과. 같은production연결·SDK오류종료판단/수락저장경계검증. 실제서비스수명/기기실행은NOT_TESTED로기록."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "debug fixture/문자열/문구매핑은release APK에부재정적확인. 신규좌표/원문로그·서버전송·DB초기화없음."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "SDK source/콜백문맥/시각/세션차단변경없음. FakeLocationSource오류후기존tracking/Repository와shared종료판단JVM회귀. 실제SDK주장없음."
+    },
+    {
+      "id": "DOC-d771e574367a#버튼상태",
+      "status": "PASS",
+      "evidence": "debug버튼저장중Disabled/내부Loader, 기존시작버튼canStart로저장중차단. 행렬JVM/소스정적검토, 실제규격측정아님."
+    },
+    {
+      "id": "DES-01",
+      "status": "NOT_TESTED",
+      "evidence": "사용자실행금지. UI응답시간/대비/한손조작/터치실측없음. 저장중Loading과짧은문구는코드/정적검사만확인."
+    },
+    {
+      "id": "DES-02",
+      "status": "NOT_TESTED",
+      "evidence": "실제다중창잘림/물리글자높이/문단줄수는기기실행금지로미측정. 기본Theme및짧은리소스문구재사용."
+    }
+  ]
+}

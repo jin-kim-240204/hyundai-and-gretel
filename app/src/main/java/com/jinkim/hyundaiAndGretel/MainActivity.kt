@@ -44,13 +44,14 @@ class MainActivity : ComponentActivity() {
             }
         })
         setContent {
-            val status by viewModel.status.collectAsStateWithLifecycle()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val startCommandFailed by viewModel.startCommandFailed.collectAsStateWithLifecycle()
             LocationView(
-                status = status,
+                state = uiState,
                 startCommandFailed = startCommandFailed,
                 permissionMessage = permissionMessage,
                 onStart = ::requestStart,
+                onSubmitTestNote = viewModel::submitTestNote,
                 onStop = {
                     pendingStart = PendingStart.NONE
                     viewModel.stop()

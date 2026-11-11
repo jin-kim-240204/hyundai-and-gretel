@@ -17,19 +17,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.jinkim.hyundaiAndGretel.R
 import androidx.compose.runtime.Composable
+import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import com.jinkim.hyundaiAndGretel.ui.theme.HyundaiAndGretelTheme
 
 @Composable
 fun LocationView(
-    status: TrackingStatus,
+    state: LocationUiState,
     startCommandFailed: Boolean,
     permissionMessage: String,
     onStart: () -> Unit,
     onStop: () -> Unit,
     onOpenSettings: () -> Unit,
+    onSubmitTestNote: (String, NoteCategory) -> Unit,
 ) {
-    val collecting = status.isCollecting
+    val status = state.trackingStatus
     HyundaiAndGretelTheme {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.padding(24.dp).verticalScroll(rememberScrollState()),
@@ -48,11 +50,12 @@ fun LocationView(
                 Text(statusMessage)
                 if (startCommandFailed) Text(stringResource(R.string.location_command_failed))
                 if (permissionMessage.isNotEmpty()) Text(permissionMessage)
-                Button(onClick = onStart, enabled = !collecting && status != TrackingStatus.UNSUPPORTED,
+                Button(onClick = onStart, enabled = state.canStart,
                     modifier = Modifier.heightIn(min = 56.dp)) { Text(stringResource(R.string.location_start)) }
                 Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) {
                     Text(stringResource(R.string.location_stopped))
                 }
+                DebugNoteSubmission(state = state, onSubmit = onSubmitTestNote)
                 if (permissionMessage.isNotEmpty()) Button(onClick = onOpenSettings, modifier = Modifier.heightIn(min = 56.dp)) { Text(stringResource(R.string.location_permission_settings)) }
             }
         }

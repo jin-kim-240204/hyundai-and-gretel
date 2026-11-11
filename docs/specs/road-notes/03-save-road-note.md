@@ -1,6 +1,6 @@
 # 03. 과거 위치에 쪽지를 Room으로 저장하기
 
-상태: **03-a/b 구현·리뷰 반영 / 03-c 독립 스펙 리뷰 대기**. [03-a 작업 기록](../../work/step03a-room-storage.md).
+상태: **03-a/b 구현·리뷰 반영 / 03-c 구현·허용검사 후 독립 코드 리뷰 대기**. [03-a 작업 기록](../../work/step03a-room-storage.md).
 선행:01위치 수집·02버퍼·중간 리팩터링46f427a. [전체 계획](00-overview.md) · [공통 정본](../../plans/implementation-plan.md) · [02 버퍼 계약](02-location-buffer.md).
 
 ## 1. 이번에 만들 결과
@@ -150,3 +150,5 @@ sample 수신 단조시각 자체는 저장하지 않는다. 재부팅을 넘겨
 ## 9. 다음 검토: 03-c
 
 [03-c debug 제보·결과 연결 스펙](03c-debug-submission-ui.md)을 독립 리뷰한다. 현재 코드 기준03-a/b가 구현되어 있으며 이전의 구현 전/검토 대기 문장은 당시 이력이다. 이번 자율 SDD 운영에서는 독립 스펙 리뷰·리뷰이 판단·반영·재검토 전 구현하지 않는다. 앱/Studio/adb/에뮬레이터/계측 실행은 금지하고 JVM·빌드·정적 검사만 허용한다. 과거 기기 PASS를 새 단계 PASS로 재사용하지 않는다.
+
+03-c는4a0f332독립재검토통과후구현했다. [구현/허용검사기록](../../work/step03c-debug-submission-implementation.md)을기준으로독립코드리뷰한다. 실제기기/UI/Room/SDK는사용자금지로NOT_TESTED이며03전체AC완료주장없음.

@@ -12,36 +12,38 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jinkim.hyundaiAndGretel.location.LocationTrackingService
+import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class LocationViewModel(private val app: Application) : AndroidViewModel(app), ServiceConnection {
-    private val connectedStatus = MutableStateFlow<StateFlow<TrackingStatus>?>(null)
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val status = connectedStatus
-        .flatMapLatest { it ?: flowOf(TrackingStatus.STOPPED) }
+    private val connection = LocationConnection(viewModelScope)
+    val uiState = connection.state
+    val status = uiState.map { it.trackingStatus }
         .stateIn(viewModelScope, SharingStarted.Eagerly, TrackingStatus.STOPPED)
     private val mutableStartCommandFailed = MutableStateFlow(false)
     val startCommandFailed = mutableStartCommandFailed.asStateFlow()
     private val bound = app.bindService(Intent(app, LocationTrackingService::class.java), this, Context.BIND_AUTO_CREATE)
 
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-        connectedStatus.value = (binder as LocationTrackingService.LocalBinder).status
+        connection.connect(binder as LocationTrackingService.LocalBinder)
     }
 
     override fun onServiceDisconnected(name: ComponentName) {
-        connectedStatus.value = null
+        connection.connect(null)
+    }
+
+    fun submitTestNote(content: String, category: NoteCategory) {
+        connection.submitTestNote(content, category)
     }
 
     fun start() {
+        if (!uiState.value.canStart) return
         mutableStartCommandFailed.value = false
         try {
             ContextCompat.startForegroundService(app,

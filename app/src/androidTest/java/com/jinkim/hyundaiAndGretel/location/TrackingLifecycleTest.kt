@@ -99,35 +99,6 @@ class TrackingLifecycleTest {
             val registrationsAfter = registeredLogs(instrumentation).removePrefix(registrationsBefore)
             assertEquals("Recreation must not register another SDK listener", 1,
                 registrationsAfter.lineSequence().count { " REGISTERED" in it })
-            val serviceName = ComponentName(context, LocationTrackingService::class.java)
-            scenario.onActivity { ViewModelProvider(it)[LocationViewModel::class.java].onServiceDisconnected(serviceName) }
-            withTimeout(5_000) {
-                var disconnected = false
-                while (!disconnected) {
-                    scenario.onActivity { disconnected = ViewModelProvider(it)[LocationViewModel::class.java].status.value == TrackingStatus.STOPPED }
-                    if (!disconnected) delay(50)
-                }
-            }
-            context.startService(Intent(context, LocationTrackingService::class.java).setAction(LocationTrackingService.ACTION_STOP))
-            withTimeout(5_000) { while (status.value != TrackingStatus.STOPPED) delay(50) }
-            scenario.onActivity {
-                ContextCompat.startForegroundService(it,
-                    Intent(it, LocationTrackingService::class.java).setAction(LocationTrackingService.ACTION_START))
-            }
-            withTimeout(10_000) { while (status.value !in setOf(TrackingStatus.WAITING, TrackingStatus.RECEIVING)) delay(50) }
-            delay(200)
-            scenario.onActivity {
-                val model = ViewModelProvider(it)[LocationViewModel::class.java]
-                assertEquals("Disconnected screen must not follow service updates", TrackingStatus.STOPPED, model.status.value)
-                model.onServiceConnected(serviceName, binder)
-            }
-            withTimeout(5_000) {
-                var reconnected = false
-                while (!reconnected) {
-                    scenario.onActivity { reconnected = ViewModelProvider(it)[LocationViewModel::class.java].status.value in setOf(TrackingStatus.WAITING, TrackingStatus.RECEIVING) }
-                    if (!reconnected) delay(50)
-                }
-            }
             val notification = context.getSystemService(NotificationManager::class.java).activeNotifications.single { it.id == 1 }
             notification.notification.actions.single().actionIntent.send()
             withTimeout(5_000) {

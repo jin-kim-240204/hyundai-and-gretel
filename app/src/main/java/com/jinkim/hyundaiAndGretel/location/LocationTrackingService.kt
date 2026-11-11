@@ -37,13 +37,13 @@ class LocationTrackingService : Service() {
         onFailure = { finishWhenStorageIsIdle() },
         clock = SystemClock::elapsedRealtime,
     )
-    private val submissions by lazy {
+    private val submissions: RoadNoteRepository by lazy {
         RoadNoteRepository(
             scope = scope,
             store = RoomRoadNoteStore(this),
             captureAnchor = tracking::selectAnchor,
             utcMillis = System::currentTimeMillis,
-            onFinished = { if (!isTracking) stopForegroundAndRequestServiceStop() },
+            onFinished = { if (shouldStopTrackingService(tracking.status.value, submissions.state.value)) stopForegroundAndRequestServiceStop() },
             onUnexpectedError = { error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "STORE_UNEXPECTED_ERROR ${error.javaClass.simpleName}")
             },
@@ -52,11 +52,11 @@ class LocationTrackingService : Service() {
     private val isTracking get() = tracking.status.value.isCollecting
     private val binder = LocalBinder()
 
-    inner class LocalBinder : Binder() {
-        val status get() = tracking.status
-        val submissionState get() = submissions.state
+    inner class LocalBinder : Binder(), LocationSession {
+        override val status get() = tracking.status
+        override val submissionState get() = submissions.state
 
-        fun submitTestNote(content: String, category: NoteCategory) {
+        override fun submitTestNote(content: String, category: NoteCategory) {
             if (BuildConfig.DEBUG) submissions.submit(content, category)
         }
     }
@@ -100,7 +100,7 @@ class LocationTrackingService : Service() {
     private fun finishWhenStorageIsIdle() {
         if (submissions.isSubmitting) {
             getSystemService(NotificationManager::class.java).notify(1, buildTrackingNotification(savingOnly = true))
-        } else {
+        } else if (shouldStopTrackingService(tracking.status.value, submissions.state.value)) {
             stopForegroundAndRequestServiceStop()
         }
     }
