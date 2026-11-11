@@ -1,0 +1,30 @@
+{
+  "task": "spec-step04-nearby-candidates",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "스펙/상태/기록만변경. 현재ComponentActivity·앱코드·Gradle·스키마불변. 링크/diff/harness정적확인."
+    },
+    {
+      "id": "VEH-03",
+      "status": "N/A",
+      "evidence": "04스펙리뷰요청단계. SDK등록/접근/서비스구현변경없음. 후보수명/실패계획만정의. 기기실행금지로runtime PASS주장없음."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "N/A",
+      "evidence": "스펙은버퍼전체콜백/단조시각/세션차단보존. 실제SDK/JNI/기기검증은미실행이며04구현전."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "합성한정·원시위치메모리·원본보존·자동업로드없음유지. legacy원본삭제/실위치허용·전송계획추가없음."
+    }
+  ]
+}

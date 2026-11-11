@@ -1,6 +1,6 @@
 # 위치 쪽지: 함께 구현할 전체 작업 스펙
 
-상태: **03-a/b 구현·리뷰 반영 / 03-c 구현·허용검사 후 독립 코드 리뷰 대기**. [03-c 스펙](03c-debug-submission-ui.md) · [구현/검증 제한](../../work/step03c-debug-submission-implementation.md). 기기 실행 금지에 따른 NOT_TESTED를 보존한다.04단계는 아직 착수하지 않는다.
+상태: **03-c 코드 독립 재검토 통과 / 실제 기기 검증 대기 / 04 독립 스펙 리뷰 대기**. [04 후보 스펙](04-nearby-candidates.md).03-c 최종899fd88은 blocker0이며 실제UI/Binder/SDK/Room은NOT_TESTED다.04 코드·의존성은 독립 리뷰 전 변경하지 않는다.
 
 ## 읽는 순서와 문서 책임
 
