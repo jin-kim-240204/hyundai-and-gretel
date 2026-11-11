@@ -1,0 +1,18 @@
+{
+  "task": "clean-code-review-skill",
+  "selected_rules": [
+    "ENV-02"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "N/A",
+      "evidence": "스킬·문서만 변경. Android Activity/Manifest/의존성 변경 없음."
+    },
+    {
+      "id": "DOC-eb1428718f0c#Activity구조",
+      "status": "N/A",
+      "evidence": "일반 Activity 구조 및 SDK 계약 변경 없음. docs/work/clean-code-review-skill.md 참조."
+    }
+  ]
+}
