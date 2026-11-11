@@ -10,4 +10,3 @@ interface LocationSession {
     val submissionState: StateFlow<SubmissionState>
     fun submitTestNote(content: String, category: NoteCategory)
 }
-

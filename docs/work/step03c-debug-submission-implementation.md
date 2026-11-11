@@ -22,3 +22,5 @@ PASS: assembleDebug/assembleRelease/assembleDebugAndroidTest/lintDebug(최종빌
 NOT_TESTED: 앱·UI·클릭·Binder·재생성·Room실제동작·SDK실오류·서비스알림/마지막unbind·기기JNI/주행·다중창·대비·물리글자높이/터치·0.25초실측. 사용자금지로Studio(build_project포함)/adb/emulator/simulator/계측/컴퓨터UI를실행하지않음. 과거계측PASS재사용없음. report의DES-01/02 NOT_TESTED로exit2를보존한다.
 
 이번종료지점은03-c구현·허용검사후독립코드리뷰대기다. 전체AC완료/실기기완료주장없음. 기존보류스레드4541836274/4541836293의production JVM경계는추가했지만독립리뷰전resolve하지않는다. 코드리뷰후조정자가처리한다.04스펙미착수. 이번범위파일만명시stage·한국어feat커밋/푸시후AI구현자/SHA/검증제한을PR4에기록한다.
+
+후속정적수정: 최초명시stage후새파일LocationSession.kt 끝빈줄이 diff --check에검출됐다. 로직변경없이EOF공백만제거하고추가커밋으로정리했다(amend/force push없음). 전체변경diff검사를다시실행했다. 이공백변경은빌드/테스트재실행대상이아니다.
