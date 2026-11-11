@@ -1,6 +1,6 @@
 # 03-c. debug 제보 진입과 저장 결과 연결
 
-상태: **독립 스펙 리뷰 대기 / 구현 금지**. 기준 SHA `8b9504e6cf3cbf96d27a7e3a5b698ff8aec51798`.
+상태: **독립 리뷰·리뷰이 채택2건 반영 / 독립 재검토 대기 / 구현 금지**. 기준 SHA `8b9504e6cf3cbf96d27a7e3a5b698ff8aec51798`.
 상위 계약: [03 저장](03-save-road-note.md), [전체 단계](00-overview.md), [시스템 정본](../../plans/implementation-plan.md).
 이번 운영은 스펙→독립 리뷰→리뷰이 판단→반영·재검토 후 구현 순서다. 사용자 대신 독립 검토로 진행하되 이 문서는 아직 승인된 구현 지시가 아니다.
 
@@ -16,7 +16,7 @@
 |---|---|
 | LocalBinder가 status/submissionState/submitTestNote를 제공 | 화면 연결에서 제한된 상태·동작만 사용. DAO·Room·buffer·SDK 노출 금지 |
 | LocationViewModel은 status만 연결·해제 | 같은 연결의 수집/제출 상태를 함께 관찰하고 제출 동작 전달 |
-| LocationView는 상태·콜백을 받는 순수 화면 | debug 슬롯에 표시 상태와 필수 클릭 콜백 전달. ViewModel/서비스 직접 참조 금지 |
+| LocationView는 상태·콜백을 받는 순수 화면 | debug 슬롯에 표시 상태와 필수 클릭 콜백 전달. 저장 중 기존 시작 버튼도 비활성. ViewModel/서비스 직접 참조 금지 |
 | Repository가 Submitting 선설정·단일 저장·결과 보관 | 중복 gate·ID·저장 scope 재구현 금지 |
 | 서비스가 수집 종료 후 수락한 저장 완료까지 생존 | 기존 수명·알림 유지. 화면 수명으로 저장 취소 금지 |
 
@@ -53,6 +53,8 @@ flowchart TD
 
 연결됨 AND `trackingStatus.isCollecting` AND `submissionState != Submitting`일 때만 활성이다. 시작/준비/첫 표본 대기도 활성 세션이므로 버튼이 켜질 수 있다. 유효 표본이 없거나 stale이면 Repository가 LOCATION_UNAVAILABLE로 거절한다. UI에서30초 타이머·버퍼 길이·별도 신선도 판정을 만들지 않는다. STOPPED/FAILED/UNSUPPORTED, 연결 없음, 저장만 남아 있는 종료 대기에서는 비활성이다.
 
+기존 위치 시작 버튼도 `submissionState != Submitting`을 기존 활성 조건에 추가해 계산한다. 따라서 STOPPED/FAILED+Submitting에는 시작/제보 버튼이 모두 비활성이다. 저장 성공·실패가 정리된 뒤에는 기존 시작 조건에 따라 사용자가 수동으로 시작할 수 있다. 화면 복귀나 저장 완료가 자동 시작을 예약·호출하지 않는다. 별도 시작 대기 플래그·큐·자동 재시작은 만들지 않는다. 현재 서비스가 저장만 남아 있을 때 시작 요청을 무시하는 동작은 유지하고, 화면의 무반응 클릭을 막는 조건만 보완한다.
+
 화면 연타를 막는 표시와 별개로 기존 Repository의 Submitting gate가 최종 중복 수락을 막는다. 실패/성공 후 클릭은 새 의도·새 noteId다. 추가 질문·자동 재시도·‘다시 시도’ 버튼·새 UUID를 이용한 자동 재전송은 없다. 오류로 인한 취소는 기존 전파·finally 계약을 유지한다.
 
 ## 4. debug 경계와 최소 UI
@@ -79,8 +81,8 @@ Saved는 로컬 커밋 완료이며 서버 공유·B 수신 완료·Gleo 응답 
 ### 순수 JVM에서 입증할 계약
 
 1. 실제 production 연결 관찰 로직을 좁은 함수 또는 최소 계약으로 분리해 MutableStateFlow/Fake와 test scheduler로 확인한다. AndroidViewModel을 테스트하기 위해 Robolectric/MockK/Hilt/공통 ConnectionManager를 선제 도입하지 않는다. 테스트에서 Flow 전환 로직을 다시 작성해서 검증하지 않는다.
-2. 연결A → 해제 → A 상태 변경 → 스케줄러 소진에서도 연결 대기 유지, 연결B → A 갱신 무시/B 갱신 반영. status와 submission도 같은 연결에서 교체되는지 확인한다. `delay(200)`만으로 구독 종료를 입증하지 않는다. PR [4541836274](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/4#discussion_r4541836274)의 대상이다. 기존 긴 계측의 해당 구독 단언은 중복을 줄이되 SDK 수명 확인은 유지한다(실행 금지).
-3. 표시/버튼 조건은 연결 없음·7개 추적 상태·4개 제출 상태에서 확인한다. Submitting 때 콜백 재전달이 와도 store 호출은1회, 완료 전 Saved 없음, 실패/성공 후 새 클릭은 새 의도. Recompose/상태 수집 시작은 submit을 호출하지 않는다.
+2. 연결A → 해제 → A 상태 변경 → 스케줄러 소진에서도 연결 대기 유지, 연결B → A 갱신 무시/B 갱신 반영. 입력은 A=RECEIVING/Saved, B=STOPPED/Idle처럼 다르게 두고, A 갱신을 예약한 뒤 연결 교체와 스케줄러 실행 순서를 제어한다. 관찰되는 status/submission은 어느 한 유효 연결의 쌍 또는 연결 없음이어야 하며 A/B 혼합이나 예약 A 상태의 재진입은 허용하지 않는다. StateFlow가 모든 내부 순간값을 노출한다고 가정하거나 최종값만으로 판정하지 않는다. B=STOPPED/Idle에서 클릭하면 제출 호출0회, B를 활성 상태로 바꾼 뒤 클릭하면 A0회/B1회인지 Fake 호출 수로 확인해 제출 참조도 현재 연결을 사용하는지 검증한다. `delay(200)`만으로 구독 종료를 입증하지 않는다. PR [4541836274](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/4#discussion_r4541836274)의 대상이다. 기존 긴 계측의 해당 구독 단언은 중복을 줄이되 SDK 수명 확인은 유지한다(실행 금지).
+3. 표시/버튼 조건은 연결 없음·7개 추적 상태·4개 제출 상태에서 확인한다. 특히 STOPPED/FAILED+Submitting에는 기존 시작/제보 모두 비활성, 저장 완료 후 기존 조건에 따른 수동 시작 가능, 완료만으로 시작 호출0회를 확인한다. Submitting 때 콜백 재전달이 와도 store 호출은1회, 완료 전 Saved 없음, 실패/성공 후 새 클릭은 새 의도. Recompose/상태 수집 시작은 submit을 호출하지 않는다.
 4. SDK 오류는 기존 LocationSource Fake가 오류 콜백을 발생시키도록 제어한다. 실제 production 수집/저장 종료 판단에 연결하여 수집 정리·새 제출 차단·수락 저장의 완료를 확인한다. 테스트가 서비스 종료 규칙을 자체 복제하는 방식은 허용하지 않는다. 필요하면 서비스의 기존 종료 판단을 작은 순수 함수로 추출하되 범용 coordinator/전역 scope는 만들지 않는다. PR [4541836293](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/4#discussion_r4541836293)의 대상이다. Fake 테스트는 Android started/bound 수명·마지막 unbind 이후 생존을 입증하지 않는다.
 
 ### AC와 허용 검증
@@ -91,10 +93,11 @@ Saved는 로컬 커밋 완료이며 서버 공유·B 수신 완료·Gleo 응답 
 | C02 | fixture가 기존 제출 경로에 한 번 전달 | JVM Fake 콜백/Store 호출 수; 실제 Binder/UI 클릭 NOT_TESTED |
 | C03 | 저장 전 성공 금지·모든 결과 매핑 | 지연 Fake Store와 순수 상태/문구 매핑 검사; 실제 Room 커밋 NOT_TESTED |
 | C04 | 연타·새 의도·재생성 재제출 금지 | production 연결/Repository 테스트; Android 재생성 NOT_TESTED |
-| C05 | 해제/재연결 뒤 이전 Flow 차단 | test scheduler로 production 구독 전환 검증 |
+| C05 | 다른 상태 A/B 교체·예약 A 갱신 차단·현재 연결 클릭 | scheduler로 관찰 쌍/연결 없음 검증. B중지 클릭0, B활성 클릭A0/B1 |
 | C06 | 중지/SDK 오류 뒤 수락 건 유지·새 제출 차단 | 좁은 Fake 오류/Store 및 production 종료 판단; 실제 서비스/알림/SDK 오류 NOT_TESTED |
 | C07 | 첫 표본·짧은 이력·stale·불변 anchor | 기존 buffer/Repository JVM 회귀; 실제 GPS NOT_TESTED |
 | C08 | 프로세스 재실행 시 원본 보존·버퍼 새 세션 | 스키마/DB 초기화 금지 정적 검토, 계측 코드 compile; 실제 재실행/Room NOT_TESTED |
+| C10 | 저장 중 기존 시작도 차단·완료 후 수동 시작만 허용 | STOPPED/FAILED+Submitting 버튼 비활성, 완료 후 기존 시작 조건 및 자동 호출0회 JVM검사; 실제 버튼 NOT_TESTED |
 | C09 | 주행/정차 동작과 결과 가독성 | 상태 gate에 속도/기어 조건 없음 정적 검토; 실제 주행 화면/OS 규제/다중창/대비 NOT_TESTED |
 
 허용: `testDebugUnitTest`, `assembleDebug`, `assembleRelease`, `assembleDebugAndroidTest`, `lintDebug`, `verify_harness.py`, 스키마·리소스·diff 정적 검사. 새 계측을 작성/컴파일할 수 있으나 실행하지 않는다. 앱 실행/설치, adb, Studio(build_project 포함), emulator/simulator, GPS주입, connectedAndroidTest, 컴퓨터 UI 조작은 금지다. 과거03-a/b 계측 PASS는 참고 이력이지 새 구현의 런타임 PASS가 아니다. 제한 때문에 남는 NOT_TESTED는 운영 합의대로 별도 남기며 순수/빌드 FAIL은 해결한다.
@@ -114,3 +117,7 @@ Saved는 로컬 커밋 완료이며 서버 공유·B 수신 완료·Gleo 응답 
 - production을 그대로 검증할 수 있는 최소 연결/종료 판단 추출은 어디까지인가. Fake 증거를 실제 Binder/SDK/서비스 수명으로 확대하지 않아야 한다.
 
 기기 제한 외 외부 차단은 현재 없다.03-c 구현·검증은 아직 수행하지 않았다. 검토 종료 후 조정자가 독립 리뷰어에게 이 문서와 위 쟁점을 전달한다.
+
+## 7. 독립 리뷰 채택 반영
+
+독립 리뷰 대상714387b의 [4542288503](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/4#discussion_r4542288503), [4542288514](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/4#discussion_r4542288514)를 리뷰이 판단에 따라 채택했다. §2/3/5에 저장 중 시작 차단·완료 후 수동 시작만 허용, 서로 다른 A/B 상태·예약 이전 갱신·클릭 대상 검증을 보강했다. 문서 반영이며 실제 테스트나 구현 완료가 아니다. 독립 재검토 전 구현하지 않고 두 스레드는 resolve하지 않는다.
