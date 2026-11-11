@@ -24,3 +24,9 @@ NOT_TESTED: 앱·UI·클릭·Binder·재생성·Room실제동작·SDK실오류·
 이번종료지점은03-c구현·허용검사후독립코드리뷰대기다. 전체AC완료/실기기완료주장없음. 기존보류스레드4541836274/4541836293의production JVM경계는추가했지만독립리뷰전resolve하지않는다. 코드리뷰후조정자가처리한다.04스펙미착수. 이번범위파일만명시stage·한국어feat커밋/푸시후AI구현자/SHA/검증제한을PR4에기록한다.
 
 후속정적수정: 최초명시stage후새파일LocationSession.kt 끝빈줄이 diff --check에검출됐다. 로직변경없이EOF공백만제거하고추가커밋으로정리했다(amend/force push없음). 전체변경diff검사를다시실행했다. 이공백변경은빌드/테스트재실행대상이아니다.
+
+## 독립 코드 리뷰 채택 테스트 보강
+
+대상3e4667b·리뷰5864409926/4542436999 및리뷰이답변기록을읽고선택개선1건수용. production변경없이기존Session Fake/LocationConnection으로직접A→B와A→null→B를중간runCurrent없이확인하는테스트추가. 표시캐시가A인상태에서B중지클릭A0/B0, 예약A갱신처리후B상태/이후A무시, B활성클릭A0/B1을검증한다. 빠른null의중간방출은필수로단언하지않는다. 스레드반영SHA답글후resolve없이재검토대기, 실제SDK수명4541836293은NOT_TESTED유지. 기존변경과다른역할기록보존. 앱/Studio/adb/기기/계측실행없음.
+
+후속검증 PASS: testDebugUnitTest 전체36개/실패0, 추가1테스트안의직접/빠른null교체두경로통과, diff검사통과. production코드변경없어APK/lint추가재실행N/A. report의UI NOT_TESTED는계속보존한다. 이번테스트/기록/보고서3개만커밋한다.

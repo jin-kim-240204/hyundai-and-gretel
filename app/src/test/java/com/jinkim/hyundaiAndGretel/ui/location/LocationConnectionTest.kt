@@ -55,6 +55,50 @@ class LocationConnectionTest {
         assertEquals(listOf("도로에 구덩이가 있어요" to NoteCategory.WARNING), b.calls)
     }
 
+    @Test fun immediateReplacementWithOrWithoutNullUsesOnlyNewSession() = runTest {
+        for (disconnectFirst in listOf(false, true)) {
+            val a = Session(TrackingStatus.RECEIVING, SubmissionState.Saved(note()))
+            val b = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+            val connection = LocationConnection(backgroundScope)
+            val observed = mutableListOf<LocationUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                connection.state.collect { observed += it }
+            }
+            connection.connect(a)
+            runCurrent()
+            val displayedA = LocationUiState(a.status.value, a.submissionState.value)
+            assertEquals(displayedA, connection.state.value)
+            observed.clear()
+            backgroundScope.launch {
+                yield()
+                a.status.value = TrackingStatus.FAILED
+                a.submissionState.value = SubmissionState.Failed(SubmissionFailure.STORAGE)
+            }
+            if (disconnectFirst) connection.connect(null)
+            connection.connect(b)
+            // Do not drain the scheduler between A, optional null, and B.
+            assertEquals(displayedA, connection.state.value)
+            connection.submitTestNote("차단", NoteCategory.WARNING)
+            assertTrue(a.calls.isEmpty())
+            assertTrue(b.calls.isEmpty())
+            runCurrent()
+            val stoppedB = LocationUiState(TrackingStatus.STOPPED, SubmissionState.Idle)
+            assertEquals(stoppedB, connection.state.value)
+            assertTrue(observed.all { it == stoppedB || it == LocationUiState() })
+            // A fast null may be conflated; its emission is not required.
+            a.status.value = TrackingStatus.RECEIVING
+            a.submissionState.value = SubmissionState.Idle
+            runCurrent()
+            assertEquals(stoppedB, connection.state.value)
+            b.status.value = TrackingStatus.RECEIVING
+            connection.submitTestNote("도로에 구덩이가 있어요", NoteCategory.WARNING)
+            runCurrent()
+            assertTrue(a.calls.isEmpty())
+            assertEquals(listOf("도로에 구덩이가 있어요" to NoteCategory.WARNING), b.calls)
+            assertEquals(LocationUiState(TrackingStatus.RECEIVING, SubmissionState.Submitting), connection.state.value)
+        }
+    }
+
     @Test fun reconnectObservesCurrentResultWithoutResubmittingAndNewServiceStartsIdle() = runTest {
         val session = Session(TrackingStatus.RECEIVING, SubmissionState.Submitting)
         val connection = LocationConnection(backgroundScope)

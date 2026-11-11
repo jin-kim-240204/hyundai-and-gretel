@@ -16,7 +16,7 @@
     {
       "id": "VEH-03",
       "status": "PASS",
-      "evidence": "JVM35개통과. 같은production연결·SDK오류종료판단/수락저장경계검증. 실제서비스수명/기기실행은NOT_TESTED로기록."
+      "evidence": "JVM36개통과(추가직접A→B/빠른null→B전환포함). 같은production연결·SDK오류종료판단/수락저장경계검증. production변경없음. 실제서비스수명/기기실행은NOT_TESTED로기록."
     },
     {
       "id": "PRIV-01",
