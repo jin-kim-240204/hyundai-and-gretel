@@ -1,0 +1,30 @@
+{
+  "task": "spec-step03-save-road-note",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "스펙 문서 대조: 기존ComponentActivity구조 유지, 문서만 추가"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "스펙 문서 대조: 서비스 소유 버퍼/저장수명 및 Main시점 선택 계약 검토안 명시"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "스펙 문서 대조: 03§4 SDK버퍼선택사용·수신시각과벽시계구분, SDK새API/직접DB접근 없음"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "스펙 문서 대조: 합성원본만저장 계획, 위치버퍼메모리 유지, 서버/원시궤적저장 제외"
+    }
+  ]
+}
