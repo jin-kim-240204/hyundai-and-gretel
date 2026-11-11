@@ -1,0 +1,18 @@
+{
+  "task": "review-skill-branch-sync",
+  "selected_rules": [
+    "ENV-02"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "N/A",
+      "evidence": "공통 스킬·문서 동기화. 실행 코드 변경 없음."
+    },
+    {
+      "id": "DOC-eb1428718f0c#Activity구조",
+      "status": "N/A",
+      "evidence": "Activity/Manifest/SDK 계약을 변경하지 않는 문서 병합."
+    }
+  ]
+}
