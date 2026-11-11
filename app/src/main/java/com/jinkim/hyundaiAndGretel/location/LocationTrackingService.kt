@@ -17,6 +17,9 @@ import androidx.core.app.ServiceCompat
 import com.jinkim.hyundaiAndGretel.BuildConfig
 import com.jinkim.hyundaiAndGretel.MainActivity
 import com.jinkim.hyundaiAndGretel.R
+import com.jinkim.hyundaiAndGretel.notes.NoteCategory
+import com.jinkim.hyundaiAndGretel.notes.RoadNoteRepository
+import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,13 +34,30 @@ class LocationTrackingService : Service() {
         log = { message ->
             if (BuildConfig.DEBUG) Log.d("RoadLocation", message)
         },
-        onFailure = { stopForegroundAndRequestServiceStop() },
+        onFailure = { finishWhenStorageIsIdle() },
         clock = SystemClock::elapsedRealtime,
+    )
+    private val submissions by lazy {
+        RoadNoteRepository(
+            scope = scope,
+            store = RoomRoadNoteStore(this),
+            captureAnchor = tracking::selectAnchor,
+            utcMillis = System::currentTimeMillis,
+            onFinished = { if (!isTracking) stopForegroundAndRequestServiceStop() },
+        )
+    }
+    private val isTracking get() = tracking.status.value in setOf(
+        TrackingStatus.STARTING, TrackingStatus.WAITING, TrackingStatus.RECEIVING, TrackingStatus.UNAVAILABLE,
     )
     private val binder = LocalBinder()
 
     inner class LocalBinder : Binder() {
         val status get() = tracking.status
+        val submissionState get() = submissions.state
+
+        fun submitTestNote(content: String, category: NoteCategory) {
+            if (BuildConfig.DEBUG) submissions.submit(content, category)
+        }
     }
 
     override fun onBind(intent: Intent): IBinder = binder
@@ -53,13 +73,15 @@ class LocationTrackingService : Service() {
     }
 
     private fun startTracking() {
+        if (!isTracking && submissions.isSubmitting) return
         try {
             val notification = buildTrackingNotification()
             val serviceType = if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
             ServiceCompat.startForeground(this, 1, notification, serviceType)
             tracking.start()
         } catch (cancelled: CancellationException) {
-            stopForegroundAndRequestServiceStop()
+            tracking.stop()
+            finishWhenStorageIsIdle()
             throw cancelled
         } catch (error: Exception) {
             tracking.fail(error, operation = "FOREGROUND_START")
@@ -70,6 +92,14 @@ class LocationTrackingService : Service() {
         try {
             tracking.stop()
         } finally {
+            finishWhenStorageIsIdle()
+        }
+    }
+
+    private fun finishWhenStorageIsIdle() {
+        if (submissions.isSubmitting) {
+            getSystemService(NotificationManager::class.java).notify(1, buildTrackingNotification(savingOnly = true))
+        } else {
             stopForegroundAndRequestServiceStop()
         }
     }
@@ -79,7 +109,7 @@ class LocationTrackingService : Service() {
         stopSelf()
     }
 
-    private fun buildTrackingNotification(): Notification {
+    private fun buildTrackingNotification(savingOnly: Boolean = false): Notification {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel(CHANNEL, getString(R.string.location_channel_name), NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
@@ -87,8 +117,8 @@ class LocationTrackingService : Service() {
             Intent(this, LocationTrackingService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(getString(R.string.location_notification_title))
-            .setContentText(getString(R.string.location_notification_text))
+            .setContentTitle(getString(if (savingOnly) R.string.note_saving_title else R.string.location_notification_title))
+            .setContentText(getString(if (savingOnly) R.string.note_saving_text else R.string.location_notification_text))
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(0, getString(R.string.location_notification_stop), stop)

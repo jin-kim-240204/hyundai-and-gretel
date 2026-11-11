@@ -23,4 +23,6 @@
     <string name="location_notification_title">도로 제보 위치 수집 중</string>
     <string name="location_notification_text">앱을 벗어나도 위치 수집을 유지합니다.</string>
     <string name="location_notification_stop">중지</string>
+    <string name="note_saving_title">제보 저장 중</string>
+    <string name="note_saving_text">수락한 제보를 저장한 뒤 종료합니다.</string>
 </resources>

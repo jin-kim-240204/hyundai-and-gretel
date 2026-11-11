@@ -1,0 +1,30 @@
+{
+  "task": "step03-review-and-submission",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "하네스 --build, Debug/Release 및 androidTest compile, lintDebug, Studio build_project 통과. Activity 구조 유지."
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "실제 서비스 계측: DB저장대기→중지→마지막UI연결해제에도 알림/서비스유지, 성공/실패 정리후종료. SDK실제오류 주입은 미검증으로 작업기록에 구분."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "SDK콜백 수집·세션차단·해제 순서 변경없음. 기존 위치단위19 및 SDK/서비스계측3 통과. 실제 SDK표본→anchor→저장 수명계측 통과."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "합성 debug 제보만Binder에서수락. 원문/좌표로그 추가·서버전송 없음. isSynthetic 삭제는 동의/실데이터/업로드 범위확대 아님."
+    }
+  ]
+}
