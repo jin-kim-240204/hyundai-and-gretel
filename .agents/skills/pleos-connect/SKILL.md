@@ -7,6 +7,7 @@ description: hyundai-and-gretel의 Pleos Connect Android 구현·설계·리뷰�
 루트 AGENTS.md와 현재 작업 기록을 읽는다. [규칙 목록](references/rules.json)에서 적용 규칙 ID를 고르고 [문서 지도](references/source-map.md)로 관련 페이지를 읽는다. ID의 요약만으로 원문 검토를 대체하지 않는다.
 
 ## 작업별 로딩
+- 코드·PR 리뷰: [클린 코드 리뷰](../clean-code-review/SKILL.md)를 함께 적용한다.
 - 프로젝트/SDK/에뮬레이터: [환경 규칙](references/setup.md).
 - 차량 조회·제어·권한·생명주기: `../pleos-vehicle/SKILL.md`.
 - Compose 구조·상태·코루틴 리팩터링: `../android-compose-architecture/SKILL.md`.
