@@ -1,5 +1,6 @@
 package com.jinkim.hyundaiAndGretel.location
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -30,7 +31,7 @@ class LocationTrackingService : Service() {
         log = { message ->
             if (BuildConfig.DEBUG) Log.d("RoadLocation", message)
         },
-        onFailure = { finishForeground() },
+        onFailure = { stopForegroundAndRequestServiceStop() },
         clock = SystemClock::elapsedRealtime,
     )
     private val binder = LocalBinder()
@@ -42,42 +43,49 @@ class LocationTrackingService : Service() {
     override fun onBind(intent: Intent): IBinder = binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_START) {
-            try {
-                startTrackingForeground()
-                tracking.start()
-            } catch (cancelled: CancellationException) {
-                finishForeground()
-                throw cancelled
-            } catch (error: Exception) {
-                tracking.fail(error)
-            }
-        } else {
-            stopTracking()
+        when (intent?.action) {
+            ACTION_START -> startTracking()
+            ACTION_STOP -> stopTracking()
+            // Preserve the existing stop behavior for null or unknown commands.
+            else -> stopTracking()
         }
         return START_NOT_STICKY
+    }
+
+    private fun startTracking() {
+        try {
+            val notification = buildTrackingNotification()
+            val serviceType = if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
+            ServiceCompat.startForeground(this, 1, notification, serviceType)
+            tracking.start()
+        } catch (cancelled: CancellationException) {
+            stopForegroundAndRequestServiceStop()
+            throw cancelled
+        } catch (error: Exception) {
+            tracking.fail(error, operation = "FOREGROUND_START")
+        }
     }
 
     private fun stopTracking() {
         try {
             tracking.stop()
         } finally {
-            finishForeground()
+            stopForegroundAndRequestServiceStop()
         }
     }
 
-    private fun finishForeground() {
+    private fun stopForegroundAndRequestServiceStop() {
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
-    private fun startTrackingForeground() {
+    private fun buildTrackingNotification(): Notification {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel(CHANNEL, getString(R.string.location_channel_name), NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(this, 1,
             Intent(this, LocationTrackingService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
-        val notification = NotificationCompat.Builder(this, CHANNEL)
+        return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(getString(R.string.location_notification_title))
             .setContentText(getString(R.string.location_notification_text))
@@ -85,8 +93,6 @@ class LocationTrackingService : Service() {
             .setOngoing(true)
             .addAction(0, getString(R.string.location_notification_stop), stop)
             .build()
-        val type = if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
-        ServiceCompat.startForeground(this, 1, notification, type)
     }
 
     override fun onDestroy() {

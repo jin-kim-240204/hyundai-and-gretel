@@ -1,0 +1,40 @@
+{
+  "task": "tracking-start-readability",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "Activity/MVVM구조 불변, 작은 private함수로 절차/후속콜백만 분리. debug/release/IDE/harnessPASS"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "19단위/3기기2.184초. Main예약후세션검사·중복시작·unknown중지·정리 유지"
+    },
+    {
+      "id": "DOC-1ba06876919b#수명",
+      "status": "PASS",
+      "evidence": "Source어댑터변경없음, initialize→register/unregister finally release 기존회귀PASS"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "nullable 수신단조시각ms 함수타입명명, 실제처리시generation검사. 예약오류/이전위치회귀PASS"
+    },
+    {
+      "id": "DOC-ba9b83fc86f6#오류",
+      "status": "NOT_TESTED",
+      "evidence": "취소/실패/FGS로그분류 단위PASS, 실제OS FGS거절·SDKprivacy주입 미실행"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "새수집/전송없음. 로그주입과기존로컬폴링은 범위확인전 유지, 이번 커밋에 임시폴링미포함"
+    }
+  ]
+}

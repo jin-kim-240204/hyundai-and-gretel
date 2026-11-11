@@ -134,6 +134,15 @@ class TrackingLifecycleTest {
                 while (status.value != TrackingStatus.STOPPED) delay(50)
             }
             assertEquals(TrackingStatus.STOPPED, status.value)
+            scenario.onActivity {
+                ContextCompat.startForegroundService(it,
+                    Intent(it, LocationTrackingService::class.java).setAction(LocationTrackingService.ACTION_START))
+            }
+            withTimeout(10_000) {
+                while (status.value !in setOf(TrackingStatus.WAITING, TrackingStatus.RECEIVING)) delay(50)
+            }
+            context.startService(Intent(context, LocationTrackingService::class.java).setAction("unknown-test-command"))
+            withTimeout(5_000) { while (status.value != TrackingStatus.STOPPED) delay(50) }
         } finally {
             context.startService(Intent(context, LocationTrackingService::class.java)
                 .setAction(LocationTrackingService.ACTION_STOP))

@@ -156,4 +156,30 @@ class LocationTrackingTest {
         tracking.stop()
     }
 
+    @Test fun queuedErrorIsCheckedWhenHandledNotWhenReceived() = runTest {
+        val source = FakeSource()
+        var failures = 0
+        val tracking = LocationTracking(this, { source }, {}, { failures++ }, { 1000L })
+        tracking.start()
+        source.error(IllegalStateException("queued before stop"))
+        tracking.stop()
+        tracking.start()
+        runCurrent()
+        assertEquals(TrackingStatus.WAITING, tracking.status.value)
+        assertEquals(0, failures)
+        assertEquals(1, source.stops)
+        tracking.stop()
+    }
+
+    @Test fun foregroundFailureKeepsFailureStateButNotTheSdkErrorLabel() = runTest {
+        val logs = mutableListOf<String>()
+        var failures = 0
+        val tracking = LocationTracking(this, { FakeSource() }, logs::add, { failures++ }, { 1000L })
+        tracking.fail(SecurityException("foreground denied"), operation = "FOREGROUND_START")
+        assertEquals(TrackingStatus.FAILED, tracking.status.value)
+        assertEquals(1, failures)
+        assertTrue(logs.any { "FOREGROUND_START_ERROR" in it })
+        assertFalse(logs.any { "SDK_ERROR" in it })
+    }
+
 }

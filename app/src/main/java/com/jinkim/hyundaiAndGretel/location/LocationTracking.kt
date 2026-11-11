@@ -24,47 +24,62 @@ class LocationTracking(
 
     fun start() {
         if (source != null) return
-        buffer.reset()
-        val session = ++generation
-        update(TrackingStatus.STARTING)
+        val session = prepareSession()
         try {
             val current = createSource()
             source = current
-            val supported = current.start(
-                onLocation = { fix, receivedAt ->
-                    scope.launch {
-                        if (generation != session) return@launch
-                        when (buffer.offer(fix, receivedAt, clock())) {
-                            LocationBuffer.Update.IGNORED -> Unit
-                            LocationBuffer.Update.INVALIDATED -> update(TrackingStatus.UNAVAILABLE)
-                            LocationBuffer.Update.ACCEPTED -> {
-                                update(TrackingStatus.RECEIVING)
-                                log("session=$session LOCATION lat=${fix?.latitude} lon=${fix?.longitude} elapsed=$receivedAt")
-                                log("session=$session BUFFER_APPEND size=${buffer.size} oldest=${buffer.oldestElapsedMillis} latest=${buffer.latestElapsedMillis}")
-                            }
-                        }
-                    }
-                },
-                onError = { error ->
-                    scope.launch {
-                        if (generation == session) fail(error)
-                    }
-                },
-            )
-            if (!supported) {
-                stop()
-                update(TrackingStatus.UNSUPPORTED)
-                onFailure()
-                return
-            }
-            log("session=$session REGISTERED")
-            update(TrackingStatus.WAITING)
+            val isSupported = registerCallbacks(current, session)
+            handleRegistration(isSupported, session)
         } catch (cancelled: CancellationException) {
             stop()
             throw cancelled
         } catch (error: Exception) {
             fail(error)
         }
+    }
+
+    private fun prepareSession(): Long {
+        buffer.reset()
+        val session = ++generation
+        update(TrackingStatus.STARTING)
+        return session
+    }
+
+    private fun registerCallbacks(current: LocationSource, session: Long): Boolean = current.start(
+        onLocation = { fix, receivedElapsedMillis ->
+            scope.launch { handleLocation(session, fix, receivedElapsedMillis) }
+        },
+        onError = { error ->
+            scope.launch { handleError(session, error) }
+        },
+    )
+
+    private fun handleRegistration(isSupported: Boolean, session: Long) {
+        if (!isSupported) {
+            stop()
+            update(TrackingStatus.UNSUPPORTED)
+            onFailure()
+            return
+        }
+        log("session=$session REGISTERED")
+        update(TrackingStatus.WAITING)
+    }
+
+    private fun handleLocation(session: Long, fix: LocationFix?, receivedElapsedMillis: Long) {
+        if (generation != session) return
+        when (buffer.offer(fix, receivedElapsedMillis, clock())) {
+            LocationBuffer.Update.IGNORED -> Unit
+            LocationBuffer.Update.INVALIDATED -> update(TrackingStatus.UNAVAILABLE)
+            LocationBuffer.Update.ACCEPTED -> {
+                update(TrackingStatus.RECEIVING)
+                log("session=$session LOCATION lat=${fix?.latitude} lon=${fix?.longitude} elapsed=$receivedElapsedMillis")
+                log("session=$session BUFFER_APPEND size=${buffer.size} oldest=${buffer.oldestElapsedMillis} latest=${buffer.latestElapsedMillis}")
+            }
+        }
+    }
+
+    private fun handleError(session: Long, error: Exception) {
+        if (generation == session) fail(error)
     }
 
     fun stop() {
@@ -82,14 +97,14 @@ class LocationTracking(
         }
     }
 
-    fun fail(error: Exception) {
+    fun fail(error: Exception, operation: String = "SDK") {
         if (error is CancellationException) {
             stop()
             throw error
         }
         stop()
         update(TrackingStatus.FAILED)
-        log("session=$generation SDK_ERROR ${error.javaClass.simpleName}")
+        log("session=$generation ${operation}_ERROR ${error.javaClass.simpleName}")
         onFailure()
     }
 
