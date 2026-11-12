@@ -1,0 +1,35 @@
+{
+  "task": "07 통합·검증·시연 준비 명세",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "DES-06"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "문서만 변경. 07 실행 제약/clean HEAD 검증 계획 및 원격 PR head/base 대조. docs/work/spec-step07-integration-and-demo.md"
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "기존 SDK 초기화/해제·수락 쓰기·미해결4541836293 추적. runtime R01~07은 비실행 계획이며 SDK/서비스 실동작은 검증하지 않음"
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "제품/패널 및 기존 명시 ACK/CarUx 매핑 보존. 실제 UI/주행/화면 유지/CarUx 실행 금지"
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "NOT_TESTED",
+      "evidence": "07 §4/6/7: 현01~06 계약 적용, 실제 SDK 등록해제/오류 수명은 미검증"
+    },
+    {
+      "id": "DOC-9faba42791f0#기능별규제",
+      "status": "NOT_TESTED",
+      "evidence": "07 §3/7: 기존06 UX01~09 매핑 유지, OS 우회/DO 추가 없음. 실제 규제/화면 NOT_TESTED"
+    }
+  ]
+}

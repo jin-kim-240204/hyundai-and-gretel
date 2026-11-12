@@ -1,8 +1,8 @@
 # 06. 디버그 시연 패널과 실제 SDK를 통과하는 가상 주행
 
-상태: **06 리뷰이 수용 B1/P1/P2 반영 / 독립 재검토 대기 / 구현 전**. 코드 기준 `fdd9bbf`, 부모 정본 `2ca00c0`(별도 커밋·푸시 후 기능 병합).05 독립 재검토 PASS·기존 P2 두 스레드 해결·리뷰어 직접12 JVM PASS(원 ACK 반례 포함)는 사용자 전달 결과다. 실제 기기 검증은 NOT_TESTED로 유지한다.
+상태: **06 구현·허용 검사 완료 / e8ef142 독립 코드 재검토 PASS / runtime 대기**. 승인 명세6f33659·부모 정본2ca00c0. 독립 리뷰어 원 반례1건+관련 JVM25건 직접 PASS와 P2 두 스레드 해결을 사용자 전달 및 원격 답글로 확인했다. 작성자 JVM93/빌드 보고와 구분하며 실제 SDK/HTTP/provider/CarUx/UI/Room/FGS는 NOT_TESTED다. [P2 수정 기록](../../work/step06-review-fixes.md) · [07 명세](07-integration-and-demo.md).
 
-읽기: [00 전체 계획](00-overview.md), [정본](../../plans/implementation-plan.md), [05 계약](05-proximity-and-receipts.md), [고정 조사 근거](lessons-learned.md). 기존 로컬 `docs/work/pleos-road-notes-wireframes.md`는 미추적 사용자 기획으로 읽되 수정/커밋하지 않는다. 이 문서는 필요한 내용을 자체 서술하므로 미게시 와이어프레임 링크를 필수로 삼지 않는다. §12 정책을 리뷰이 판단대로 부모에 동기화했으며 독립 재검토 전에는 구현하지 않는다.
+읽기: [00 전체 계획](00-overview.md), [정본](../../plans/implementation-plan.md), [05 계약](05-proximity-and-receipts.md), [고정 조사 근거](lessons-learned.md). 기존 로컬 `docs/work/pleos-road-notes-wireframes.md`는 미추적 사용자 기획으로 읽되 수정/커밋하지 않는다. 이 문서는 필요한 내용을 자체 서술하므로 미게시 와이어프레임 링크를 필수로 삼지 않는다. §12 정책을 부모에 동기화한 뒤 명세와 코드의 독립 재검토를 거쳤다. 현재 상태는 상단과07 명세를 따른다.
 
 ## 1. 결과와 단계 경계
 
@@ -201,4 +201,4 @@ release에는패널/진입버튼·역할/reset테스트명령·mockprovider·loc
 
 ## 구현 제출 상태
 
-명세6f33659/부모2ca00c0의 독립 재검토5867895005 통과를 사용자에게 전달받아 승인 범위만 구현했다. 코드 제출과 runtime 검증 완료는 다르다. [구현 기록](../../work/step06-demo-implementation.md)에 의미별 커밋·JVM/Fake·빌드·정적 근거와 미검증을 연결한다.07 선행 구현·기기 실행은 하지 않았으며 독립 코드 리뷰 대기 상태다. 재현 절차는 §11이며 오늘 실행한 결과가 아니다.
+명세6f33659/부모2ca00c0의 독립 재검토5867895005 통과를 사용자에게 전달받아 승인 범위만 구현했다. 코드 제출과 runtime 검증 완료는 다르다. [구현 기록](../../work/step06-demo-implementation.md)에 의미별 커밋·JVM/Fake·빌드·정적 근거와 미검증을 연결한다.06 수정 e8ef142의 독립 코드 재검토를 통과했고 runtime 대기 상태다.07은 명세만 작성하며 기기 실행은 하지 않았다. 재현 절차는 §11이며 오늘 실행한 결과가 아니다.
