@@ -1,4 +1,5 @@
 [versions]
+h3 = "4.5.1"
 room = "2.8.5"
 ksp = "2.3.12"
 agp = "9.5.0"
@@ -12,6 +13,7 @@ kotlin = "2.2.10"
 composeBom = "2024.09.00"
 
 [libraries]
+uber-h3 = { module = "com.uber:h3", version.ref = "h3" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

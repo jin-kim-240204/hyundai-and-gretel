@@ -21,6 +21,7 @@ android {
     buildFeatures { compose = true; buildConfig = true }
 }
 dependencies {
+    implementation(libs.uber.h3)
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation("ai.pleos.playground:Vehicle:2.3.2")
@@ -44,3 +45,22 @@ dependencies {
 }
 
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
+
+// The H3 jar's Android resources must also be packaged as system-loadable JNI libraries.
+val h3Natives by configurations.creating
+dependencies { h3Natives(libs.uber.h3) { isTransitive = false } }
+val extractH3Natives by tasks.registering(Copy::class) {
+    from(h3Natives.map { zipTree(it) }) {
+        include("android-arm64/*.so", "android-arm/*.so")
+        eachFile {
+            relativePath = RelativePath(true, if (path.startsWith("android-arm64/")) "arm64-v8a" else "armeabi-v7a", name)
+        }
+        includeEmptyDirs = false
+    }
+    into(layout.buildDirectory.dir("generated/h3Jni"))
+}
+android.sourceSets.getByName("main").jniLibs.srcDir(layout.buildDirectory.dir("generated/h3Jni").get().asFile)
+android.packaging.resources.excludes += setOf("android-*/**", "linux-*/**", "darwin-*/**", "windows-*/**", "META-INF/native-image/**")
+tasks.configureEach {
+    if (name.startsWith("merge") && name.endsWith("JniLibFolders")) dependsOn(extractH3Natives)
+}
