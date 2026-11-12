@@ -1,0 +1,41 @@
+{
+  "task": "step05-proximity-receipts-implementation",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01",
+    "DES-06"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "JVM69/69, Debug/Release/계측APK 컴파일/lintDebug/하네스--build PASS. H3 APK arm64/armv7 ELF 정적 확인. 의존성/ABI/Manifest 불변."
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "Fake로 pending16/lateID/동일세션실패/2초/150m/수락쓰기 검증. 실제SDK 등록·오류·해제/Roommigration·트랜잭션·JNI/FGS·바인딩실행은 사용자금지로 미실행. 전체AC 완료 아님."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "원시버퍼 메모리, 원본/로컬수신이력 분리 및 legacy 보존. 자동업로드/자동삭제/새좌표·내용로그 없음. 기존사용자polling diff는 별도 보존·커밋제외."
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "최소수신1건+명시확인 버튼·저장중비활성/실패문구 구현. 실제폼팩터/조작/대비/물리크기/가시성 검증은 앱실행금지로 미실행."
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "PASS",
+      "evidence": "동일SDK 접근→위치리스너→finally release 순서 정적 대조. release뒤 새 인스턴스·lateID 소유SDK/현재source확인, stop/finally정리 경로 보존. 실제SDK 실행과구분."
+    },
+    {
+      "id": "DOC-d771e574367a#버튼상태",
+      "status": "NOT_TESTED",
+      "evidence": "원문 상태/도해 링크 확인. 확인쓰기 동안버튼 disabled와기록중문구, 실패후명시클릭만. 도해/실제화면치수·터치조작실행 검증아님."
+    }
+  ]
+}

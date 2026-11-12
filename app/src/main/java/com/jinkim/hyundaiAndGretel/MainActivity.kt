@@ -52,6 +52,9 @@ class MainActivity : ComponentActivity() {
                 permissionMessage = permissionMessage,
                 onStart = ::requestStart,
                 onSubmitTestNote = viewModel::submitTestNote,
+                onConfirmReceipt = { key ->
+                    viewModel.confirmReceipt(key, lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
+                },
                 onStop = {
                     pendingStart = PendingStart.NONE
                     viewModel.stop()

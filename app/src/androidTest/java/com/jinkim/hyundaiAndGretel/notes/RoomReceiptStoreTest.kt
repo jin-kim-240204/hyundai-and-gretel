@@ -21,7 +21,7 @@ class RoomReceiptStoreTest {
             override fun cover(latitude: Double, longitude: Double) = setOf("fixture")
         }
         var utc = 1_000L
-        val receipts = RoomReceiptStore(db) { utc }
+        val receipts = RoomReceiptStore(db, utcMillis = { utc })
         val store = RoomRoadNoteStore(db, index)
         val setup = SyntheticSession("B")
         val position = LocationFix(37.5, 127.03, 0)

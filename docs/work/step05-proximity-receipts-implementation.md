@@ -23,3 +23,13 @@ PASS: 전체JVM68(기존49+합성2+수신/ACK6+접근10+수명1), Debug/Release/
 기존 사용자 polling은 작업트리에 그대로 두고, HEAD 원문에 이번SDK메서드/임포트만 적용한 별도staged내용과 비교해 이번변경만커밋한다. Gradle검사는 기존polling이있는작업트리를컴파일했으며 polling/앱은실행하지않았다. 실제SDK/Room/서비스/화면실행은NOT_TESTED.
 
 동기 예외 tombstone 수정 후 JVM68/빌드/계측컴파일/lint 재PASS. staged SDK 26줄만 포함하며 남은 unstaged 추가/삭제줄이 작업 시작 polling diff와 정확히 같음(assert PASS).
+
+## 묶음4 서비스와 최소 확인 UI
+
+Binder→LocationConnection→ViewModel→Compose로 수신상태·맨앞항목과 확인이벤트만 연결. MainActivity가 클릭 시 RESUMED를 읽고 같은 Main 호출체인에서 현재수신자/맨앞키/연타를 재검사한다. composition/재구성/화면복귀 자동ACK 없음. 확인커밋 전 다음항목 전환금지·실패후명시클릭만. 수신한기록이라는 문구로 만료된과거이력을 새위험처럼 표시하지 않음. 화면규정은 pleos-design 및 기존 Basic button/typography/layout/color 원문을 검토했고 기존Material/56dp버튼/간격을 재사용했다. 물리치수/대비/실제조작/스크린샷은 NOT_TESTED(DES-06), 테마만으로준수판정하지않음.
+
+서비스는 위치수집·수락된제보/수신/ACK쓰기 수명을구분한다. 마지막수신/ACK쓰기전종료금지의순수판단회귀추가. 추적중지상태의bound-only서비스에서 명시ACK를수락할때 started/foreground로유지하고,저장만남은알림·마지막쓰기종료처리를연결한다. 실제Android foreground/bind수명은NOT_TESTED. 실앱setup은05계약대로A/R1/+1고정, B수신은Fake검증이며06역할UI/GPS를추가하지않았다.
+
+추가PASS: 실제03 Repository·04 NearbyCandidates.currentCandidates·05수신/ACK를연결한메모리/Fake 흐름1개. anchor저장→400m밖미등록→400m내등록→150m안보완수신→중복차단→명시확인→원본유지 검증. 총JVM69/69 실패/오류/skip0. Debug/Release/계측APK컴파일/lintDebug 재PASS. 실제SDK/Room테스트PASS로확대하지않음. 증거 /private/tmp/step05-final-checks.log, step05-harness-build.log 및 Gradle XML. 계측테스트는컴파일만했다.
+
+P01~P05/P08/P09는Fake/순수회귀범위PASS, P06/P07 Room이관·JOIN/동시성·cascade는계측작성/컴파일·schema정적만PASS이고실제실행NOT_TESTED. P10확인계약은Repository/Fake만PASS이며실제Compose노출/조작NOT_TESTED. P11빌드/패키징정적PASS,SDK/JNI/기기E2E NOT_TESTED. 스펙은사용자전달의독립재검토PASS로상태만갱신하며부모정책을새로바꾸지않음. 독립코드리뷰대기·06선행없음.

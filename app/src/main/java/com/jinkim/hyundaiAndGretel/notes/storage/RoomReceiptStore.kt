@@ -37,9 +37,10 @@ internal interface ReceiptDao {
 class RoomReceiptStore internal constructor(
     private val database: NoteDatabase,
     private val utcMillis: () -> Long,
+    private val onError: (Exception) -> Unit = {},
 ) : ReceiptStore {
-    constructor(context: Context, utcMillis: () -> Long = System::currentTimeMillis) :
-        this(NoteDatabase.getInstance(context), utcMillis)
+    constructor(context: Context, utcMillis: () -> Long = System::currentTimeMillis, onError: (Exception) -> Unit = {}) :
+        this(NoteDatabase.getInstance(context), utcMillis, onError)
 
     override fun observeInbox(recipientId: String) = database.receipts().inbox(recipientId).map { rows -> rows.map { it.toItem() } }
 
@@ -61,7 +62,8 @@ class RoomReceiptStore internal constructor(
         }
     } catch (cancelled: CancellationException) {
         throw cancelled
-    } catch (_: Exception) {
+    } catch (error: Exception) {
+        onError(error)
         ReceiveResult.STORAGE_FAILURE
     }
 

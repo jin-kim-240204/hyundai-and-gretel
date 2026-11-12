@@ -19,6 +19,9 @@ import com.jinkim.hyundaiAndGretel.MainActivity
 import com.jinkim.hyundaiAndGretel.R
 import com.jinkim.hyundaiAndGretel.notes.spatial.H3SpatialIndex
 import com.jinkim.hyundaiAndGretel.notes.spatial.NearbyCandidates
+import com.jinkim.hyundaiAndGretel.notes.pickup.*
+import com.jinkim.hyundaiAndGretel.notes.storage.RoomReceiptStore
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.RoadNoteRepository
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
@@ -36,7 +39,7 @@ class LocationTrackingService : Service() {
         log = { message ->
             if (BuildConfig.DEBUG) Log.d("RoadLocation", message)
         },
-        onFailure = { finishWhenStorageIsIdle() },
+        onFailure = { stopReceiving(); finishWhenStorageIsIdle() },
         clock = SystemClock::elapsedRealtime,
     )
     private val spatial = H3SpatialIndex()
@@ -52,13 +55,31 @@ class LocationTrackingService : Service() {
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
             })
     }
+    private val setup = SyntheticSession() // 06 will supply explicit synthetic role/route configuration.
+    private val recipient = MutableStateFlow(setup.actorId)
+    private val receipts by lazy {
+        ReceiptRepository(scope, RoomReceiptStore(this, onError = { error ->
+            if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
+        }), recipient, ::finishWhenStorageIsIdle,
+            onWriteAccepted = ::holdStorageForeground)
+    }
+    private val pickupDelegate = lazy {
+        ProximityPickup(scope, tracking.currentPosition, candidates.state, candidates::currentCandidates, receipts,
+            tracking::ownsSource, SystemClock::elapsedRealtime, System::currentTimeMillis,
+            onError = { operation, error ->
+                if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
+            })
+    }
+    private val pickup by pickupDelegate
+
     private val submissions: RoadNoteRepository by lazy {
         RoadNoteRepository(
             scope = scope,
             store = noteStore,
             captureAnchor = tracking::selectAnchor,
             utcMillis = System::currentTimeMillis,
-            onFinished = { if (shouldStopTrackingService(tracking.status.value, submissions.state.value)) stopForegroundAndRequestServiceStop() },
+            onFinished = ::finishWhenStorageIsIdle,
+            setup = { setup },
             onUnexpectedError = { error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "STORE_UNEXPECTED_ERROR ${error.javaClass.simpleName}")
             },
@@ -70,6 +91,9 @@ class LocationTrackingService : Service() {
     inner class LocalBinder : Binder(), LocationSession {
         override val status get() = tracking.status
         override val submissionState get() = submissions.state
+        override val inboxState get() = receipts.inbox
+        override val pickupState get() = pickup.state
+        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) = receipts.confirm(key, screenResumed)
 
         override fun submitTestNote(content: String, category: NoteCategory) {
             if (BuildConfig.DEBUG) submissions.submit(content, category)
@@ -82,6 +106,7 @@ class LocationTrackingService : Service() {
         when (intent?.action) {
             ACTION_START -> startTracking()
             ACTION_STOP -> stopTracking()
+            ACTION_STORAGE_HOLD -> finishWhenStorageIsIdle()
             // Preserve the existing stop behavior for null or unknown commands.
             else -> stopTracking()
         }
@@ -89,13 +114,14 @@ class LocationTrackingService : Service() {
     }
 
     private fun startTracking() {
-        if (!isTracking && submissions.isSubmitting) return
+        if (isTracking || submissions.isSubmitting || receipts.hasPendingWrites) return
         try {
             val notification = buildTrackingNotification()
             val serviceType = if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
             ServiceCompat.startForeground(this, 1, notification, serviceType)
             candidates
             tracking.start()
+            tracking.proximitySource?.let { pickup.start(tracking.sessionId, it, setup) }
         } catch (cancelled: CancellationException) {
             tracking.stop()
             finishWhenStorageIsIdle()
@@ -105,19 +131,37 @@ class LocationTrackingService : Service() {
         }
     }
 
+    private fun stopReceiving() {
+        if (pickupDelegate.isInitialized()) pickup.stop()
+    }
+
     private fun stopTracking() {
         try {
-            tracking.stop()
+            stopReceiving()
         } finally {
-            finishWhenStorageIsIdle()
+            try { tracking.stop() }
+            finally { finishWhenStorageIsIdle() }
         }
     }
 
     private fun finishWhenStorageIsIdle() {
-        if (submissions.isSubmitting) {
-            getSystemService(NotificationManager::class.java).notify(1, buildTrackingNotification(savingOnly = true))
-        } else if (shouldStopTrackingService(tracking.status.value, submissions.state.value)) {
+        if (submissions.isSubmitting || receipts.hasPendingWrites) {
+            getSystemService(NotificationManager::class.java).notify(1, buildTrackingNotification(savingOnly = !isTracking))
+        } else if (shouldStopTrackingService(tracking.status.value, submissions.state.value, receipts.hasPendingWrites)) {
             stopForegroundAndRequestServiceStop()
+        }
+    }
+
+    private fun holdStorageForeground() {
+        if (isTracking) return
+        // A bound-only service must become started before an accepted ACK outlives unbinding.
+        ServiceCompat.startForeground(this, 1, buildTrackingNotification(savingOnly = true),
+            if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+        try {
+            startService(Intent(this, LocationTrackingService::class.java).setAction(ACTION_STORAGE_HOLD))
+        } catch (error: RuntimeException) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+            throw error
         }
     }
 
@@ -144,16 +188,20 @@ class LocationTrackingService : Service() {
 
     override fun onDestroy() {
         try {
-            tracking.stop()
+            stopReceiving()
         } finally {
-            scope.cancel()
-            super.onDestroy()
+            try { tracking.stop() }
+            finally {
+                scope.cancel()
+                super.onDestroy()
+            }
         }
     }
 
     companion object {
         const val ACTION_START = "com.jinkim.hyundaiAndGretel.START_LOCATION"
         const val ACTION_STOP = "com.jinkim.hyundaiAndGretel.STOP_LOCATION"
+        private const val ACTION_STORAGE_HOLD = "com.jinkim.hyundaiAndGretel.HOLD_NOTE_WRITES"
         private const val CHANNEL = "location_tracking"
     }
 }

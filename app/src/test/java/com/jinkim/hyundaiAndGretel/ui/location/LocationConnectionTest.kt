@@ -3,6 +3,7 @@ package com.jinkim.hyundaiAndGretel.ui.location
 import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import com.jinkim.hyundaiAndGretel.location.LocationSession
 import com.jinkim.hyundaiAndGretel.notes.*
+import com.jinkim.hyundaiAndGretel.notes.pickup.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
@@ -14,6 +15,9 @@ class LocationConnectionTest {
     private class Session(status: TrackingStatus, submission: SubmissionState) : LocationSession {
         override val status = MutableStateFlow(status)
         override val submissionState = MutableStateFlow(submission)
+        override val inboxState = MutableStateFlow(InboxState())
+        override val pickupState = MutableStateFlow<PickupState>(PickupState.Waiting)
+        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) = Unit
         val calls = mutableListOf<Pair<String, NoteCategory>>()
         override fun submitTestNote(content: String, category: NoteCategory) {
             calls += content to category

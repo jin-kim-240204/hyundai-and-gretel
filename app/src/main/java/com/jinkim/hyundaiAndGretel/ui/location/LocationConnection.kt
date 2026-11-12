@@ -4,6 +4,7 @@ import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import com.jinkim.hyundaiAndGretel.location.LocationSession
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.SubmissionState
+import com.jinkim.hyundaiAndGretel.notes.pickup.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.stateIn
 data class LocationUiState(
     val trackingStatus: TrackingStatus = TrackingStatus.STOPPED,
     val submission: SubmissionState? = null,
+    val inbox: InboxState = InboxState(),
+    val pickup: PickupState = PickupState.Waiting,
 ) {
     val canSubmit get() = submission != null && trackingStatus.isCollecting && submission != SubmissionState.Submitting
     val canStart get() = !trackingStatus.isCollecting && trackingStatus != TrackingStatus.UNSUPPORTED &&
@@ -31,13 +34,17 @@ class LocationConnection(scope: CoroutineScope) {
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<LocationUiState> = current.flatMapLatest { session ->
         if (session == null) flowOf(LocationUiState())
-        else combine(session.status, session.submissionState) { status, submission ->
-            LocationUiState(status, submission)
+        else combine(session.status, session.submissionState, session.inboxState, session.pickupState) { status, submission, inbox, pickup ->
+            LocationUiState(status, submission, inbox, pickup)
         }
     }.buffer(0).stateIn(scope, SharingStarted.Eagerly, LocationUiState())
 
     fun connect(session: LocationSession?) {
         current.value = session
+    }
+
+    fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) {
+        current.value?.confirmReceipt(key, screenResumed)
     }
 
     fun submitTestNote(content: String, category: NoteCategory) {

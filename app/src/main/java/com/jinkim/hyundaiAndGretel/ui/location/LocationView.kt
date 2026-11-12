@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.jinkim.hyundaiAndGretel.R
 import androidx.compose.runtime.Composable
+import com.jinkim.hyundaiAndGretel.notes.pickup.*
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import com.jinkim.hyundaiAndGretel.ui.theme.HyundaiAndGretelTheme
@@ -30,6 +31,7 @@ fun LocationView(
     onStop: () -> Unit,
     onOpenSettings: () -> Unit,
     onSubmitTestNote: (String, NoteCategory) -> Unit,
+    onConfirmReceipt: (ReceiptKey) -> Unit,
 ) {
     val status = state.trackingStatus
     HyundaiAndGretelTheme {
@@ -54,6 +56,17 @@ fun LocationView(
                     modifier = Modifier.heightIn(min = 56.dp)) { Text(stringResource(R.string.location_start)) }
                 Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) {
                     Text(stringResource(R.string.location_stopped))
+                }
+                if (state.pickup is PickupState.Failed) Text(stringResource(R.string.pickup_failed))
+                if (state.inbox.error) Text(stringResource(R.string.receipt_failed))
+                state.inbox.pending?.let { item ->
+                    // History may have expired; this is a received note, not a new danger alert.
+                    Text(stringResource(R.string.receipt_title))
+                    Text(item.note.content, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Button(onClick = { onConfirmReceipt(ReceiptKey(item.note.noteId, item.recipientId)) },
+                        enabled = state.inbox.confirming == null, modifier = Modifier.heightIn(min = 56.dp)) {
+                        Text(stringResource(if (state.inbox.confirming == null) R.string.receipt_confirm else R.string.receipt_confirming))
+                    }
                 }
                 DebugNoteSubmission(state = state, onSubmit = onSubmitTestNote)
                 if (permissionMessage.isNotEmpty()) Button(onClick = onOpenSettings, modifier = Modifier.heightIn(min = 56.dp)) { Text(stringResource(R.string.location_permission_settings)) }

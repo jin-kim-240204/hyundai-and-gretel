@@ -1,8 +1,8 @@
 # 05. 접근 감지와 사용자별 쪽지 수신
 
-상태: **리뷰 B1/P1/P2/P3 수용 반영 / 독립 재검토 대기 / 구현 전**. 기준 코드 `21783e9`. 04 수정의 독립 재검토 PASS·P2 resolve는 사용자 전달 결과이며 실제 기기 검증 완료를 뜻하지 않는다.
+상태: **5957bf2/부모fdc51fa 독립 스펙 재검토 통과(사용자 전달,5867373540) / 05 구현·허용검사 후 독립 코드 리뷰 대기**. 실제 SDK/Room/화면·기기 검증은 NOT_TESTED다. [구현·검증 기록](../../work/step05-proximity-receipts-implementation.md).
 
-정본은 [전체 시스템 설계](../../plans/implementation-plan.md)(부모 `spec-road-note-system`의 `fdc51fa`를 별도 커밋·푸시 후 기능 브랜치에 병합), 단계는 [00](00-overview.md), 선행 계약은 [03](03-save-road-note.md)·[04](04-nearby-candidates.md), 과거 조사 근거는 [ae11722 교훈](lessons-learned.md)이다. 리뷰이 수용에 따라 §10의 공통 정책은 부모 정본에 동기화했다. 독립 재검토 전 구현하지 않는다.
+정본은 [전체 시스템 설계](../../plans/implementation-plan.md)(부모 `spec-road-note-system`의 `fdc51fa`를 별도 커밋·푸시 후 기능 브랜치에 병합), 단계는 [00](00-overview.md), 선행 계약은 [03](03-save-road-note.md)·[04](04-nearby-candidates.md), 과거 조사 근거는 [ae11722 교훈](lessons-learned.md)이다. 리뷰이 수용에 따라 §10의 공통 정책은 부모 정본에 동기화했다. 독립 스펙 재검토 후 사용자 승인으로 구현했으며 코드 리뷰·실제 검증 상태는 위 기록을 따른다.
 
 ## 1. 결과와 범위
 
@@ -90,7 +90,7 @@ remove는 원격 완료 ACK가 없어서 물리적 원격 동시16개를 보장�
 
 ## 6. Room v3와 legacy 보존
 
-v2부터 영속 DB가 있을 수 있다. v1/v2 수정이나 destructive fallback 없이 **2→3 명시 migration**, 신규 설치 v3 schema export를 추가할 계획이다. v1→2→3 경로도 검사한다. 실제 스키마/코드는 이번 문서 작업에서 만들지 않는다.
+v2부터 영속 DB가 있을 수 있다. v1/v2 수정이나 destructive fallback 없이 **2→3 명시 migration**, 신규 설치 v3 schema export를 추가할 계획이다. v1→2→3 경로도 검사한다. 구현에서 v3 schema export와 명시 migration을 추가했다. 실제 Room 실행 검증은 별도다.
 
 | 테이블/필드 | 제약·처리 |
 |---|---|

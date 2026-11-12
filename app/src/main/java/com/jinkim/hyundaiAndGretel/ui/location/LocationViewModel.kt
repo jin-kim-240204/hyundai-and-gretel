@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jinkim.hyundaiAndGretel.location.LocationTrackingService
+import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import kotlinx.coroutines.CancellationException
@@ -37,6 +38,8 @@ class LocationViewModel(private val app: Application) : AndroidViewModel(app), S
     override fun onServiceDisconnected(name: ComponentName) {
         connection.connect(null)
     }
+
+    fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) = connection.confirmReceipt(key, screenResumed)
 
     fun submitTestNote(content: String, category: NoteCategory) {
         connection.submitTestNote(content, category)
