@@ -25,6 +25,8 @@ class LocationTracking(
 ) {
     private val mutableStatus = MutableStateFlow(TrackingStatus.STOPPED)
     val status = mutableStatus.asStateFlow()
+    private val mutablePosition = MutableStateFlow<TrackedPosition?>(null)
+    val currentPosition = mutablePosition.asStateFlow()
     private var source: LocationSource? = null
     private var generation = 0L
     private val buffer = LocationBuffer()
@@ -46,6 +48,7 @@ class LocationTracking(
     }
 
     private fun prepareSession(): Long {
+        mutablePosition.value = null
         buffer.reset()
         val session = ++generation
         update(TrackingStatus.STARTING)
@@ -76,8 +79,12 @@ class LocationTracking(
         if (generation != session) return
         when (buffer.offer(fix = fix, receivedElapsedMillis = receivedElapsedMillis, nowElapsedMillis = clock())) {
             LocationBuffer.Update.IGNORED -> Unit
-            LocationBuffer.Update.INVALIDATED -> update(TrackingStatus.UNAVAILABLE)
+            LocationBuffer.Update.INVALIDATED -> {
+                mutablePosition.value = null
+                update(TrackingStatus.UNAVAILABLE)
+            }
             LocationBuffer.Update.ACCEPTED -> {
+                mutablePosition.value = TrackedPosition(session, checkNotNull(fix))
                 update(TrackingStatus.RECEIVING)
                 log("session=$session LOCATION lat=${fix?.latitude} lon=${fix?.longitude} elapsed=$receivedElapsedMillis")
                 log("session=$session BUFFER_APPEND size=${buffer.size} oldest=${buffer.oldestElapsedMillis} latest=${buffer.latestElapsedMillis}")
@@ -90,6 +97,7 @@ class LocationTracking(
     }
 
     fun stop() {
+        mutablePosition.value = null
         ++generation
         val previous = source
         source = null

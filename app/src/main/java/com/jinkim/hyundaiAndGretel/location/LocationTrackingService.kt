@@ -17,6 +17,8 @@ import androidx.core.app.ServiceCompat
 import com.jinkim.hyundaiAndGretel.BuildConfig
 import com.jinkim.hyundaiAndGretel.MainActivity
 import com.jinkim.hyundaiAndGretel.R
+import com.jinkim.hyundaiAndGretel.notes.spatial.H3SpatialIndex
+import com.jinkim.hyundaiAndGretel.notes.spatial.NearbyCandidates
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.RoadNoteRepository
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
@@ -37,10 +39,23 @@ class LocationTrackingService : Service() {
         onFailure = { finishWhenStorageIsIdle() },
         clock = SystemClock::elapsedRealtime,
     )
+    private val spatial = H3SpatialIndex()
+    private val noteStore by lazy {
+        RoomRoadNoteStore(this, spatial) { error ->
+            if (BuildConfig.DEBUG) Log.d("RoadNote", "H3_CREATE_ERROR ${error.javaClass.simpleName}")
+        }
+    }
+    private val candidates by lazy {
+        NearbyCandidates(scope, tracking.currentPosition, spatial, noteStore,
+            elapsedMillis = SystemClock::elapsedRealtime, utcMillis = System::currentTimeMillis,
+            onFailure = { operation, error ->
+                if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
+            })
+    }
     private val submissions: RoadNoteRepository by lazy {
         RoadNoteRepository(
             scope = scope,
-            store = RoomRoadNoteStore(this),
+            store = noteStore,
             captureAnchor = tracking::selectAnchor,
             utcMillis = System::currentTimeMillis,
             onFinished = { if (shouldStopTrackingService(tracking.status.value, submissions.state.value)) stopForegroundAndRequestServiceStop() },
@@ -79,6 +94,7 @@ class LocationTrackingService : Service() {
             val notification = buildTrackingNotification()
             val serviceType = if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
             ServiceCompat.startForeground(this, 1, notification, serviceType)
+            candidates
             tracking.start()
         } catch (cancelled: CancellationException) {
             tracking.stop()

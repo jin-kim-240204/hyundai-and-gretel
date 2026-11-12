@@ -29,6 +29,33 @@ class LocationTrackingTest {
         override fun stop() { stops++; stopError?.let { throw it } }
     }
 
+    @Test fun currentPositionCarriesSessionAndCannotSurviveInvalidationOrRestart() = runTest {
+        val first = FakeSource(); val second = FakeSource()
+        val sources = ArrayDeque(listOf(first, second))
+        val tracking = LocationTracking(this, { sources.removeFirst() }, {}, {}, { 1000L })
+        tracking.start()
+        first.location(LocationFix(37.5, 127.03, 1))
+        runCurrent()
+        val original = checkNotNull(tracking.currentPosition.value)
+        first.event(null, 2)
+        runCurrent()
+        assertNull(tracking.currentPosition.value)
+        first.location(original.fix)
+        runCurrent()
+        assertNull(tracking.currentPosition.value)
+        tracking.stop()
+        tracking.start()
+        second.location(LocationFix(37.5, 127.03, 3))
+        runCurrent()
+        val restarted = checkNotNull(tracking.currentPosition.value)
+        assertTrue(restarted.session > original.session)
+        first.location(LocationFix(38.0, 128.0, 4))
+        runCurrent()
+        assertEquals(restarted, tracking.currentPosition.value)
+        tracking.stop()
+        assertNull(tracking.currentPosition.value)
+    }
+
     @Test fun duplicateStartAndInvalidLocationsKeepOneSubscription() = runTest {
         val source = FakeSource()
         val logs = mutableListOf<String>()

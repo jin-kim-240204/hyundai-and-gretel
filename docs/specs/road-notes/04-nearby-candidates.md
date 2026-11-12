@@ -1,6 +1,6 @@
 # 04. H3 인덱스와 주변 쪽지 후보 갱신
 
-상태: **리뷰이 판단5건 반영 / 독립 재검토 대기 / 코드·의존성 변경 금지**. 기준899fd88.03-c는 독립 코드 재검토에서 blocker0이며 기기 검증은 여전히 NOT_TESTED다.
+상태: **5a0dd01 독립 재검토 승인 / 04 구현·허용검사 후 독립 코드 리뷰 대기**. 기준899fd88.03-c는 독립 코드 재검토에서 blocker0이며 기기 검증은 여전히 NOT_TESTED다.
 정본: [시스템 설계](../../plans/implementation-plan.md), [전체 단계](00-overview.md), [03 저장](03-save-road-note.md), [조사 교훈](lessons-learned.md).
 
 ## 1. 만들 결과와 단계 경계
@@ -102,3 +102,7 @@ H3는 res9로 고정한다. 셀 ID는 H3 표준 주소 문자열이며 외부/UI
 리뷰749ff7f의 P1/P2/P3/O1/O2 판단을 반영했다. P1은 raw 직접소비금지/현재시점 진입점으로 확정, P2는 명시 중심/여유영역과 경계밖 후보·03저장 보존, P3는 Room Flow 채택/10초 폴링 제거다. O1은 기존cover 실패/상한 문제 때만 overlap 대안을 비교, O2는 Android system/host resource 로딩을 구분했다.
 
 공통 정본은 부모 설계브랜치의04 소비/지원영역 계약에 먼저 반영·병합한 뒤 이 문서를 동기화했다. 아직04 구현 승인이 아니며 독립 재검토를 기다린다. 셀 경계 실험·artifact/JNI·Room Flow/migration 실제 동작은 NOT_TESTED다. 앱/설치/Studio/adb/기기/에뮬레이터/시뮬레이터/GPS주입/계측 실행은 하지 않는다.
+
+## 10. 구현·허용검사 인계
+
+5a0dd01독립재검토통과후04-a/b/c를구현했다. [구현/검증기록](../../work/step04-nearby-candidates-implementation.md)을기준으로독립코드리뷰하며위의구현전문장은당시승인게이트이력이다. 실제AndroidJNI/Room/SDK/기기검증은NOT_TESTED이며유한host회귀를전영역증명으로확대하지않는다.05/06은미구현이다.

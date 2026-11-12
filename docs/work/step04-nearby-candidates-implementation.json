@@ -1,0 +1,30 @@
+{
+  "task": "step04-nearby-candidates-implementation",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "Debug/Release/계측APK컴파일·lint·하네스--build PASS. Activity구조/앱ABI필터불변. APK arm64-v8a/armeabi-v7a H3 ELF경로/아키텍처정적확인."
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "JVM47개PASS, 후보세션/시간/관찰/소비경계검증. 사용자금지로실제Roommigration/Flow·AndroidJNI·SDK/서비스/Binder/기기실행미검증. 전체AC완료아님."
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "기존SDKsource/등록/해제/실제처리시점세션검사보존. ACCEPTED위치의세션발행/무효화/중지후차단JVM추가. 버퍼이벤트누락없음."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "원시위치메모리·공간후보만추가. v1컬럼/원본보존, 삭제/자동업로드/새좌표원문로그없음. 05수신/06시연선행없음."
+    }
+  ]
+}

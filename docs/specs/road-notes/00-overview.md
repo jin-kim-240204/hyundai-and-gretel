@@ -1,6 +1,6 @@
 # 위치 쪽지: 함께 구현할 전체 작업 스펙
 
-상태: **03-c 코드 독립 재검토 통과 / 실제 기기 검증 대기 / 04 독립 스펙 리뷰 대기**. [04 후보 스펙](04-nearby-candidates.md).03-c 최종899fd88은 blocker0이며 실제UI/Binder/SDK/Room은NOT_TESTED다.04 코드·의존성은 독립 리뷰 전 변경하지 않는다.
+상태: **04 구현·허용검사 후 독립 코드 리뷰 대기 / 실제 기기 검증 대기**. [04 스펙](04-nearby-candidates.md) · [구현/검증기록](../../work/step04-nearby-candidates-implementation.md). JVM/컴파일·정적PASS와Room/JNI/기기NOT_TESTED를구분한다.05/06은아직구현하지않았다.
 
 ## 읽는 순서와 문서 책임
 
