@@ -32,14 +32,14 @@ class PleosLocationSource(context: Context) : LocationSource {
         return true
     }
 
-    // 리뷰용: 쪽지 좌표의 150미터 ENTER 감시를 SDK에 요청한다. 등록 ID는 반환값이 아니라 이후 콜백으로 도착한다.
+    // 리뷰용: 쪽지 좌표의 전달받은 반경의 ENTER 감시를 SDK에 요청한다. 등록 ID는 반환값이 아니라 이후 콜백으로 도착한다.
     override fun addProximity(
-        latitude: Double, longitude: Double,
+        latitude: Double, longitude: Double, radiusMeters: Float,
         onRegistered: (String) -> Unit, onEnter: (String) -> Unit, onError: (Exception) -> Unit,
     ) {
         check(initialized)
         sdk.addProximityAlert(
-            ProximityAlertRequest(latitude, longitude, 150f, setOf(ProximityTransition.ENTER)),
+            ProximityAlertRequest(latitude, longitude, radiusMeters, setOf(ProximityTransition.ENTER)),
             object : ProximityAlertListener {
                 override fun onRegistered(alertId: String) = onRegistered.invoke(alertId)
                 override fun onTransition(event: ProximityAlertEvent) {

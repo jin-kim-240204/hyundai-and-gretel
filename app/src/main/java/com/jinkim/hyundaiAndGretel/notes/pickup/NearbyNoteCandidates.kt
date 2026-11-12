@@ -136,7 +136,7 @@ class NearbyNoteCandidates(
         return evaluate(rows ?: return null, position, utcMillis())
     }
 
-    // 리뷰용: 저장 원본 검증 → 중복 제거 → 만료 제외 → 실제 거리 계산 → 400미터 이내 정렬 순으로 후보를 좁힌다.
+    // 리뷰용: 저장 원본 검증 → 중복 제거 → 만료 제외 → 실제 거리 계산 → 6km 이내 정렬 순으로 후보를 좁힌다.
     private fun evaluate(originals: List<RoadNote>, position: TrackedPosition, nowUtc: Long): List<NearbyCandidate> =
         originals.onEach { require(it.validationError() == null) }
             .distinctBy { it.noteId }

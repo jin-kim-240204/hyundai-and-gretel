@@ -113,6 +113,7 @@ class ProximityPickup(
             owner.requests += request
             try {
                 owner.source.addProximity(candidate.note.latitude, candidate.note.longitude,
+                    radiusMeters = PICKUP_RADIUS_METERS.toFloat(),
                     onRegistered = { id -> scope.launch { onRegistrationCompleted(request, id) } },
                     onEnter = { id -> scope.launch { onEnteredRadius(request, id) } },
                     onError = { error -> scope.launch { onRegistrationFailed(request, error) } })
@@ -158,7 +159,7 @@ class ProximityPickup(
         fail(owner, PickupFailure.PROXIMITY, error)
     }
 
-    // 리뷰용: ENTER 이벤트와 이미 반경 안인 경우가 함께 사용하는 판정이다. 위치 2초 최신성·150미터·경로·방향·만료·중복을 다시 확인한다.
+    // 리뷰용: ENTER 이벤트와 이미 반경 안인 경우가 함께 사용하는 판정이다. 위치 2초 최신성·500미터·경로·방향·만료·중복을 다시 확인한다.
     private fun tryReceiveNote(request: ProximityRegistration) {
         val owner = request.owner
         if (!request.valid || request.alertId == null || !isCurrentSession(owner)) return

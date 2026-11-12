@@ -8,7 +8,7 @@ interface SpatialIndex {
 class SpatialUnavailableException(cause: Throwable) : RuntimeException(cause)
 
 object CandidateArea {
-    const val RADIUS_METERS = 400.0
+    const val RADIUS_METERS = 6_000.0
     const val MAX_QUERY_CELLS = 512
 
     fun contains(latitude: Double, longitude: Double) =

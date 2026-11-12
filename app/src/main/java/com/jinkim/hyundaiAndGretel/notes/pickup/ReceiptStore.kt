@@ -5,6 +5,8 @@ import com.jinkim.hyundaiAndGretel.notes.RoadNote
 import com.jinkim.hyundaiAndGretel.notes.spatial.distanceMeters
 import kotlinx.coroutines.flow.Flow
 
+const val PICKUP_RADIUS_METERS = 500.0
+
 /** 현재 등록과 위치를 수락하는 시점에 메인 실행 문맥에서 입력을 고정한다. */
 data class ReceiptRequest(val noteId: String, val recipient: SyntheticSession, val position: LocationFix, val scenarioId: String? = null)
 data class InboxItem(
@@ -30,6 +32,6 @@ fun eligibleDistance(note: RoadNote, setup: SyntheticSession, position: Location
     if (!SyntheticRoute.matches(route, note.latitude, note.longitude)) return null
     val current = SyntheticRoute.project(position.latitude, position.longitude, setup) ?: return null
     val ahead = SyntheticRoute.ahead(route, current) ?: return null
-    if (ahead !in 0.0..150.0) return null
-    return distanceMeters(position.latitude, position.longitude, note.latitude, note.longitude).takeIf { it <= 150.0 }
+    if (ahead !in 0.0..PICKUP_RADIUS_METERS) return null
+    return distanceMeters(position.latitude, position.longitude, note.latitude, note.longitude).takeIf { it <= PICKUP_RADIUS_METERS }
 }

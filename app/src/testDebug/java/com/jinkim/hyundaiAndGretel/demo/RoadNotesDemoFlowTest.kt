@@ -78,7 +78,7 @@ class RoadNotesDemoFlowTest {
             location = onLocation; error = onError; return true
         }
         override fun stop() { stops++ }
-        override fun addProximity(latitude: Double, longitude: Double, onRegistered: (String) -> Unit,
+        override fun addProximity(latitude: Double, longitude: Double, radiusMeters: Float, onRegistered: (String) -> Unit,
                                   onEnter: (String) -> Unit, onError: (Exception) -> Unit) {
             val key = "alert-${++registrations}"
             enters += { onEnter(key) }
@@ -202,9 +202,11 @@ class RoadNotesDemoFlowTest {
         assertEquals("B", h.actor.value)
         assertEquals(activeScenario, h.store.active.value)
         assertEquals(DemoPhase.READY, h.demo.state.value.phase)
-        assertEquals(0, b.registrations)
-        h.drive(21); assertEquals(1, b.registrations)
-        h.drive(25)
+        assertEquals(1, b.registrations)
+        assertEquals(1, b.registrations)
+        h.drive(9)
+        assertTrue(h.store.received.value.none { it.note.noteId == note.noteId })
+        h.drive(2)
         val newRows = { h.store.received.value.filter { it.note.noteId == note.noteId } }
         assertEquals(1, newRows().size)
         b.enters.forEach { it() }; runCurrent()

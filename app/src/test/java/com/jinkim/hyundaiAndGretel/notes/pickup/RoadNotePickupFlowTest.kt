@@ -56,7 +56,7 @@ class RoadNotePickupFlowTest {
         var enterCallback: ((String) -> Unit)? = null
         var removes = 0
         val source = object : ProximitySource {
-            override fun addProximity(latitude: Double, longitude: Double, onRegistered: (String) -> Unit,
+            override fun addProximity(latitude: Double, longitude: Double, radiusMeters: Float, onRegistered: (String) -> Unit,
                                       onEnter: (String) -> Unit, onError: (Exception) -> Unit) {
                 registeredCallback = onRegistered
                 enterCallback = onEnter
@@ -66,11 +66,11 @@ class RoadNotePickupFlowTest {
         val pickup = ProximityPickup(backgroundScope, positions, candidates.state, candidates::currentCandidates,
             receipts, { it === source }, { 0 }, { 1_000 })
         pickup.start(1, source, SyntheticSession("B")); runCurrent()
-        assertNull(registeredCallback) // 400미터보다 멀리 있어 근접 등록 대상이 아니다.
-        positions.value = TrackedPosition(1, LocationFix(37.5, 127.0265, 0)); runCurrent()
+        assertNotNull(registeredCallback) // 6km 후보 안이지만 500m 수신 반경 밖이다.
+        positions.value = TrackedPosition(1, LocationFix(37.5, 127.024, 0)); runCurrent()
         registeredCallback!!("note"); runCurrent()
         assertTrue(received.value.isEmpty()) // 등록됐어도 수신 반경 밖이면 수신하지 않는다.
-        positions.value = TrackedPosition(1, LocationFix(37.5, 127.0285, 0)); runCurrent()
+        positions.value = TrackedPosition(1, LocationFix(37.5, 127.0255, 0)); runCurrent()
         assertEquals(1, received.value.size) // ENTER 이벤트가 없어도 현재 위치의 반경 안 판정으로 수신을 보완한다.
         enterCallback!!("note"); runCurrent()
         assertEquals(1, received.value.size)

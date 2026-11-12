@@ -13,15 +13,15 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProximityPickupTest {
     private class Source : ProximitySource {
-        data class Request(val longitude: Double, val registered: (String) -> Unit, val enter: (String) -> Unit, val error: (Exception) -> Unit)
+        data class Request(val longitude: Double, val radiusMeters: Float, val registered: (String) -> Unit, val enter: (String) -> Unit, val error: (Exception) -> Unit)
         val requests = mutableListOf<Request>()
         val removed = mutableListOf<String>()
         var throwAdd = false
         var throwRemove = false
-        override fun addProximity(latitude: Double, longitude: Double, onRegistered: (String) -> Unit,
+        override fun addProximity(latitude: Double, longitude: Double, radiusMeters: Float, onRegistered: (String) -> Unit,
                                   onEnter: (String) -> Unit, onError: (Exception) -> Unit) {
             if (throwAdd) throw IOException("add")
-            requests += Request(longitude, onRegistered, onEnter, onError)
+            requests += Request(longitude, radiusMeters, onRegistered, onEnter, onError)
         }
         override fun removeProximity(alertId: String) {
             removed += alertId
@@ -60,7 +60,7 @@ class ProximityPickupTest {
             if (p == null || elapsed - p.fix.receivedElapsedMillis !in 0L..5_000) null else notes
                 .filter { it.isActiveAt(utc) }
                 .map { NearbyCandidate(it, distanceMeters(p.fix.latitude, p.fix.longitude, it.latitude, it.longitude)) }
-                .filter { it.distanceMeters <= 400 }
+                .filter { it.distanceMeters <= CandidateArea.RADIUS_METERS }
         }, receipts, { sourceActive && it === source }, { elapsed }, { utc })
         fun start(session: Long = 1) = pickup.start(session, source, SyntheticSession("B"))
         fun signal() { signals.value = if (signals.value == CandidateState.Loading) CandidateState.WaitingForLocation else CandidateState.Loading }
@@ -91,10 +91,11 @@ class ProximityPickupTest {
 
     @Test fun pendingLimitDistanceOrderingAndNoDuplicateRegistration() = runTest {
         val h = Harness(backgroundScope)
-        h.positions.value = TrackedPosition(1, LocationFix(37.5, 127.0265, 0))
+        h.positions.value = TrackedPosition(1, LocationFix(37.5, 127.0235, 0))
         h.notes = (1..17).reversed().map { note(it, 127.03 + it * 0.00001) }
         h.start(); runCurrent()
         assertEquals(16, h.source.requests.size)
+        assertTrue(h.source.requests.all { it.radiusMeters == 500f })
         assertEquals(127.03001, h.source.requests.first().longitude, 1e-10)
         assertEquals(127.03016, h.source.requests.last().longitude, 1e-10)
         assertEquals(PickupState.Watching(16, 16, 0, 1), h.pickup.state.value)
@@ -103,7 +104,7 @@ class ProximityPickupTest {
         h.source.requests.first().registered("closest")
         runCurrent()
         assertEquals(16, h.source.requests.size)
-        assertTrue(h.store.inputs.isEmpty()) // 등록 전이며 150미터 밖인 상태에서는 수신하면 안 된다.
+        assertTrue(h.store.inputs.isEmpty()) // 등록 전이며 500미터 밖인 상태에서는 수신하면 안 된다.
     }
 
     @Test fun lateIdsKeepSlotsAndOldEnterCannotReceiveNewSameKeyRequest() = runTest {
@@ -138,7 +139,7 @@ class ProximityPickupTest {
     @Test fun registrationErrorsBeforeAndAfterSuccessLatchFailureUntilExplicitNewSession() = runTest {
         for (registeredFirst in listOf(false, true)) {
             val h = Harness(backgroundScope)
-            h.positions.value = TrackedPosition(1, LocationFix(37.5, 127.0265, 0))
+            h.positions.value = TrackedPosition(1, LocationFix(37.5, 127.0235, 0))
             h.start(); runCurrent()
             val old = h.source.requests.single()
             if (registeredFirst) { old.registered("known"); runCurrent() }
@@ -249,7 +250,7 @@ class ProximityPickupTest {
         assertEquals(PickupState.Failed(PickupFailure.PROXIMITY), h.pickup.state.value)
         assertEquals(0, h.positions.subscriptionCount.value)
         h.pickup.stop(); h.source.throwAdd = false
-        h.positions.value = TrackedPosition(2, LocationFix(37.5, 127.0265, 0))
+        h.positions.value = TrackedPosition(2, LocationFix(37.5, 127.0235, 0))
         h.notes = listOf(note(1), note(2)); h.start(2); runCurrent()
         h.source.requests[0].registered("a"); h.source.requests[1].registered("b"); runCurrent()
         h.source.throwRemove = true
