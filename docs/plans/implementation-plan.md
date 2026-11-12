@@ -31,7 +31,7 @@
 | 쪽지 공유 | 앱 내부 Room DB. 서버 없음 |
 | 시연 | 노트북 1대, Pleos 에뮬레이터 1대, 앱 1개. 주행 중에도 동일 화면에서 동작. 정차 중에도 가상 사용자 A/B 전환·제보·수신 가능 |
 | 줍기 | B의 현재 위치 업데이트 때 접근 판정 → B의 수신 이력 저장 → 화면에 한 번 표시 |
-| 화면 | 현재 DO 선언 없음·이번06 새 선언 없음. 기본 UI 유지와 CarUx 기능별 제한을 함께 적용. 화면 꺼짐 방지는 별도 |
+| 화면 | 07에서 주행 중 제품 화면 사용을 위해 MainActivity의 activity metadata로 DO 선언을 계획. CarUx 기능별 제한 유지, 화면 꺼짐 방지는 별도 |
 | 제외 | 지명 검색·과거 제보·위치 핀·멀티턴·실차 간 네트워크·카메라·조명·자체 내비·선제 음성 안내 |
 
 A/B는 실제 차량 2대가 아니라 한 앱의 가상 운전자다. Room은 로컬 공유 공간 역할이며 외부 사용자에게 배포하는 서버가 아니다. 두 노트북·두 앱 인스턴스는 각자 별도 DB이므로 이번 구성으로 서로 공유되지 않는다.
@@ -46,7 +46,7 @@ A/B는 실제 차량 2대가 아니라 한 앱의 가상 운전자다. Room은 �
 | 위치 | FusedLocation 의존성/권한/초기화/수집 미구현 | 지원 확인·동의·권한·콜백·버퍼·정리 구현 |
 | 저장 | Keystore/AES-GCM 바이너리 DraftStore, 기존 초안 보존 | 합성 시연 전용 Room에 쪽지와 사용자별 수신 이력 저장 |
 | 수신 | 접근 판정 없음 | 위치 업데이트마다 후보 쪽지 필터링 및 수신 처리 |
-| 주행 표시 | Manifest DO 선언 없음, 규제 상태 연동 미구현 | 기본 구조 유지·CarUx 기능별 제한/미연결 시 설정 차단. 같은 UI가 주행 허가라는 뜻은 아님 |
+| 주행 표시 | 현재 위치 기능 브랜치의 DO 미선언은07 보완 대상 | 올바른 MainActivity DO metadata + 기존 CarUx 제한 유지. 선언만으로 실주행 적합 판정하지 않음 |
 
 기존 초안 파일은 Room 쪽지로 자동 전환하지 않는다. 좌표 없는 과거 초안을 이미 심어진 쪽지로 만들지 않으며, 별도 레거시 화면/보관으로 구분한다. Room 기본 저장이 기존 AES-GCM과 같은 암호화 보장을 준다고 가정하지 않는다. 이번 제출 DB는 합성 좌표·시험 문구 전용이며 실위치 영속 저장은 별도 보안 결정 전 열지 않는다.
 
@@ -327,12 +327,12 @@ FusedLocation 지원 확인 → 목적 동의/권한 → 초기화 → listener 
 
 | 구분 | 계획 |
 |---|---|
-| 주행 중 앱 표시 | 현재 Manifest에 DO 선언 없음, 이번06 새 선언 없음. 기본 UI를 유지하면서 CarUxRestrictions 기능별 제한을 반영하고 OS의 표시 제약을 우회하지 않음 |
+| 주행 중 앱 표시 | 현 코드의 DO 미선언을07에서 보완할 계획. MainActivity activity metadata에 distractionOptimized=true 선언 후 동일 제품 화면과 CarUxRestrictions 기능별 제한을 유지. 구현·실제 주행은 미검증 |
 | 시연 화면 전환 정책 | 주행 상태 변경으로 화면을 교체하지 않음. 같은 화면에서 역할·버퍼·쪽지·수신 결과만 갱신. A/B 전환·초기화·모드/출발점/입력시작은 NO_SETUP에서 차단. 규제 미연결/조회 오류도 설정 불가. 속도0/P를 허가로 사용하지 않음 |
 | 화면 꺼짐 방지 | 활성 시연 및 앱이 보이는 동안 Activity Window의 FLAG_KEEP_SCREEN_ON 적용. 중단/비가시/해제 때 원복 |
 | 시스템 우선 | Driving view/시스템 오버레이/절전·전원 정책 우회 없음. wake lock·주기적 화면 깨우기 사용 안 함 |
 
-현재 DO 미선언을 정정하며 새 DO를 선언하지 않는다. 기본 구조 유지와 기능별 제한은 별개다. 실제 CarUxRestrictionsManager의 현재 값/변경 콜백으로 requiresDistractionOptimization·ActiveRestrictions·플랫폼 상한을 반영한다. NO_SETUP에서는 역할·모드·출발점/reset/입력시작 명령을 UI와 Main 수락 직전에 차단한다(프로젝트의 시연 설정 분류). 규제 미연결/오류도 설정 불허·이유 표시이며 전체 앱/수신함을 잠그는 정책은 아니다. 중지·취소·패널 닫기는 유지하고, 제한 활성화 때 금지된 미수락 전환을 무효화·정리하되 수락 DB 쓰기는 끝낸다. 해제만으로 자동 재개하지 않는다. 일반 규제 엔진/전역 오버레이는 추가하지 않는다.
+07 사용자 범위 추가로06의 ‘새 DO 선언 없음’은 이후 구현 범위를 제한하는 정책에서 제외한다. 주행 중 제품 화면이 사라지는 문제를 해결하기 위해 MainActivity의 activity metadata에 DO를 선언할 계획이며, 독립 스펙 리뷰 전 앱 코드는 바꾸지 않는다. DO는 Activity 사용 선언이고 화면 꺼짐 방지나 기능 제한 해제 권한이 아니다. 실제 CarUxRestrictionsManager의 현재 값/변경 콜백으로 requiresDistractionOptimization·ActiveRestrictions·플랫폼 상한을 반영한다. NO_SETUP에서는 역할·모드·출발점/reset/입력시작 명령을 UI와 Main 수락 직전에 차단한다(프로젝트의 시연 설정 분류). 규제 미연결/오류도 설정 불허·이유 표시이며 전체 앱/수신함을 잠그는 정책은 아니다. 중지·취소·패널 닫기는 유지하고, 제한 활성화 때 금지된 미수락 전환을 무효화·정리하되 수락 DB 쓰기는 끝낸다. 해제만으로 자동 재개하지 않는다. 일반 규제 엔진/전역 오버레이는 추가하지 않는다.
 
 [공식 Pleos 규제](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)와 [CarUxRestrictions](https://developer.android.com/reference/android/car/drivingstate/CarUxRestrictions)를 근거로 기능별로 적용한다. 문자/탐색 상한은 플랫폼 값을 쓰며 DB 원문/행을 삭제·수정하거나 미표시 항목을 자동 ACK하지 않는다.06의 요구사항 매핑 표가 각 기능의 적용·검증을 추적한다. 실제 신호/지역/DO 효과·주행 UI는 NOT_TESTED다.
 
@@ -395,7 +395,7 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 | 3 | Room 쪽지/수신 이력·fixture 경로 문맥 | RoadNote/NoteReceipt/DAO, 세션 초기화, TTL·트랜잭션 | 저장/재조회/만료/복합키 중복/cascade/재시작 테스트 |
 | 4 | A 심기 유스케이스와 Gleo 연결 | 기존 Parser 유지, Receiver 수신 문맥 → 버퍼 anchor → Room | 실제 저장 후 success, 준비 부족 fail, timeout·콜백 실패 구분. debug preview와 실행 모드 구분 |
 | 5 | B 접근 판정·수신함·표시 ACK | 위치 + Room 후보 + 경로 진행값 | 전방 150m·정차/이미 반경 안·쪽지 변경 트리거·동방향·자기 제외·다른 도로·만료·이미 수신 제외 테스트 |
-| 6 | 기존 동일 UI 기반 상태/쪽지 표시·keep-screen-on·A/B 시연 컨트롤 | 현재 DO 없음/새 선언 없음·CarUx 기능별 제한·DB Flow | 주행 중 동일 UI 유지·A/B 전환·전경/배경·분할·회전·화면 꺼짐 방지/원복 실제 증거 |
+| 6 | 기존 동일 UI 기반 상태/쪽지 표시·keep-screen-on·A/B 시연 컨트롤 | 07의 MainActivity DO metadata 계획·CarUx 기능별 제한 유지·DB Flow | 주행 중 동일 UI 유지·A/B 전환·전경/배경·분할·회전·화면 꺼짐 방지/원복 실제 증거 |
 | 7 | 한 노트북 E2E 시연 패키지 | 두 경로 fixture, 재현 순서, 초기화, 상태/로그 확인 | 심기→저장→B 접근→1회 수신 영상·DB 검증. 실제 SDK/외부입력/JVM Fake 증거 분리 |
 
 각 단계는 구현 → 해당 단위/통합 검사 → 실제 환경 검토 → 실패 수정 순서로 수행한다. `python3 scripts/verify_harness.py --build` 및 작업별 JSON report를 사용한다. 자동 검사 PASS가 실차/시장 심사 PASS를 의미하지 않는다. 실제 구현 완료 상태는 단계별 작업 기록에서 갱신하며 이 설계 문서만으로 완료 체크하지 않는다.
@@ -451,3 +451,16 @@ PR4 05 독립 리뷰 B1/P1/P2/P3의 리뷰이 수용 및 사용자 전달에 따
 ## 06단계 시연·규제·보존 확정 계약 (2026-11-12)
 
 06 리뷰이 판단 B1/P1/P2 및 사용자 지시에 따른 정책이다. 새 코드/실행 검증 완료가 아니다. A 기본610±5m·실제 저장 anchor에서 B600m 뒤 요청, 두 실제 SDK 입력·no REPLAY, 현재 시나리오만 원자 reset, CarUx 기능별 제한/NO_SETUP·미연결 설정 차단을 채택한다. 제품 수신함은 **recipient 전체 JOIN·동일 한 건 큐·명시 ACK를 debug/release 모두 유지**한다. null legacy/다른 시나리오도 보존되어 있으면 조회·확인이 가능하다. 후보/등록·신규수신/대상·진행축·시연카운트만 활성 시나리오로 제한한다. v4 nullable scenarioId/단일 활성 상태행, 기존 필드·이력 유지, 소속 추정 없음. reset은 수락 쓰기0·명시 확인 후 현재 시나리오만 삭제·새 ID 갱신하며 실패 시 롤백한다.
+
+
+## 07 사용자 추가 범위: 주행 중 제품 화면 사용 (2026-11-12)
+
+사용자는 주행 중에도 앱을 사용할 수 있어야 하며 속도가 올라가면 화면이 사라지는 문제를07에서 해결하도록 명시했다. **06 당시 DO 미선언은 코드 현황/과거 범위이고, 앞으로도 추가하지 않는다는 정책은 이번 요구로 대체한다.** 이번 변경은 명세이며 앱 Manifest는 아직 바꾸지 않는다. 독립 스펙 리뷰 후 구현한다.
+
+[지역별 정책](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/driving-restiction-policy)의 ‘주행 상황에 따른 앱 사용 여부’는 DO 미선언 Drive 사용 불가를 설명한다. [개발 가이드](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)의 CarUxRestrictions 연동은 DO 선언 이후에도 기능별 제한 적용을 요구한다. 두 조건을 함께 지킨다.
+
+계획하는 최소 선언은 기존 MainActivity의 `<activity>` 자식 `<meta-data android:name="distractionOptimized" android:value="true" />`다. application/service 아래에 잘못 놓거나 debug에만 넣지 않는다. debug/release merged Manifest 및 패키징 Manifest에서 같은 Activity의 단일 Boolean true 선언을 검사한다. 기존 제품 UI/명시 확인 ACK·수락 쓰기·메모리/Room 수명·CarUx NO_SETUP/문자·깊이·항목·본문·NO_VIDEO 제한과 중지/취소/닫기를 유지한다. KEEP_SCREEN_ON은 가시성에 따른 화면 꺼짐 방지로 별도다. 주행 전용 축소 화면·강제 foreground 복귀·Gleo 확장을 추가하지 않는다.
+
+git fetch origin 후 확인한 gm/feat-speech-to-text의 b61ffd71fadc4b0d88625de85f664cdaf4e53565는 위 Activity metadata를 추가했고819df06fbd7508ecdc4b75691f5143d3db0999da는 전체 UI 복원 때 선언을 유지했다. 현재 main/위치 기능 브랜치에는 없는 변경이다. 해당 브랜치 전체 merge/cherry-pick이나 옛 UI/CarUx 구현 복사는 하지 않고 선언과 현 UI 규제 계약만 검토한다.
+
+07의 허용 host/빌드·정적 회귀와 별도 실행 허용 후의 실제 주행 재현을 분리한다. DO 선언만으로 화면 유지/주행 UX 적합성·심사 통과를 PASS로 보지 않는다. 현재 실제 주행/SDK/CarUx/UI는 NOT_TESTED이며 실행 금지는 유지한다. 독립 스펙 리뷰 대상인 세부 검증은 기능 PR의07 명세에서 연결한다.
