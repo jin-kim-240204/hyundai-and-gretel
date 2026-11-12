@@ -1,6 +1,6 @@
 # 05. 접근 감지와 사용자별 쪽지 수신
 
-상태: **5957bf2/부모fdc51fa 독립 스펙 재검토 통과(사용자 전달,5867373540) / 05 구현·허용검사 후 독립 코드 리뷰 대기**. 실제 SDK/Room/화면·기기 검증은 NOT_TESTED다. [구현·검증 기록](../../work/step05-proximity-receipts-implementation.md).
+상태: **05 수정 fdd9bbf 독립 코드 재검토 PASS(사용자 전달) / 실제 기기 검증 NOT_TESTED**. 리뷰어 직접12 JVM PASS(원 ACK 반례 포함)·기존 P2 두 스레드 해결을 전달받았다. [구현·검증 기록](../../work/step05-proximity-receipts-implementation.md) · [06 스펙](06-debug-demo-controls.md).
 
 정본은 [전체 시스템 설계](../../plans/implementation-plan.md)(부모 `spec-road-note-system`의 `fdc51fa`를 별도 커밋·푸시 후 기능 브랜치에 병합), 단계는 [00](00-overview.md), 선행 계약은 [03](03-save-road-note.md)·[04](04-nearby-candidates.md), 과거 조사 근거는 [ae11722 교훈](lessons-learned.md)이다. 리뷰이 수용에 따라 §10의 공통 정책은 부모 정본에 동기화했다. 독립 스펙 재검토 후 사용자 승인으로 구현했으며 코드 리뷰·실제 검증 상태는 위 기록을 따른다.
 

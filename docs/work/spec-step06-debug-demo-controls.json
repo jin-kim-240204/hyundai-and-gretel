@@ -1,0 +1,42 @@
+{
+  "task": "spec-step06-debug-demo-controls",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01",
+    "DES-04",
+    "DES-06"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "06명세·00/05상태·작업기록만변경. 코드/의존성/Manifest/부모정본변경없음. release debug도구제외/실제SDK경로를계획."
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "06구현전. mock권한/provider정리·실제SDK캐시gate/웹콘솔/ADB/서비스 runtime 사용자금지로미실행. 정책충돌은독립리뷰대상."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "계획에서현재시나리오reset확인·legacy보존·역할전환이력유지·원시위치메모리·자동가짜입력없음을명시. 실제DB삭제/소속변경없음."
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "제품/인앱debug패널분리·같은제품구조·시스템제약미우회계획. 주행/전체/분할/좁은창/가림실행미검증."
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "기존wireframe검토·최소패널/명시확인계획. Figma내부/정식토큰/크기·간격·도해실측/대비준수주장없음. 기기실행금지."
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "PASS",
+      "evidence": "06§5/9에서입력정리·접근/위치리스너해제·release·새instance/처리시점소유권·gate계획. 기존1.1.3계약재사용,새구현/기기PASS아님."
+    }
+  ]
+}
