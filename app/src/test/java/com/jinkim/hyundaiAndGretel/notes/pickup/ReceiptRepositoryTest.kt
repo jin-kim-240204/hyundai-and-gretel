@@ -1,6 +1,10 @@
 package com.jinkim.hyundaiAndGretel.notes.pickup
 
+import android.content.pm.ServiceInfo
 import com.jinkim.hyundaiAndGretel.location.LocationFix
+import com.jinkim.hyundaiAndGretel.location.TrackingStatus
+import com.jinkim.hyundaiAndGretel.location.foregroundServiceType
+import com.jinkim.hyundaiAndGretel.location.shouldStopTrackingService
 import com.jinkim.hyundaiAndGretel.notes.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -15,12 +19,14 @@ class ReceiptRepositoryTest {
     private class Store : ReceiptStore {
         val rows = MutableStateFlow<List<InboxItem>>(emptyList())
         var confirmCalls = 0
+        val confirmations = mutableListOf<ReceiptKey>()
         var fail = false
         var gate = CompletableDeferred<Unit>().also { it.complete(Unit) }
         override fun observeInbox(recipientId: String) = rows.map { list -> list.filter { it.recipientId == recipientId } }
         override suspend fun receive(request: ReceiptRequest): ReceiveResult { gate.await(); return ReceiveResult.RECEIVED }
         override suspend fun confirm(noteId: String, recipientId: String) {
             confirmCalls++
+            confirmations += ReceiptKey(noteId, recipientId)
             gate.await()
             if (fail) error("db")
             rows.value = rows.value.map { if (it.note.noteId == noteId && it.recipientId == recipientId) it.copy(displayedAtUtcMillis = 50) else it }
@@ -123,6 +129,83 @@ class ReceiptRepositoryTest {
         val reverse = note.copy(route = note.route!!.copy(direction = -1))
         assertNotNull(eligibleDistance(reverse, setup.copy(direction = -1), LocationFix(37.5, at(-149.99), 0), 1))
         assertNull(eligibleDistance(reverse, setup.copy(direction = -1), LocationFix(37.5, at(1.0), 0), 1))
+    }
+
+    @Test fun reusedActorObservationRejectsOldAckUiResultsButKeepsLockWriteAndDatabaseUpdates() = runTest {
+        for (oldFails in listOf(false, true)) {
+            val store = Store().apply { gate = CompletableDeferred(); fail = oldFails }
+            val actor = MutableStateFlow("B")
+            var finished = 0
+            val repo = ReceiptRepository(backgroundScope, store, actor, { finished++ })
+            store.rows.value = listOf(InboxItem(note, "B", 10, 0.0, null))
+            runCurrent()
+            val oldKey = ReceiptKey(note.noteId, "B")
+            repo.confirm(oldKey, true)
+            runCurrent()
+            actor.value = "C"; runCurrent()
+            actor.value = "B"; runCurrent()
+            assertFalse(repo.inbox.value.error)
+            assertNull(repo.inbox.value.confirming)
+            repo.confirm(oldKey, true); runCurrent()
+            assertEquals(1, store.confirmCalls) // Observation replacement must not unlock the accepted ACK.
+            assertTrue(repo.hasPendingWrites)
+            store.gate.complete(Unit); runCurrent()
+            assertFalse(repo.inbox.value.error)
+            assertNull(repo.inbox.value.confirming)
+            assertEquals(listOf(oldKey), store.confirmations)
+            assertEquals(1, finished)
+            assertFalse(repo.hasPendingWrites)
+            // A successful old DB commit remains observable through the new owner's normal Flow.
+            assertEquals(if (oldFails) null else 50L, repo.inbox.value.items.single().displayedAtUtcMillis)
+            val next = note.copy(noteId = "00000000-0000-0000-0000-000000000002")
+            store.rows.value = listOf(InboxItem(next, "B", 20, 0.0, null)); runCurrent()
+            store.fail = true
+            repo.confirm(ReceiptKey(next.noteId, "B"), true); runCurrent()
+            assertTrue(repo.inbox.value.error) // A current owner's own failure is still visible.
+            assertEquals(next, repo.inbox.value.pending!!.note)
+            assertEquals(2, finished)
+            assertFalse(repo.hasPendingWrites)
+        }
+    }
+
+    @Test fun stoppedLocalAckUsesDataSyncWithoutLocationPermissionAndKeepsAcceptedWriteAlive() = runTest {
+        val store = Store().apply { gate = CompletableDeferred() }
+        var finished = 0
+        var promotedType: Int? = null
+        val repo = ReceiptRepository(backgroundScope, store, MutableStateFlow("B"), { finished++ }, onWriteAccepted = {
+            val type = foregroundServiceType(collecting = false, sdkInt = 34)
+            if (type and ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION != 0) throw SecurityException("No location permission")
+            promotedType = type
+        })
+        store.rows.value = listOf(InboxItem(note, "B", 10, 0.0, null)); runCurrent()
+        repo.confirm(ReceiptKey(note.noteId, "B"), true); runCurrent()
+        assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC, promotedType)
+        assertEquals(1, store.confirmCalls)
+        assertTrue(repo.hasPendingWrites)
+        assertFalse(shouldStopTrackingService(
+            TrackingStatus.STOPPED, SubmissionState.Idle, repo.hasPendingWrites))
+        store.gate.complete(Unit); runCurrent()
+        assertFalse(repo.hasPendingWrites)
+        assertEquals(1, finished)
+        assertTrue(shouldStopTrackingService(
+            TrackingStatus.STOPPED, SubmissionState.Idle, repo.hasPendingWrites))
+    }
+
+    @Test fun failedForegroundOrStartedPromotionDoesNotAcceptAckOrReachStorage() = runTest {
+        for (failure in listOf(SecurityException("foreground"), IllegalStateException("started"))) {
+            val store = Store()
+            var finished = 0
+            val repo = ReceiptRepository(backgroundScope, store, MutableStateFlow("B"), { finished++ },
+                onWriteAccepted = { throw failure })
+            store.rows.value = listOf(InboxItem(note, "B", 10, 0.0, null)); runCurrent()
+            repo.confirm(ReceiptKey(note.noteId, "B"), true); runCurrent()
+            assertEquals(0, store.confirmCalls)
+            assertFalse(repo.hasPendingWrites)
+            assertNull(repo.inbox.value.confirming)
+            assertTrue(repo.inbox.value.error)
+            assertNotNull(repo.inbox.value.pending)
+            assertEquals(0, finished)
+        }
     }
 
     @Test fun eligibilityPreservesExpirySelfDirectionAndLegacyBoundaries() {

@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <queries><package android:name="ai.pleos.playground.service.location.fused" /></queries>
     <application
@@ -16,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HyundaiAndGretel">
         <service android:name=".location.LocationTrackingService" android:exported="false"
-            android:foregroundServiceType="location" />
+            android:foregroundServiceType="location|dataSync" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

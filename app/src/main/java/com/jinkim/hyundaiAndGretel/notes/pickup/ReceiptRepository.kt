@@ -26,10 +26,12 @@ class ReceiptRepository(
     private var writes = 0
     val hasPendingWrites get() = writes > 0
     private var confirming: ReceiptKey? = null
+    private var observationOwner: Any? = null
 
     init {
         scope.launch {
             recipient.collectLatest { actor ->
+                observationOwner = Any()
                 mutableInbox.value = InboxState()
                 val ownerContext = coroutineContext
                 try {
@@ -69,9 +71,14 @@ class ReceiptRepository(
         val pending = inbox.value.pending ?: return
         if (!screenResumed || confirming != null || recipient.value != key.recipientId ||
             pending.recipientId != key.recipientId || pending.note.noteId != key.noteId) return
+        val owner = observationOwner ?: return
         try { onWriteAccepted() }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { mutableInbox.value = mutableInbox.value.copy(error = true); return }
+        catch (_: Exception) {
+            if (observationOwner === owner && recipient.value == key.recipientId)
+                mutableInbox.value = mutableInbox.value.copy(error = true)
+            return
+        }
         confirming = key
         mutableInbox.value = mutableInbox.value.copy(confirming = key, error = false)
         writes++
@@ -81,10 +88,10 @@ class ReceiptRepository(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                if (recipient.value == key.recipientId) mutableInbox.value = mutableInbox.value.copy(error = true)
+                if (observationOwner === owner && recipient.value == key.recipientId) mutableInbox.value = mutableInbox.value.copy(error = true)
             } finally {
                 confirming = null
-                if (recipient.value == key.recipientId) mutableInbox.value = mutableInbox.value.copy(confirming = null)
+                if (observationOwner === owner && recipient.value == key.recipientId) mutableInbox.value = mutableInbox.value.copy(confirming = null)
                 writes--
                 onFinished()
             }

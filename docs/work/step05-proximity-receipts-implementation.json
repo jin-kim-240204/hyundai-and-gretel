@@ -10,12 +10,12 @@
     {
       "id": "ENV-02",
       "status": "PASS",
-      "evidence": "JVM69/69, Debug/Release/계측APK 컴파일/lintDebug/하네스--build PASS. H3 APK arm64/armv7 ELF 정적 확인. 의존성/ABI/Manifest 불변."
+      "evidence": "05 P2 수정 후 JVM73/73·Debug/Release/lintDebug/하네스--build PASS. 원본/mergedManifest location|dataSync 및 타입권한 일치. API28/29/34+ 타입선택·승격실패DB0 Fake검증. 의존성/SDK/ABI 불변."
     },
     {
       "id": "VEH-03",
       "status": "NOT_TESTED",
-      "evidence": "Fake로 pending16/lateID/동일세션실패/2초/150m/수락쓰기 검증. 실제SDK 등록·오류·해제/Roommigration·트랜잭션·JNI/FGS·바인딩실행은 사용자금지로 미실행. 전체AC 완료 아님."
+      "evidence": "원ACK반례1FAIL→동일소스PASS, STOPPED 타입회귀1FAIL→PASS. 관찰토큰 B→C→B UI격리/원래키쓰기·정리 및 승격실패수락거절 회귀PASS. 실제AndroidFGS전환/권한/마지막unbind·Room/SDK/JNI/기기 사용자금지로 NOT_TESTED, 전체AC완료아님."
     },
     {
       "id": "PRIV-01",

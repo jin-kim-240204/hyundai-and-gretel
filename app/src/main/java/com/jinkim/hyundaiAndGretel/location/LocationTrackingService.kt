@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.Binder
 import android.os.IBinder
@@ -117,7 +116,7 @@ class LocationTrackingService : Service() {
         if (isTracking || submissions.isSubmitting || receipts.hasPendingWrites) return
         try {
             val notification = buildTrackingNotification()
-            val serviceType = if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
+            val serviceType = foregroundServiceType(collecting = true, sdkInt = Build.VERSION.SDK_INT)
             ServiceCompat.startForeground(this, 1, notification, serviceType)
             candidates
             tracking.start()
@@ -146,7 +145,16 @@ class LocationTrackingService : Service() {
 
     private fun finishWhenStorageIsIdle() {
         if (submissions.isSubmitting || receipts.hasPendingWrites) {
-            getSystemService(NotificationManager::class.java).notify(1, buildTrackingNotification(savingOnly = !isTracking))
+            if (isTracking) {
+                getSystemService(NotificationManager::class.java).notify(1, buildTrackingNotification())
+            } else {
+                try { promoteStorageForeground() }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (error: Exception) {
+                    // Already accepted writes still finish even if the type transition fails.
+                    if (BuildConfig.DEBUG) Log.d("RoadNote", "STORAGE_FOREGROUND ${error.javaClass.simpleName}")
+                }
+            }
         } else if (shouldStopTrackingService(tracking.status.value, submissions.state.value, receipts.hasPendingWrites)) {
             stopForegroundAndRequestServiceStop()
         }
@@ -155,14 +163,20 @@ class LocationTrackingService : Service() {
     private fun holdStorageForeground() {
         if (isTracking) return
         // A bound-only service must become started before an accepted ACK outlives unbinding.
-        ServiceCompat.startForeground(this, 1, buildTrackingNotification(savingOnly = true),
-            if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+        promoteStorageForeground()
         try {
             startService(Intent(this, LocationTrackingService::class.java).setAction(ACTION_STORAGE_HOLD))
         } catch (error: RuntimeException) {
-            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+            if (!submissions.isSubmitting && !receipts.hasPendingWrites) {
+                ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+            }
             throw error
         }
+    }
+
+    private fun promoteStorageForeground() {
+        ServiceCompat.startForeground(this, 1, buildTrackingNotification(savingOnly = true),
+            foregroundServiceType(collecting = false, sdkInt = Build.VERSION.SDK_INT))
     }
 
     private fun stopForegroundAndRequestServiceStop() {

@@ -33,3 +33,17 @@ Binder→LocationConnection→ViewModel→Compose로 수신상태·맨앞항목�
 추가PASS: 실제03 Repository·04 NearbyCandidates.currentCandidates·05수신/ACK를연결한메모리/Fake 흐름1개. anchor저장→400m밖미등록→400m내등록→150m안보완수신→중복차단→명시확인→원본유지 검증. 총JVM69/69 실패/오류/skip0. Debug/Release/계측APK컴파일/lintDebug 재PASS. 실제SDK/Room테스트PASS로확대하지않음. 증거 /private/tmp/step05-final-checks.log, step05-harness-build.log 및 Gradle XML. 계측테스트는컴파일만했다.
 
 P01~P05/P08/P09는Fake/순수회귀범위PASS, P06/P07 Room이관·JOIN/동시성·cascade는계측작성/컴파일·schema정적만PASS이고실제실행NOT_TESTED. P10확인계약은Repository/Fake만PASS이며실제Compose노출/조작NOT_TESTED. P11빌드/패키징정적PASS,SDK/JNI/기기E2E NOT_TESTED. 스펙은사용자전달의독립재검토PASS로상태만갱신하며부모정책을새로바꾸지않음. 독립코드리뷰대기·06선행없음.
+
+## 05 코드 리뷰 P2 두 건 후속
+
+기준a58efa2. pr4-05-code-review.md/response.md와 원격4545085650/5659·리뷰이답글4545098096/8464 대조. 필수수용: 동일서비스 수집location/저장전용dataSync·Manifest/API일치·수락전승격실패DB0·수락쓰기유지, recipient관찰소유토큰으로B→C→B옛ACK 직접UI결과격리·원래키DB쓰기/단일잠금/writes/onFinished유지. 적용ENV-02/VEH-03/PRIV-01·기존초기화해제/명시ACK계약. 코드/테스트/해당작업기록만 수정하며공통정책/06/SDK/polling/타역할파일은변경하지않음.
+
+수정 전 독립 AckOwnerProbeTest 동일소스를 직접 실행해1FAIL 확인: old B failure→new B inbox.error=true. 증거 /private/tmp/step05-p2-owner-before.xml/log. FGS 문제는 공식Android14 runtime/dataSync/location 원문과현Manifest/호출에근거하며기기재현이아님. 현재 두호출의 동일location 선택을좁은순수함수로행동보존추출한뒤 STOPPED 기대값 회귀를 red→green으로확인한다.
+
+P2 수정결과: 순수 타입선택(API28=0/API29+=수집location·저장dataSync)을 두 실제승격호출에연결하고 Manifest에location|dataSync/FOREGROUND_SERVICE_DATA_SYNC를함께선언. 추적중지후수락쓰기만남아도저장타입으로전환시도하며실패가이미수락한쓰기를취소하지않음. 새ACK 수락전foreground→started중예외는DB0/오류/PENDING,기존수락쓰기가있으면started실패정리로기존foreground를임의제거하지않음. 별도서비스/WorkManager/위치권한재요청없음. 공식Android14 dataSync/local file processing·location/runtime 원문 https://developer.android.google.cn/about/versions/14/changes/fgs-types-required?hl=en 을2026-11-12 재확인했다. 플랫폼실행PASS가아니라타입선택/호출/Manifest 정적근거다.
+
+ACK는 recipient 관찰 시작마다 소유토큰1개를교체하고수락시캡처한다. catch/finally의직접UI오류/confirming반영만사용자ID+토큰으로제한한다. 원래noteId/recipientId 쓰기·단일ACK잠금·writes감소·onFinished는관찰교체와무관하게끝낸다. 옛성공커밋은새B의정상JOINFlow에보이도록유지. 범용세션매니저/쓰기취소없음.
+
+검사: 수정전 ACK독립반례1FAIL 및 기존타입선택을행동보존추출한타입회귀1FAIL(expecteddataSync1/actuallocation8)→수정후원반례동일소스+타입회귀모두PASS. /private/tmp/step05-p2-owner-before.xml·type-before.xml·probes-after.log. 최종기존69+추가4=JVM73/73,실패/오류/skip0. B→C→B옛성공/실패UI격리·원래키/잠금/카운트/후처리보존·새B자신실패,STOPPED/위치권한없음Fake에서ACK저장도달·승격/started예외DB0,수락쓰기후종료판단회귀PASS.
+
+PASS: assembleDebug/assembleRelease/lintDebug·하네스--build·diff정적,Debug/Release mergedManifest와원본의타입/권한일치,기존pollingdiff일치. /private/tmp/step05-p2-final.log·harness.log. 현재영향의순수JVM/빌드/정적만실행했고이번계측작성/실행없음. 실제AndroidFGS유형전환/권한회수/마지막unbind·Room/SDK/UI/기기는NOT_TESTED. 기존사용자polling이있는작업트리를컴파일했으며해당코드실행/커밋없음. 다음은고정SHA로PR두스레드반영답글·독립재검토대기,resolve/06진행없음.
