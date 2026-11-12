@@ -7,11 +7,13 @@
 | 목적 | 파일 / 종류 | 책임 |
 |---|---|---|
 | 화면 시작 | [MainActivity](../app/src/main/java/com/jinkim/hyundaiAndGretel/MainActivity.kt), 실제 Android 진입점 | 길쪽지 Route를 화면에 연결 |
-| 화면 연결 | [RoadNotesRoute](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/RoadNotesRoute.kt), 실제 Compose 진입점 | 상태 구독·권한 화면·제품 화면과 debug 패널 연결 |
+| 화면 연결 | [RoadNotesRoute](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/RoadNotesRoute.kt), 실제 Compose 진입점 | Activity 범위의 ViewModel 조회·상태 구독·권한 화면·제품 화면과 debug 패널 연결 |
 | 권한 진입 | [LocationPermissionGate](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/LocationPermissionGate.kt), 권한용 UI | 미허용이면 안내/허용·설정 버튼, 허용 상태면 제품 화면. 허용 자체로 수집 자동 시작 없음 |
 | 화면 유지 | [KeepScreenOnWhileTracking](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/KeepScreenOnWhileTracking.kt), 화면 수명 효과 | 수집 중이며 STARTED 이상일 때만 화면 켜짐 유지, 화면 이탈/해제 시 정리 |
 | 제품 화면 | [RoadNotesScreen](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/RoadNotesScreen.kt), 실제 화면 함수 | 상태와 버튼/현재 수신 카드. 패널은 DemoPanel로 별도 |
-| 화면 이벤트 | [RoadNotesViewModel](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/RoadNotesViewModel.kt), 실제 처리자 | Android 서비스 연결/명령·방문 정본 snapshot |
+| 화면 이벤트 | [RoadNotesViewModel](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/RoadNotesViewModel.kt), 실제 처리자 | 화면 상태 조합·이벤트 진입점·방문 정본 snapshot |
+| Android 연결/명령 | [RoadNoteServiceClient](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/RoadNoteServiceClient.kt), 실제 처리자 | bind/unbind·시작/중지 Intent·명령 실패. 연결 해제와 서비스 종료를 구분 |
+| 시연 화면 상태 | [DemoViewModel](../app/src/debug/java/com/jinkim/hyundaiAndGretel/demo/DemoViewModel.kt), debug 전용 | 제품 화면의 서비스 연결을 공유해 역할/모드/reset 전달. SDK·바인딩 수명은 소유하지 않음 |
 | 연결 교체 | [RoadNoteServiceConnection](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/RoadNoteServiceConnection.kt), 실제 처리자 | 현재 서비스만 관찰·이벤트 전달. SQL/SDK를 모름 |
 | 화면 상태 | [RoadNotesUiState](../app/src/main/java/com/jinkim/hyundaiAndGretel/ui/roadnotes/RoadNotesUiState.kt), data class | 화면 값과 버튼 가능 여부. 서비스 연결 수명과 별도로 읽음 |
 | 화면용 계약 | [RoadNoteServiceContract](../app/src/main/java/com/jinkim/hyundaiAndGretel/service/RoadNoteServiceContract.kt), interface | 화면이 읽는 Flow와 제보/확인 명령 |
@@ -45,7 +47,7 @@ UI/서비스는 가능 여부·수명을, Submission은 고정한 anchor/작성�
 
 `PleosLocationSource callback → LocationTracking(세션/gate/버퍼/현재 위치) → NearbyNoteCandidates → NearbyNoteStore / Room Flow → ProximityPickup(ENTER 또는 이미 안) → NoteReceiptProcessor.receive → ReceiptStore.receive → RoomReceiptStore.withTransaction → ReceiptDao.insert → recipient 전체 JOIN → RoadNotesUiState/Screen`
 
-이후 현재 명시 확인은 `ViewModel 방문 snapshot → Connection → Binder 최신 규제 confirmVisibleReceipt → NoteReceiptProcessor.confirm → ReceiptStore.confirm → Room UPDATE`다. callback 등록/해제/늦은 결과는 같은 PickupSession/ProximityRegistration에 유지했다. 원본은 수신/확인으로 삭제하지 않으며 실제 표시/음성 자동 ACK는 추가하지 않았다.
+이후 현재 명시 확인은 `ViewModel 방문 snapshot → ServiceClient → Connection → Binder 최신 규제 confirmVisibleReceipt → NoteReceiptProcessor.confirm → ReceiptStore.confirm → Room UPDATE`다. callback 등록/해제/늦은 결과는 같은 PickupSession/ProximityRegistration에 유지했다. 원본은 수신/확인으로 삭제하지 않으며 실제 표시/음성 자동 ACK는 추가하지 않았다.
 
 ## 현재 DB: 새 개발 기준 v1
 

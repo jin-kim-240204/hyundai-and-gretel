@@ -5,4 +5,4 @@ import com.jinkim.hyundaiAndGretel.ui.roadnotes.RoadNotesViewModel
 
 @Suppress("UNUSED_PARAMETER")
 @Composable
-fun DemoPanel(viewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> Unit) = Unit
+fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> Unit) = Unit

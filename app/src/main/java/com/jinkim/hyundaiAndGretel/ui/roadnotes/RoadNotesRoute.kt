@@ -9,31 +9,35 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jinkim.hyundaiAndGretel.demo.DemoPanel
 import com.jinkim.hyundaiAndGretel.ui.theme.HyundaiAndGretelTheme
 
 /** 화면 상태 구독과 이벤트 연결은 여기서, 실제 화면 구성은 Screen에서 담당한다. */
 @Composable
-fun RoadNotesRoute(viewModel: RoadNotesViewModel, window: Window) {
+fun RoadNotesRoute(
+    window: Window,
+    viewModel: RoadNotesViewModel = viewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     KeepScreenOnWhileTracking(window, state.trackingStatus.isCollecting)
 
     HyundaiAndGretelTheme {
-        LocationPermissionGate(state.restrictions, onStopTracking = viewModel::stop) {
+        LocationPermissionGate(state.restrictions, onStopTracking = viewModel::stopTracking) {
             Box(Modifier.fillMaxSize()) {
                 RoadNotesScreen(
                     state = state,
                     startAllowed = viewModel.canStartTracking,
-                    onStartTracking = viewModel::start,
-                    onStopTracking = viewModel::stop,
+                    onStartTracking = viewModel::startTracking,
+                    onStopTracking = viewModel::stopTracking,
                     onConfirmReceipt = { key ->
                         viewModel.confirmReceipt(key, lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
                     },
                     onContentShown = viewModel::markPresented,
                 )
                 // 디버그 전용 UI 연결은 이 한 곳에만 둔다. 릴리스 구현은 아무것도 표시하지 않는다.
-                DemoPanel(viewModel, onStart = viewModel::start, onStop = viewModel::stop)
+                DemoPanel(viewModel, onStart = viewModel::startTracking, onStop = viewModel::stopTracking)
             }
         }
     }

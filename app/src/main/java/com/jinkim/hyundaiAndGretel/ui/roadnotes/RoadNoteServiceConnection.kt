@@ -22,6 +22,7 @@ class RoadNoteServiceConnection(scope: CoroutineScope) {
     private val current = MutableStateFlow<RoadNoteServiceContract?>(null)
 
     // 리뷰용: 현재 연결의 상태 흐름만 구독한다. 연결이 바뀌면 이전 서비스 관찰을 취소하고 새 상태로 화면을 구성한다.
+    // TODO(코루틴 업데이트 검토): flatMapLatest의 실험 상태·이전 구독 취소·buffer(0) 동작을 재확인한다.
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<RoadNotesUiState> = current.flatMapLatest { session ->
         if (session == null) flowOf(RoadNotesUiState())
@@ -29,6 +30,8 @@ class RoadNoteServiceConnection(scope: CoroutineScope) {
             RoadNotesUiState(status, submission, inbox, pickup)
         }.combine(session.uiRestrictions) { state, policy -> state.copy(restrictions = policy) }
     }.buffer(0).stateIn(scope, SharingStarted.Eagerly, RoadNotesUiState())
+
+    val canStartTracking get() = current.value?.canStartTracking ?: true
 
     fun connect(session: RoadNoteServiceContract?) {
         current.value = session

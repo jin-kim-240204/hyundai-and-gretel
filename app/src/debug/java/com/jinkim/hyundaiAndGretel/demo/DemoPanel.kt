@@ -15,35 +15,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.jinkim.hyundaiAndGretel.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import com.jinkim.hyundaiAndGretel.ui.roadnotes.*
 import com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions
 
-/** Activity와 같은 뷰모델을 받는다. 시연 동작은 그 서비스의 DemoRuntime이 처리한다. */
+/** 제품 상태와 debug ViewModel을 조합한다. 두 ViewModel은 같은 서비스 연결을 사용한다. */
 @Composable
-fun DemoPanel(viewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> Unit) {
-    val runtime by viewModel.demoRuntime.collectAsStateWithLifecycle()
+fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> Unit) {
+    val demoViewModel: DemoViewModel = viewModel(factory = viewModelFactory {
+        initializer { DemoViewModel(productViewModel.serviceClient.service) }
+    })
+    val runtime by demoViewModel.runtime.collectAsStateWithLifecycle()
     val tools = runtime ?: return
-    val ui by viewModel.uiState.collectAsStateWithLifecycle()
+    val ui by productViewModel.uiState.collectAsStateWithLifecycle()
     var open by remember { mutableStateOf(false) }
     BackHandler(open) { open = false }
     Box(Modifier.fillMaxSize()) {
         if (open) {
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)).clickable { })
             Surface(Modifier.align(Alignment.CenterEnd).widthIn(max = 480.dp).fillMaxHeight(), tonalElevation = 8.dp) {
-                DemoPanelContents(viewModel, tools, ui, onStart, onStop, onClose = { open = false })
+                DemoPanelContents(productViewModel, demoViewModel, tools, ui, onStart, onStop, onClose = { open = false })
             }
         } else {
             Button(onClick = { open = true }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).heightIn(min = 56.dp)) {
-                PolicyText("시연 도구", ui.restrictions)
+                PolicyText(stringResource(R.string.debug_tools_open), ui.restrictions)
             }
         }
     }
 }
 
 @Composable
-private fun DemoPanelContents(viewModel: RoadNotesViewModel, tools: DemoRuntime, ui: RoadNotesUiState, onStart: () -> Unit, onStop: () -> Unit, onClose: () -> Unit) {
+private fun DemoPanelContents(viewModel: RoadNotesViewModel, demoViewModel: DemoViewModel, tools: DemoRuntime, ui: RoadNotesUiState, onStart: () -> Unit, onStop: () -> Unit, onClose: () -> Unit) {
     val demo by tools.state.collectAsStateWithLifecycle()
     val notes by tools.notes.collectAsStateWithLifecycle()
     var details by remember { mutableStateOf(false) }
@@ -54,18 +60,19 @@ private fun DemoPanelContents(viewModel: RoadNotesViewModel, tools: DemoRuntime,
     SideEffect { visible.forEach { viewModel.markPresented("debug:$it") } }
 
     Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        PolicyText("시연 도구 · 합성 데이터", policy, style = MaterialTheme.typography.titleLarge)
+        PolicyText(stringResource(R.string.debug_tools_title), policy, style = MaterialTheme.typography.titleLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onClose, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("닫기", policy) }
-            Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("중지 / 취소", policy) }
+            Button(onClick = onClose, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_tools_close), policy) }
+            Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_tools_stop), policy) }
         }
-        PolicyText("${if (demo.actor == "A") "제보자 A" else "수신자 B"} · ${demo.mode} · ${demo.phase}", policy)
+        val role = stringResource(if (demo.actor == "A") R.string.debug_role_author else R.string.debug_role_recipient)
+        PolicyText(stringResource(R.string.debug_session_status, role, demo.mode, demo.phase), policy)
         PolicyText(demo.inputStatus, policy)
         demo.message?.let { PolicyText(it, policy) }
-        if (!policy.canSetup) PolicyText("규제 미연결 또는 설정 제한 · 중지/닫기는 가능합니다", policy)
+        if (!policy.canSetup) PolicyText(stringResource(R.string.debug_setup_restricted), policy)
 
         if ("settings" in visible) {
-            DemoRoleAndInputControls(tools, demo, settingsAllowed, ui.canStart, onStart, policy)
+            DemoRoleAndInputControls(demoViewModel, demo, settingsAllowed, ui.canStart, onStart, policy)
             if (demo.actor == "A") {
                 val content = stringResource(R.string.debug_note_fixture)
                 Button(
@@ -74,39 +81,38 @@ private fun DemoPanelContents(viewModel: RoadNotesViewModel, tools: DemoRuntime,
                     modifier = Modifier.heightIn(min = 56.dp),
                 ) { PolicyText(stringResource(R.string.debug_note_submit), policy) }
             }
-            DemoResetControl(tools, settingsAllowed, policy)
+            DemoResetControl(demoViewModel, demo, settingsAllowed, policy)
             Button(onClick = { details = !details }, modifier = Modifier.heightIn(min = 56.dp)) {
-                PolicyText(if (details) "상세 접기" else "상세 진단", policy)
+                PolicyText(stringResource(if (details) R.string.debug_details_close else R.string.debug_details_open), policy)
             }
-        } else PolicyText("플랫폼 탐색 제한으로 시연 설정/상세 표시를 보류합니다", policy)
+        } else PolicyText(stringResource(R.string.debug_content_restricted), policy)
 
-        if (details) DemoDiagnostics(ui, demo, notes, visible, tools.writesBusy, viewModel::bufferSummary)
+        if (details) DemoDiagnostics(ui, demo, notes, visible, tools.writesBusy, demoViewModel::bufferSnapshot)
         if ("plot" in visible) DemoRoutePlot(demo, notes, policy)
     }
 }
 
 @Composable
-private fun DemoRoleAndInputControls(tools: DemoRuntime, demo: DemoState, allowed: Boolean, canStart: Boolean, onStart: () -> Unit, policy: UiRestrictions) {
+private fun DemoRoleAndInputControls(viewModel: DemoViewModel, demo: DemoState, allowed: Boolean, canStart: Boolean, onStart: () -> Unit, policy: UiRestrictions) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = { tools.role("A") }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("제보자 A", policy) }
-        Button(onClick = { tools.role("B") }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("수신자 B", policy) }
+        Button(onClick = { viewModel.selectActor("A") }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_role_author), policy) }
+        Button(onClick = { viewModel.selectActor("B") }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_role_recipient), policy) }
     }
-    Button(onClick = { tools.mode(DemoMode.WEB_CONSOLE) }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("웹콘솔 GPS", policy) }
-    Button(onClick = { tools.mode(DemoMode.EXTERNAL_ADB) }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("외부 ADB 입력", policy) }
+    Button(onClick = { viewModel.selectMode(DemoMode.WEB_CONSOLE) }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_mode_console), policy) }
+    Button(onClick = { viewModel.selectMode(DemoMode.EXTERNAL_ADB) }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_mode_external), policy) }
     Button(onClick = onStart, enabled = allowed && canStart, modifier = Modifier.heightIn(min = 56.dp)) {
-        PolicyText("${if (demo.actor == "A") "제보자" else "수신자"} 시작 위치 설정", policy)
+        PolicyText(stringResource(if (demo.actor == "A") R.string.debug_start_author else R.string.debug_start_recipient), policy)
     }
 }
 
 @Composable
-private fun DemoResetControl(tools: DemoRuntime, allowed: Boolean, policy: UiRestrictions) {
-    val demo by tools.state.collectAsStateWithLifecycle()
+private fun DemoResetControl(viewModel: DemoViewModel, demo: DemoState, allowed: Boolean, policy: UiRestrictions) {
     var confirming by remember(demo.actor, demo.mode, demo.phase) { mutableStateOf(false) }
-    Button(onClick = { confirming = true }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("새 시연 초기화", policy) }
+    Button(onClick = { confirming = true }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_reset_open), policy) }
     if (confirming) {
-        PolicyText("현재 시연의 원본과 연결 이력만 삭제합니다. 다른 시연/legacy는 보존합니다.", policy)
-        Button(onClick = { tools.reset(true); confirming = false }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("초기화 확인", policy) }
-        Button(onClick = { confirming = false }, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText("취소", policy) }
+        PolicyText(stringResource(R.string.debug_reset_description), policy)
+        Button(onClick = { viewModel.resetScenario(); confirming = false }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_reset_confirm), policy) }
+        Button(onClick = { confirming = false }, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_reset_cancel), policy) }
     }
 }
 

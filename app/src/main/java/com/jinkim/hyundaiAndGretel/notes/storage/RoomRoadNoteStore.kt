@@ -49,6 +49,7 @@ class RoomRoadNoteStore internal constructor(
         CreateNoteResult.StorageFailure
     }
 
+    // TODO(코루틴 업데이트 검토): flatMapLatest의 실험 상태와 시나리오 전환 시 이전 DB 구독 취소를 재확인한다.
     @OptIn(ExperimentalCoroutinesApi::class)
     // 리뷰용: DB가 셀 범위의 변경을 Flow로 전달한다. 활성 시나리오가 있으면 그 범위로 좁히고, 각 행의 H3 정보도 재검증한다.
     override fun observeNearby(cells: Set<String>): Flow<List<RoadNote>> {

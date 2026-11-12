@@ -257,8 +257,9 @@ class RoadNoteService : Service() {
         override val inboxState get() = receipts.inbox
         override val pickupState get() = pickup.state
         override val uiRestrictions get() = restrictions.state
+        override val canStartTracking get() = !demo.enabled || (restrictions.state.value.canSetup && !demo.transitioning)
         val demoRuntime get() = demo
-        fun bufferSummary() = tracking.bufferSummary()
+        fun bufferSnapshot() = tracking.bufferSnapshot()
         override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean, visitedContent: Set<String>) {
             if (!demo.blocksNewWrites) receipts.confirmVisibleReceipt(key, screenResumed, restrictions.state.value, visitedContent)
         }

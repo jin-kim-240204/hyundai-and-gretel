@@ -15,6 +15,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class RoadNoteServiceConnectionTest {
     private class Session(status: TrackingStatus, submission: SubmissionState) : RoadNoteServiceContract {
+        override var canStartTracking = true
         override val uiRestrictions = MutableStateFlow(com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions())
         override val status = MutableStateFlow(status)
         override val submissionState = MutableStateFlow(submission)
@@ -29,6 +30,21 @@ class RoadNoteServiceConnectionTest {
             calls += content to category
             submissionState.value = SubmissionState.Submitting
         }
+    }
+
+    @Test fun startEligibilityUsesCurrentContractBeforeStateCollection() = runTest {
+        val a = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val b = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val connection = RoadNoteServiceConnection(backgroundScope)
+        connection.connect(a)
+        a.canStartTracking = false
+        assertFalse(connection.canStartTracking)
+        connection.connect(b)
+        assertTrue(connection.canStartTracking)
+        b.canStartTracking = false
+        assertFalse(connection.canStartTracking)
+        connection.connect(null)
+        assertTrue(connection.canStartTracking)
     }
 
     @Test fun disconnectAndReplacementRejectQueuedOldStateAndOldClickTarget() = runTest {

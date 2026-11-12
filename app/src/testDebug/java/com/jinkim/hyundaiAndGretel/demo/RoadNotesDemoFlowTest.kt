@@ -162,6 +162,25 @@ class RoadNotesDemoFlowTest {
         }
     }
 
+    @Test fun repeatedRoleChangesClearMemoryBufferButPreserveStoredNotesAndReceipts() = runTest {
+        val h = Harness(this)
+        h.demo.reset(true); runCurrent(); h.ready(); h.drive(35)
+        h.submissions.submit("구덩이", NoteCategory.WARNING); runCurrent()
+        assertTrue(h.submissions.state.value is SubmissionState.Saved)
+        val originals = h.store.originals.value.toList()
+        val receipts = h.store.received.value.toList()
+        val oldSource = h.sources.last()
+        assertTrue(h.tracking.bufferSnapshot().sampleCount > 0)
+        for (actor in listOf("B", "A", "B")) {
+            h.demo.role(actor); runCurrent()
+            oldSource.location(DemoGeometry.fix(960.0, h.elapsed()), h.elapsed()); runCurrent()
+            assertEquals(0, h.tracking.bufferSnapshot().sampleCount)
+            assertNull(h.tracking.currentPosition.value)
+            assertEquals(originals, h.store.originals.value)
+            assertEquals(receipts, h.store.received.value)
+        }
+    }
+
     @Test fun sdkGatedAnchorThroughCandidatePickupExplicitAckAndScopedResetPreservesHistory() = runTest {
         val h = Harness(this)
         h.demo.reset(true); runCurrent(); h.ready(); h.drive(35)

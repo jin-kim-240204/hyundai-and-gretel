@@ -138,14 +138,15 @@ class TrackingLifecycleTest {
             withContext(Dispatchers.Main) {
                 val app = object : Application() {
                     init { attachBaseContext(context) }
+                    override fun getApplicationContext(): Context = this
                     override fun bindService(intent: Intent, connection: ServiceConnection, flags: Int) = false
                     override fun startForegroundService(intent: Intent): ComponentName? = throw SecurityException("test")
                 }
                 val model = RoadNotesViewModel(app)
                 store.put("test", model)
-                model.start()
+                model.startTracking()
                 assertTrue(model.startCommandFailed.value)
-                model.onServiceConnected(ComponentName(context, RoadNoteService::class.java), binder)
+                model.serviceClient.onServiceConnected(ComponentName(context, RoadNoteService::class.java), binder)
             }
             // 뷰모델의 관찰 작업이 서비스 초기 상태를 받을 때까지 진행한다.
             withContext(Dispatchers.Main) {

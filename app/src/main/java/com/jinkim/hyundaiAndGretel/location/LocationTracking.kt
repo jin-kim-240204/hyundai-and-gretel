@@ -133,8 +133,8 @@ class LocationTracking(
         onFailure()
     }
 
-    /** 위치 수집 실행 문맥에서 호출한다. 시각 조회와 표본 선택 중에는 실행을 양보하지 않는다. */
-    fun bufferSummary(): String = "표본 ${buffer.size} · 수신 ${buffer.oldestElapsedMillis ?: "-"}..${buffer.latestElapsedMillis ?: "-"}ms"
+    /** 위치 수집 실행 문맥에서 진단용 표본 수와 수신 시각 범위를 읽는다. */
+    fun bufferSnapshot() = LocationBufferSnapshot(buffer.size, buffer.oldestElapsedMillis, buffer.latestElapsedMillis)
 
     fun selectAnchor(): AnchorSelection = buffer.select(clock())
 

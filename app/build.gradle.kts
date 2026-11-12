@@ -36,7 +36,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.1")
+    // TODO(코루틴 업데이트 검토): 버전 변경 시 docs/work/coroutines-upgrade-review.md의 flatMapLatest 점검을 수행한다.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation("androidx.test:runner:1.7.0")

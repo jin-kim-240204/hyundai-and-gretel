@@ -1,0 +1,19 @@
+{
+  "task": "Route에서 ViewModel 조회",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "debug/release·계측compile/lint/JVM100 PASS; docs/work/route-viewmodel-owner.md"
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "기존 Activity 소유자/Factory 사용, bind/unbind 코드 동일. 실제 Activity 재생성/서비스 수명은 이번 변경 후 미실행"
+    }
+  ]
+}

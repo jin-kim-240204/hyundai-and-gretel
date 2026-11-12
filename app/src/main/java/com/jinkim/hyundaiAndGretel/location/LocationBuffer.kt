@@ -3,6 +3,12 @@ package com.jinkim.hyundaiAndGretel.location
 import kotlin.math.abs
 import java.util.concurrent.TimeUnit
 
+data class LocationBufferSnapshot(
+    val sampleCount: Int,
+    val oldestReceivedElapsedMillis: Long?,
+    val latestReceivedElapsedMillis: Long?,
+)
+
 data class LocationAnchor(val sample: LocationFix, val selectedElapsedMillis: Long) {
     val offsetMillis get() = selectedElapsedMillis - sample.receivedElapsedMillis
 }
