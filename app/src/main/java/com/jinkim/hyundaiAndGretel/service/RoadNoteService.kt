@@ -46,11 +46,9 @@ class RoadNoteService : Service() {
     private fun requestStart() {
         if (!demo.enabled) { startTracking(); return }
         try {
-            if (restrictions.state.value.canSetup && !submissions.isSubmitting && !receipts.hasPendingWrites &&
-                !demo.transitioning && activeScenario.value != null) {
-                ServiceCompat.startForeground(this, 1, notifications.build(),
-                    foregroundServiceType(collecting = true, sdkInt = Build.VERSION.SDK_INT))
-            }
+            // 시연이 시작을 거절해도 startForegroundService의 전환 의무는 먼저 충족해야 한다.
+            ServiceCompat.startForeground(this, 1, notifications.build(),
+                foregroundServiceType(collecting = true, sdkInt = Build.VERSION.SDK_INT))
             demo.requestStart()
             finishWhenStorageIsIdle()
         } catch (cancelled: CancellationException) { throw cancelled }

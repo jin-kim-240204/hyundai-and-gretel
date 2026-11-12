@@ -1,0 +1,24 @@
+{
+  "task": "위치 시작 포그라운드 전환 누락 수정",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "JVM102/debug/release/계측compile/lint/harness/artifacts/Python4/diff PASS; docs/work/location-start-foreground-fix.md"
+    },
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "운전자10 에뮬레이터에서 수정 전42초 후 FGS ANR 재현. 수정 후 초기화 거절45초 계측1 PASS, 최초 시연 준비 후 READY/SDK RECEIVING/버퍼 연속 수신 확인. 주행/A-B 전체범위 주장은 아님."
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "NOT_TESTED",
+      "evidence": "SDK 어댑터 사용자 원문 보존. 시작과 위치 수신은 기기 확인했으나 수집 중 해제·늦은 SDK콜백 전체를 이번 기기에서 재검사하지 않음."
+    }
+  ]
+}
