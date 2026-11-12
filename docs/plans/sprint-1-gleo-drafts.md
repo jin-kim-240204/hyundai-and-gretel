@@ -8,7 +8,7 @@
 
 사용자 후속 결정으로 현재 수동 검증 목표는 **음성 → Gleo 함수 선택 → 전달 파라미터 → Callback**이다. debug 빌드는 저장 동의/로컬 저장을 거치지 않고 검증 결과만 응답하며 관측 화면을 바로 표시한다. 외부 Action 수신은 debug에서만 열고 실제 설치 확인된 ai.umos.ambientai에 Callback을 제한한다. 발신자가 인증되었다고 주장하지 않으며 draft/차량/게시 기능을 실행하지 않는다. release 수신점은 내부 전용이다.
 
-[실시간 로그와 장애 단계 확인 방법](gleo-debugging.md)을 먼저 참고한다. 최근 10건의 관측은 메모리에만 남는다. 사용자 요청으로 debug `GleoProbe` logcat에 Action/키·타입/입력 JSON/결과/Callback JSON·전송 요청 시간을 기록한다. `adb logcat -s GleoProbe:D '*:S'`로 확인한다. 전송 요청 성공과 Gleo 실제 수신/음성 응답 성공을 구분한다. 사용자가 직접 음성 테스트하며 에이전트가 합성 Action/음성 호출을 자동 실행하지 않는다.
+[실시간 로그와 장애 단계 확인 방법](gleo-debugging.md)을 먼저 참고한다. 최근 10건의 관측은 메모리에만 남는다. 사용자 요청으로 debug `GleoProbe` logcat에 수신/처리 완료·문자 수·처리 시간만 기록한다. 원문 Action/키·타입/입력·Callback JSON은 앱의 메모리 화면에서만 확인한다. `adb logcat -s GleoProbe:D '*:S'`로 확인한다. 전송 요청 성공과 Gleo 실제 수신/음성 응답 성공을 구분한다. 사용자가 직접 음성 테스트하며 에이전트가 합성 Action/음성 호출을 자동 실행하지 않는다.
 
 아래 저장/UI 스프린트 범위는 이미 구현된 기반 기능이며 현재 테스트의 선행조건으로 강제하지 않는다.
 

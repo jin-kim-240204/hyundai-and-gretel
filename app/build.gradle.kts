@@ -1,4 +1,6 @@
 plugins {
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
@@ -26,6 +28,8 @@ android {
     buildFeatures { compose = true; buildConfig = true }
 }
 dependencies {
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
     implementation("ai.pleos.playground:Vehicle:2.3.2")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

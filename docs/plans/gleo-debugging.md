@@ -1,6 +1,6 @@
 # Gleo 음성 연동 로그 확인
 
-현재 debug 빌드는 저장 동의 없이 파라미터 검증과 Callback만 수행한다. 화면의 최근 10건은 메모리 기록이고, `GleoProbe` logcat에는 입력/출력 JSON을 남긴다. 테스트 내용이 포함되므로 로그를 공유할 때 내용을 확인한다. release에는 외부 테스트 수신과 원문 로그를 켜지 않는다.
+현재 debug 빌드는 저장 동의 없이 파라미터 검증과 Callback만 수행한다. 화면의 최근 10건은 메모리 기록이고, `GleoProbe` logcat에는 수신/처리 완료 시점·문자 수·처리 시간만 남긴다. 입력/출력 JSON 원문은 앱의 메모리 테스트 화면에서 확인한다. Gleo 프로세스 자체의 로그에는 발화가 포함될 수 있으므로 공유 전에 민감정보를 제거한다. release에는 외부 테스트 수신과 원문 로그를 켜지 않는다.
 
 사용자 요청으로 주행 상태 감시/간결 UI 전환을 원복했다. 현재 테스트 빌드는 distractionOptimized 선언만 유지하고 기존 전체 JSON 관측 UI를 표시한다. PC logcat도 계속 사용할 수 있다.
 
@@ -28,9 +28,9 @@ adb logcat -v time | rg --line-buffered 'DICTATION_SERVER|AGENTCLASSIFIER|refine
 | AGENTCLASSIFIER | 앱 호출 agent로 분기했는지 | Gleo 의도 분류/재질문 여부 확인 |
 | refineToolOutput | 선택한 함수와 parameters | Schema 로딩/함수 선택/필수값 확인 |
 | sendActionCall | 실제 패키지·Android Action·component·파라미터 | Gleo 실행/전달 단계 확인 |
-| GleoProbe ACTION / INPUT_JSON | 우리 Receiver에 실제 도착했는지 | 패키지 접두사·Manifest filter/exported·설치 빌드 확인 |
-| GleoProbe RESULT | SUCCESS/ASKING/FAIL, 처리 시간 | 파싱/필드 검증/실행 예외 확인 |
-| GleoProbe CALLBACK_JSON | 앱이 보낸 응답 JSON | 전송 예외·기한 초과 확인 |
+| GleoProbe RECEIVED | 우리 Receiver에 실제 도착했는지·입력 문자 수 | 패키지 접두사·Manifest filter/exported·설치 빌드 확인 |
+| GleoProbe COMPLETED | 처리 완료 시점·처리 시간 | 파싱/필드 검증/실행 예외 확인 |
+| 앱의 Callback JSON 화면 | 앱이 보낸 success/fail 응답 JSON | 전송 예외·기한 초과 확인 |
 | Gleo actionCallback | Gleo가 받은 응답 처리 | Callback 목적지·action·extra·functionName 대조 |
 
 `Callback 전송 요청`은 Android sendBroadcast 호출이 끝났다는 뜻이며 Gleo가 응답을 받았거나 음성 안내를 마쳤다는 증거가 아니다. Gleo 단계는 Gleo 프로세스 로그에서 확인한다.

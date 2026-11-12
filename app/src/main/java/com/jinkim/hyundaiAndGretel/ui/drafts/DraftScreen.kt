@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -29,21 +30,24 @@ import com.jinkim.hyundaiAndGretel.roadnote.DirectionMode
 import com.jinkim.hyundaiAndGretel.roadnote.DraftState
 import com.jinkim.hyundaiAndGretel.roadnote.LocationMode
 import com.jinkim.hyundaiAndGretel.roadnote.RoadNoteDraft
+import com.jinkim.hyundaiAndGretel.R
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/** 동의·목록·로딩·오류 상태를 화면에 표시한다. 데이터 변경은 이벤트 콜백으로 위임한다. */
 @Composable
 fun DraftScreen(
-    consentGranted: Boolean,
-    drafts: List<RoadNoteDraft>,
-    busy: Boolean,
-    errorMessage: String?,
+    state: DraftUiState,
     onConsentChange: (Boolean) -> Unit,
     onDelete: (String) -> Unit,
     onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+    val consentGranted = state.consentGranted
+    val drafts = state.drafts
+    val busy = state.busy
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
             contentPadding = PaddingValues(24.dp),
@@ -66,8 +70,8 @@ fun DraftScreen(
                     DraftText("처리 중입니다. 잠시 기다려 주세요.", announce = true)
                 }
             }
-            if (!errorMessage.isNullOrBlank()) {
-                item { DraftText(errorMessage, announce = true) }
+            if (state.hasError) {
+                item { DraftText(stringResource(R.string.draft_operation_failed), announce = true) }
             }
             if (!consentGranted) {
                 item {
@@ -103,6 +107,7 @@ fun DraftScreen(
     }
 }
 
+/** 초안 한 건의 내용·미확정 위치/방향·앱 수신 시각과 삭제 버튼을 표시한다. */
 @Composable
 private fun DraftItem(draft: RoadNoteDraft, busy: Boolean, onDelete: () -> Unit) {
     Surface(
@@ -124,6 +129,7 @@ private fun DraftItem(draft: RoadNoteDraft, busy: Boolean, onDelete: () -> Unit)
     }
 }
 
+/** 초안 화면의 본문 스타일과 줄 수를 통일하고, 필요한 상태 변화는 접근성 서비스에 알린다. */
 @Composable
 private fun DraftText(text: String, announce: Boolean = false) {
     Text(
@@ -135,6 +141,7 @@ private fun DraftText(text: String, announce: Boolean = false) {
     )
 }
 
+/** 처리 중 중복 조작을 막도록 비활성화되는 공통 버튼을 표시한다. */
 @Composable
 private fun DraftAction(label: String, busy: Boolean, onClick: () -> Unit) {
     Button(
@@ -147,11 +154,13 @@ private fun DraftAction(label: String, busy: Boolean, onClick: () -> Unit) {
     }
 }
 
+/** 초안의 위치 처리 대기 상태를 미게시 안내 문구로 변환한다. */
 internal fun RoadNoteDraft.locationStatus(): String = when (state) {
     DraftState.PENDING_LOCATION -> "미게시 · 위치 확인 대기"
     DraftState.AWAITING_LOCATION -> "미게시 · 위치 미정"
 }
 
+/** 저장된 위치 표현을 안내하되, 현재 도로 표현을 실제 좌표 확정으로 표시하지 않는다. */
 internal fun RoadNoteDraft.locationDescription(): String = when (input.locationMode) {
     LocationMode.CURRENT_ROAD -> "위치 표현: 현재 도로 (위치 미확정)"
     LocationMode.NAMED_PLACE -> "장소 표현: ${input.placeQuery?.takeIf { it.isNotBlank() } ?: "미정"}"
@@ -159,6 +168,7 @@ internal fun RoadNoteDraft.locationDescription(): String = when (input.locationM
     LocationMode.DEFERRED -> "위치 표현: 나중에 지정"
 }
 
+/** 사용자가 지정한 방향 표현 또는 미정 안내를 반환하며 실측 방향으로 단정하지 않는다. */
 internal fun RoadNoteDraft.directionDescription(): String = when (input.directionMode) {
     DirectionMode.CURRENT_VEHICLE -> "방향 표현: 현재 차량 방향 (방향 미확정)"
     DirectionMode.USER_DESCRIPTION -> "방향 표현: ${input.directionDescription?.takeIf { it.isNotBlank() } ?: "미정"}"

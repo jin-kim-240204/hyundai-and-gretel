@@ -31,7 +31,7 @@
 
 현재 저장소는 ComponentActivity/Compose 동의·초안 목록/삭제 UI, Vehicle 2.3.2 의존성, Gleo Schema/파서/처리 엔진/Callback 및 내부 전용 Receiver, Keystore/AES-GCM 로컬 저장을 포함한다. 차량 SDK 초기화/조회/제어, 위치·서버 게시/공유는 미구현이다. 기존 Manifest 도어/창문 권한 4개는 선언 상태이며 차량 기능/런타임 승인 증거가 아니다. allowBackup=false와 adjustResize는 유지한다.
 
-소스 package/Gradle namespace/applicationId와 패키지 예제는 모두 `com.jinkim.hyundaiAndGretel`로 정합했다. versionName=1.0이다. release Receiver는 exported=false다. 현재 debug는 사용자 요청에 따라 외부 Gleo 테스트 Action을 받아 저장 없이 검증/Callback만 수행하고, 설치 확인한 ai.umos.ambientai로 응답을 제한한다. Action 발신자 인증과 실제 Gleo 수신/음성 E2E는 미검증이다. debug 화면과 GleoProbe logcat에서 최근 입력·출력을 확인한다. 실제 Manifest는 빌드 타입 placeholder로 debug=true/release=false를 분리한다. 아래 exported=true XML은 외부 테스트 수신 형식의 예시다. 실제 구현/담당·확인 범위는 [Sprint 1 명세](sprint-1-gleo-drafts.md)와 [자비스 기록](../work/sprint-1-jarvis.md)을 따른다.
+소스 package/Gradle namespace/applicationId와 패키지 예제는 모두 `com.jinkim.hyundaiAndGretel`로 정합했다. versionName=1.0이다. release Receiver는 exported=false다. 현재 debug는 사용자 요청에 따라 외부 Gleo 테스트 Action을 받아 저장 없이 검증/Callback만 수행하고, 설치 확인한 ai.umos.ambientai로 응답을 제한한다. Action 발신자 인증과 실제 Gleo 수신/음성 E2E는 미검증이다. debug 화면에서 최근 입력·출력 JSON을 확인하며, GleoProbe logcat에는 수신/처리 완료·문자 수·처리 시간만 기록한다. 실제 Manifest는 빌드 타입 placeholder로 debug=true/release=false를 분리한다. 아래 exported=true XML은 외부 테스트 수신 형식의 예시다. 실제 구현/담당·확인 범위는 [Sprint 1 명세](sprint-1-gleo-drafts.md)와 [자비스 기록](../work/sprint-1-jarvis.md)을 따른다.
 
 공식 의무와 프로젝트 설계안을 구분한다. 아래 `CREATE_ROAD_NOTE`, 필드명, 입력 제한, 앱 내부 함수 시그니처는 프로젝트가 정한 제안이다. Gleo가 제공하는 SDK 클래스나 등록된 공식 도로 제보 API가 아니다.
 

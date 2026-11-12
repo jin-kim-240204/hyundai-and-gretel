@@ -10,45 +10,50 @@ import com.jinkim.hyundaiAndGretel.roadnote.RoadNoteInput
 import com.jinkim.hyundaiAndGretel.ui.theme.HyundaiAndGretelTheme
 import java.time.Instant
 
+/** 저장 미동의 화면을 좁은 창에서 미리 확인한다. */
 @Preview(name = "미동의 · 좁은 창", widthDp = 360, heightDp = 800)
 @Composable
 private fun ConsentPreview() {
     HyundaiAndGretelTheme(dynamicColor = false) {
-        DraftScreen(false, emptyList(), false, null, {}, {}, {})
+        DraftScreen(DraftUiState(), {}, {}, {})
     }
 }
 
+/** 초안 목록의 주간 가로·좁은 창·큰 글꼴 배치를 미리 확인한다. */
 @Preview(name = "초안 · 주간 가로", widthDp = 1280, heightDp = 720)
 @Preview(name = "초안 · 좁은 창", widthDp = 360, heightDp = 800)
 @Preview(name = "초안 · 큰 글꼴", widthDp = 480, heightDp = 800, fontScale = 1.5f)
 @Composable
 private fun DraftListPreview() {
     HyundaiAndGretelTheme(darkTheme = false, dynamicColor = false) {
-        DraftScreen(true, previewDrafts, false, null, {}, {}, {})
+        DraftScreen(DraftUiState(consentGranted = true, drafts = previewDrafts), {}, {}, {})
     }
 }
 
+/** 초안 목록의 야간 세로 배치를 미리 확인한다. */
 @Preview(name = "초안 · 야간 세로", widthDp = 600, heightDp = 900)
 @Composable
 private fun NightDraftsPreview() {
     HyundaiAndGretelTheme(darkTheme = true, dynamicColor = false) {
-        DraftScreen(true, previewDrafts, false, null, {}, {}, {})
+        DraftScreen(DraftUiState(consentGranted = true, drafts = previewDrafts), {}, {}, {})
     }
 }
 
+/** 저장 동의 후 초안이 없는 상태를 미리 확인한다. */
 @Preview(name = "빈 목록", widthDp = 600, heightDp = 800)
 @Composable
 private fun EmptyDraftsPreview() {
     HyundaiAndGretelTheme(dynamicColor = false) {
-        DraftScreen(true, emptyList(), false, null, {}, {}, {})
+        DraftScreen(DraftUiState(consentGranted = true), {}, {}, {})
     }
 }
 
+/** 처리 중 표시와 오류 안내가 함께 있을 때의 화면을 미리 확인한다. */
 @Preview(name = "처리 중 · 오류", widthDp = 480, heightDp = 800)
 @Composable
 private fun BusyErrorPreview() {
     HyundaiAndGretelTheme(dynamicColor = false) {
-        DraftScreen(true, previewDrafts, true, "초안을 불러오지 못했습니다. 다시 시도해 주세요.", {}, {}, {})
+        DraftScreen(DraftUiState(consentGranted = true, drafts = previewDrafts, busy = true, hasError = true), {}, {}, {})
     }
 }
 

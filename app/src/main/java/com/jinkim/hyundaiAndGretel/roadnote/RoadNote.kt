@@ -12,7 +12,7 @@ data class RoadNoteInput(
     val placeQuery: String? = null,
     val directionMode: DirectionMode = DirectionMode.UNKNOWN,
     val directionDescription: String? = null,
-    // Retained only to read and preserve previously saved drafts.
+    // 이전 저장 파일을 읽고 보존하기 위한 값이며, 현재 Gleo 입력에서 생성하지 않는다.
     val observedAt: Instant? = null,
     val draftId: String? = null,
     val category: String? = null,
@@ -25,12 +25,3 @@ data class RoadNoteDraft(
     val updatedAt: Instant,
     val state: DraftState,
 )
-
-interface DraftStore {
-    suspend fun hasConsent(): Boolean
-    suspend fun setConsent(granted: Boolean)
-    suspend fun save(input: RoadNoteInput, receivedAt: Instant): RoadNoteDraft
-    suspend fun list(): List<RoadNoteDraft>
-    suspend fun delete(id: String): Boolean
-    suspend fun clear()
-}

@@ -1,29 +1,16 @@
 package com.jinkim.hyundaiAndGretel.gleo
 
+import android.content.Intent
 import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import org.json.JSONObject
 import com.jinkim.hyundaiAndGretel.BuildConfig
-import com.jinkim.hyundaiAndGretel.roadnote.LocationMode
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-/** Debug observations stay in process memory and disappear when the app process exits. */
+/** 프로세스가 종료되면 사라지는 debug 관측 기록이며 디스크 초안과 별개다. */
 data class GleoProbeEvent(
     val id: Long,
     val receivedAt: Instant,
@@ -40,70 +27,47 @@ object GleoProbe {
     private val state = MutableStateFlow<List<GleoProbeEvent>>(emptyList())
     val events = state.asStateFlow()
 
+    /** 수신 요청에 번호를 붙여 최근 10건을 메모리에 보관하고, 원문 없는 수신 로그를 남긴다. */
     fun begin(action: String, parameters: String, extras: String, receivedAt: Instant): Long {
         if (!BuildConfig.DEBUG) return -1
         val id = sequence.incrementAndGet()
         val event = GleoProbeEvent(id, receivedAt, action, parameters.take(8192), extras.take(8192))
-        state.update { (listOf(event) + it).take(10) }
-        log(id, "ACTION", action)
-        log(id, "EXTRAS", event.extras)
-        log(id, "INPUT_JSON", event.parameters)
+        // 기존 기록 목록 맨 앞에 새 기록을 붙이고 최근 10건만 남김
+        state.update { events -> (listOf(event) + events).take(MAX_EVENTS) }
+        Log.d("GleoProbe", "[$id] RECEIVED parameterChars=${event.parameters.length}")
         return id
     }
 
+    /** 같은 요청 번호의 기록에 결과·응답·소요 시간을 반영한다. 이미 지운 기록은 복원하지 않는다. */
     fun complete(id: Long, result: String, callback: String, elapsedMs: Long) {
         if (!BuildConfig.DEBUG) return
-        state.update { items -> items.map { if (it.id == id) it.copy(result = result, callback = callback, elapsedMs = elapsedMs) else it } }
-        log(id, "RESULT", "$result elapsedMs=$elapsedMs")
-        log(id, "CALLBACK_JSON", callback)
-    }
-
-    fun clear() { state.value = emptyList() }
-
-    private fun log(id: Long, stage: String, value: String) {
-        value.chunked(2000).forEachIndexed { index, chunk ->
-            Log.d("GleoProbe", "[$id][$stage][$index] $chunk")
-        }
-    }
-}
-
-fun previewGleoAction(action: ParsedGleoAction): GleoResponse = when (action) {
-    is ParsedGleoAction.Rejected -> action.response
-    is ParsedGleoAction.Valid -> GleoResponse(
-        GleoStatus.SUCCESS,
-        "The road report was received successfully.",
-        reason = "PROBE_ONLY",
-        report = action.input,
-    )
-}
-
-@Composable
-fun GleoProbeScreen(events: List<GleoProbeEvent>, onClear: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
-        LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Gleo 음성 연동 테스트", style = MaterialTheme.typography.headlineSmall)
-                    Text("함수 선택 → 수신 JSON → 검증 → Callback을 확인합니다.")
-                    Text("저장 동의 없이 테스트하며 디스크 저장·게시를 하지 않습니다.")
-                    Text("대기 함수: CREATE_ROAD_NOTE · 로그 태그: GleoProbe")
-                    Text("수신점은 디버그 테스트용입니다. 표시된 요청의 발신자는 인증되지 않았습니다.")
-                    Button(onClick = onClear) { Text("화면 기록 지우기") }
-                    if (events.isEmpty()) Text("Gleo에게 도로 제보를 요청해 주세요. 아직 수신한 Action이 없습니다.")
-                }
-            }
-            items(events, key = { it.id }) { event ->
-                Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("#${event.id} · ${event.receivedAt}")
-                        Text("함수: ${event.action}")
-                        Text("상태: ${event.result} · ${event.elapsedMs ?: "-"} ms")
-                        Text("Intent 키·타입\n${event.extras}")
-                        Text("수신 JSON\n${event.parameters}")
-                        Text("Callback JSON\n${event.callback}")
-                    }
-                }
+        state.update { events ->
+            events.map { event ->
+                if (event.id == id) event.copy(result = result, callback = callback, elapsedMs = elapsedMs) else event
             }
         }
+        Log.d("GleoProbe", "[$id] COMPLETED elapsedMs=$elapsedMs callbackChars=${callback.length}")
     }
+
+    /** 화면에 표시할 진단 기록만 비운다. 디스크 초안과 진행 중인 요청에는 영향을 주지 않는다. */
+    fun clear() {
+        state.value = emptyList()
+    }
+
+    private const val MAX_EVENTS = 10
 }
+
+/** 진단 화면에서 Intent의 키·타입·문자열 값을 확인할 수 있도록 크기를 제한해 JSON으로 만든다. */
+internal fun describeExtras(intent: Intent): String = runCatching {
+    val extras = intent.extras ?: return@runCatching "{}"
+    JSONObject().apply {
+        extras.keySet().take(32).forEach { key ->
+            @Suppress("DEPRECATION")
+            val value = extras.get(key)
+            put(key.take(100), JSONObject().apply {
+                put("type", value?.javaClass?.simpleName ?: "null")
+                put("value", if (value is String) value.take(8192) else "값 출력 생략")
+            })
+        }
+    }.toString(2)
+}.getOrElse { "Intent extras를 읽지 못함" }

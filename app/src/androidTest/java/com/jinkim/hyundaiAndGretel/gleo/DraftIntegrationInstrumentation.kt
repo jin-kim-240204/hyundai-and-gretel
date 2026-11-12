@@ -6,8 +6,12 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Bundle
+import androidx.lifecycle.ViewModelProvider
+import com.jinkim.hyundaiAndGretel.MainActivity
 import com.jinkim.hyundaiAndGretel.roadnote.LocalDraftStore
 import com.jinkim.hyundaiAndGretel.roadnote.LocationMode
+import com.jinkim.hyundaiAndGretel.ui.drafts.DraftUiState
+import com.jinkim.hyundaiAndGretel.ui.drafts.DraftsViewModel
 import java.io.File
 import java.time.Instant
 import java.util.UUID
@@ -59,7 +63,7 @@ class DraftIntegrationInstrumentation : Instrumentation() {
                     result.putString("stream", "Process restart recovery and revocation passed.\n")
                     return@runBlocking
                 }
-                check(phase == null)
+                check(phase == null || phase == "storage")
                 check(!store.hasConsent())
                 val now = Instant.now()
                 val raw = """{"category":"WARNING","content":"synthetic runtime check","locationMode":"CURRENT_ROAD"}"""
@@ -94,6 +98,9 @@ class DraftIntegrationInstrumentation : Instrumentation() {
             if (phase == null) {
                 checkReceiver(result)
                 result.putString("stream", "Draft runtime self-check passed.\n")
+            } else if (phase == "storage") {
+                checkHiltViewModel(result)
+                result.putString("stream", "Storage and Hilt runtime self-check passed without a Gleo broadcast.\n")
             }
             finish(Activity.RESULT_OK, result)
         } catch (error: Throwable) {
@@ -118,5 +125,20 @@ class DraftIntegrationInstrumentation : Instrumentation() {
             check(JSONObject(event.callback).getString("status") == "fail")
         }
         result.putString("receiver", "PASS: debug receive, validation, observed callback request")
+    }
+
+    private fun checkHiltViewModel(result: Bundle) {
+        val activity = startActivitySync(
+            Intent(targetContext, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        ) as MainActivity
+        try {
+            runOnMainSync {
+                val viewModel = ViewModelProvider(activity)[DraftsViewModel::class.java]
+                check(viewModel.state.value == DraftUiState())
+            }
+            result.putString("hilt", "PASS: Application/Activity injection and ViewModel/Repository/Store graph")
+        } finally {
+            runOnMainSync { activity.finish() }
+        }
     }
 }
