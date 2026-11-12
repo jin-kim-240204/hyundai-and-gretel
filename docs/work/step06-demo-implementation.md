@@ -15,3 +15,14 @@ PASS: JVM83(기존73+DemoRuntime8+UiRestrictions2),debug/release Kotlin컴파일
 최종 경계 회귀: JVM 86개 PASS. 추가로 수락 전 foreground 승격 실패 시 reset DB 호출 0회, Ready 수집은 NO_SETUP만으로 재초기화하지 않음, SDK 실패 뒤 늦은 위치 차단, null/옛 수신 시각/아직 명령하지 않은 target 거부를 확인했다. 정확한 5m 경계는 위경도 왕복 오차로 최초 FAIL → 1마이크로미터 계산 오차 허용(5.01m는 거부) 후 PASS. SDK 측정 정확도를 추가하거나 5m 정책을 확대하지 않았다.
 
 서비스 ACK 진입도 최신 CarUx의 본문/문자 상한을 재검사한다. 기존 명시 ACK·원래 키 쓰기·관찰 소유권·STOPPED dataSync 수명은 유지한다. android.car 컴파일 클래스 경로와 별개로 공통 Manifest에 optional uses-library를 명시한다. DO는 추가하지 않는다. 원래 사용자 polling 변경의 +/- 행 비교 PASS, 이번 커밋에는 포함하지 않는다.
+
+묶음3: 기존 제품 한 건 수신/명시 확인 화면과 debug 오버레이를 분리했다. 패널 닫기·재생성은 서비스/DB/ACK를 바꾸지 않는다. 역할/모드/출발점/reset과 별도 확인, SDK 실제 수락점/목표/합성 거리/버퍼/시연 원본·수신·전체 PENDING/쓰기·권한 진단, 실제 SDK 파랑과 시나리오 원본 빨강 축을 연결했다. 제품과 패널의 문자·내용 개수·깊이 제한은 플랫폼 값이며 패널 재개폐로 탐색 이력을 비우지 않는다. 같은 composition에서도 항목 예산을 예약해 여러 행의 동시 상한 초과를 막는다. 화면 가시 수집 중 KEEP_SCREEN_ON만 사용하고 DO를 선언하지 않는다.
+
+검사 결과:
+- PASS: `:app:testDebugUnitTest` 86/86. 기존73 + 전환/실패/수명/gate/경계11 + 규제2. 원래 사용자 dirty polling을 포함한 현재 작업 트리에서 컴파일했지만 실제 polling은 실행하지 않았다.
+- PASS: `:app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest :app:lintDebug`. 최초 lint는 debug loopback domain의 includeSubdomains 누락 FAIL → false 명시 후 PASS. 최신 Manifest의 optional android.car 포함 빌드/패키징 PASS.
+- PASS: `python3 scripts/verify_harness.py --build` (JAVA_HOME JBR21), 진입점/133 원문 인벤토리/27 규칙/정적 Manifest. 최종 변경의 추가 Manifest 검사는 별도 harness로 확인한다.
+- PASS: schema1/2/3 원본과6f33659 byte 비교 일치, v4 scenario nullable/활성 행/원본·receipt 유지. release merged Manifest에 DO/mock/INTERNET/특례 networkSecurityConfig 없음. release DEX에 AndroidDemoInput/StartGate/DemoMode/DemoPhase/loopback URL/provider 소유 표식 없음, debug network XML 없음. H3 arm64-v8a/armeabi-v7a 패키징 있음(JNI 실행은 아님).
+- NOT_TESTED: 실제 SDK 콜백/CarUx 연결·규제/UI·FGS·mock 권한/provider·웹콘솔 HTTP 형식 호환·Room migration/reset/legacy JOIN·JNI·화면 유지·E2E. 계측은 작성/컴파일만 했다. Studio/adb/기기/앱/에뮬레이터/계측을 실행하지 않았다. 검증 스킬의 Studio/실행 요청보다 사용자 실행 금지를 우선했다.
+
+재현은 승인06 §11 절차를 향후 허용 시 사용한다. 웹콘솔 경로는 ae11722의 loopback 형식 재사용이며 공식 안정 API 보장이 아니다. AppOp 지정/단독 mock writer, 실제 콜백 gate, 두 모드 배타성, CarUx 기능별 제한과 reset 롤백은 실제 환경 검증이 남는다.07/지도 SDK/서버/Gleo/새 계층·의존성은 추가하지 않았다. 현재 상태는 구현 제출·독립 코드 리뷰 대기이며 기능 전체 검증 완료가 아니다.

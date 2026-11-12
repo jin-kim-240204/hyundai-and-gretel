@@ -8,6 +8,8 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
 import com.jinkim.hyundaiAndGretel.BuildConfig
+import com.jinkim.hyundaiAndGretel.demo.DemoRuntime
+import kotlinx.coroutines.flow.combine
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,7 +26,14 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class LocationViewModel(private val app: Application) : AndroidViewModel(app), ServiceConnection {
     private val connection = LocationConnection(viewModelScope)
-    val uiState = connection.state
+    private val visited = MutableStateFlow<Set<String>>(emptySet())
+    val uiState = combine(connection.state, visited) { state, seen -> state.copy(visitedContent = seen) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, LocationUiState())
+    private val mutableDemoRuntime = MutableStateFlow<DemoRuntime?>(null)
+    val demoRuntime = mutableDemoRuntime.asStateFlow()
+    private var currentBinder: LocationTrackingService.LocalBinder? = null
+    fun markPresented(key: String) { visited.value += key }
+    fun bufferSummary(): String = currentBinder?.bufferSummary() ?: "버퍼 연결 대기"
     val status = uiState.map { it.trackingStatus }
         .stateIn(viewModelScope, SharingStarted.Eagerly, TrackingStatus.STOPPED)
     private val mutableStartCommandFailed = MutableStateFlow(false)
@@ -32,14 +41,25 @@ class LocationViewModel(private val app: Application) : AndroidViewModel(app), S
     private val bound = app.bindService(Intent(app, LocationTrackingService::class.java), this, Context.BIND_AUTO_CREATE)
 
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-        connection.connect(binder as LocationTrackingService.LocalBinder)
+        currentBinder = binder as LocationTrackingService.LocalBinder
+        connection.connect(binder)
+        mutableDemoRuntime.value = binder.demoRuntime
     }
 
     override fun onServiceDisconnected(name: ComponentName) {
         connection.connect(null)
+        currentBinder = null; mutableDemoRuntime.value = null
     }
 
-    fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) = connection.confirmReceipt(key, screenResumed)
+    fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) {
+        val state = uiState.value
+        val item = state.inbox.pending ?: return
+        val id = "receipt:${key.recipientId}/${key.noteId}"
+        if (!state.restrictions.canShowBody || !state.restrictions.fits(item.note.content) ||
+            !state.restrictions.allowsContent(id, state.visitedContent)) return
+        markPresented(id)
+        connection.confirmReceipt(key, screenResumed)
+    }
 
     fun submitTestNote(content: String, category: NoteCategory) {
         connection.submitTestNote(content, category)
@@ -47,6 +67,9 @@ class LocationViewModel(private val app: Application) : AndroidViewModel(app), S
 
     fun start() {
         if (!uiState.value.canStart) return
+        if (demoRuntime.value?.enabled == true && !uiState.value.restrictions.canSetup) {
+            mutableStartCommandFailed.value = true; return
+        }
         mutableStartCommandFailed.value = false
         try {
             ContextCompat.startForegroundService(app,

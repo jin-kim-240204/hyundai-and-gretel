@@ -1,0 +1,64 @@
+{
+  "task": "06 승인 시연 도구 구현",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01",
+    "SAF-01",
+    "SAF-02",
+    "DES-04",
+    "DES-06"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "debug/release/AndroidTest APK compile, lintDebug, harness build PASS; 실제 기기 실행 없음"
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "docs/work/step06-demo-implementation.md: JVM/Fake 및 정적 검사는 PASS. 실제 SDK/CarUx/Room/UI/주행/FGS/E2E는 사용자 실행 금지에 따라 NOT_TESTED"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "NOT_TESTED",
+      "evidence": "docs/work/step06-demo-implementation.md: JVM/Fake 및 정적 검사는 PASS. 실제 SDK/CarUx/Room/UI/주행/FGS/E2E는 사용자 실행 금지에 따라 NOT_TESTED"
+    },
+    {
+      "id": "SAF-01",
+      "status": "NOT_TESTED",
+      "evidence": "docs/work/step06-demo-implementation.md: JVM/Fake 및 정적 검사는 PASS. 실제 SDK/CarUx/Room/UI/주행/FGS/E2E는 사용자 실행 금지에 따라 NOT_TESTED"
+    },
+    {
+      "id": "SAF-02",
+      "status": "NOT_TESTED",
+      "evidence": "docs/work/step06-demo-implementation.md: JVM/Fake 및 정적 검사는 PASS. 실제 SDK/CarUx/Room/UI/주행/FGS/E2E는 사용자 실행 금지에 따라 NOT_TESTED"
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "docs/work/step06-demo-implementation.md: JVM/Fake 및 정적 검사는 PASS. 실제 SDK/CarUx/Room/UI/주행/FGS/E2E는 사용자 실행 금지에 따라 NOT_TESTED"
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "docs/work/step06-demo-implementation.md: JVM/Fake 및 정적 검사는 PASS. 실제 SDK/CarUx/Room/UI/주행/FGS/E2E는 사용자 실행 금지에 따라 NOT_TESTED"
+    },
+    {
+      "id": "DOC-9faba42791f0#기능별규제",
+      "status": "NOT_TESTED",
+      "evidence": "06 §2.1 UX01~09 → CarRestrictionsSource/UiRestrictions/LocationView/DemoRuntime. JVM 제한·취소 PASS, 실제 신호/화면 NOT_TESTED"
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "NOT_TESTED",
+      "evidence": "06 §5/6 → 기존 SDK 소유권·DemoRuntime/AndroidDemoInput/CarRestrictionsSource 해제. Fake 지연/취소 PASS, 실제 리스너/provider NOT_TESTED"
+    },
+    {
+      "id": "DOC-402de45b9f3d#권한",
+      "status": "NOT_TESTED",
+      "evidence": "06 §6 → AndroidDemoInput mock AppOp/실패 노출, 기존 SDK 권한 별도. 거절 Fake PASS, 실제 AppOp/SDK NOT_TESTED"
+    }
+  ]
+}

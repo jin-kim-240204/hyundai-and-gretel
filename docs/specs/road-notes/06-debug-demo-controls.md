@@ -197,3 +197,8 @@ release에는패널/진입버튼·역할/reset테스트명령·mockprovider·loc
 ## 근거 경계
 
 [Android LocationManager](https://developer.android.com/reference/android/location/LocationManager)는testprovider의등록/주입/제거와mock app-op/필드검증예외근거다. 같은이름provider를대체하므로소유권/배타정리가필요하다.이것이PleosSDK전달을보장하지는않는다. [Pleos권한](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/declaring-permissions)·[초기화해제](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/initialization-and-release)·[위치콜백](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/location-data-access)은기존1.1.3계약근거다. 실제연결의과거관측은ae11722의DebugGps/debug-start-positions/fix-console-gps-mode 기록이며이번코드PASS아니다. Figma내부디자인토큰·공식자산적용·실차안전보장은확인하지않았다.
+
+
+## 구현 제출 상태
+
+명세6f33659/부모2ca00c0의 독립 재검토5867895005 통과를 사용자에게 전달받아 승인 범위만 구현했다. 코드 제출과 runtime 검증 완료는 다르다. [구현 기록](../../work/step06-demo-implementation.md)에 의미별 커밋·JVM/Fake·빌드·정적 근거와 미검증을 연결한다.07 선행 구현·기기 실행은 하지 않았으며 독립 코드 리뷰 대기 상태다. 재현 절차는 §11이며 오늘 실행한 결과가 아니다.
