@@ -22,7 +22,7 @@ import com.jinkim.hyundaiAndGretel.ui.theme.RoadNoteDimensions
 @Preview(name = "수신 · 야간 분할 창", widthDp = 512, heightDp = 377,
     uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun ReceivedNotePreview() {
+internal fun ReceivedNotePreview() {
     HyundaiAndGretelTheme {
         Surface(Modifier.fillMaxSize(), color = PleosTheme.colors.background) {
             Column(Modifier.padding(horizontal = RoadNoteDimensions.pagePadding)) {

@@ -64,3 +64,13 @@
 - NOT_TESTED: 최종 전체 suite. 반복 실행 중 Pleos vendor homescreen이 중복 task listener 예외로 종료되어 테스트 Activity가 resumed되지 않음. 자세한 환경과 예외는 evidence/compose-design-system/runtime-limit.txt. UI 로직과 무관한 launcher를 수정하거나 DO 선언을 추가하지 않았다.
 - FAIL: 원본 disabled 대비 2.08:1. NOT_TESTED: 나머지 원본/실차/창 전환/큰 글꼴/IDE build. 완성된 디자인 시스템 또는 Pleos 적합성 검증 완료로 보고하지 않는다.
 - 기본 시작 화면에 서비스 로직을 넣지 않았으며 공용 UI/Preview를 후속 화면 구현에서 사용한다.
+
+
+## 에뮬레이터 표시 후속 요청
+
+- 요청: 사용자가 UI를 볼 수 있도록 Pleos 에뮬레이터를 켜고 화면 표시.
+- 범위: 기존 ReceivedNotePreview를 internal로 공개하고 debug source set 전용 Activity/Manifest에서 재사용. Release 진입점과 업무 로직은 추가하지 않는다.
+- 적용: ENV-02의 ComponentActivity 구조 유지, 기존 DES-03/04 색상·앱 창 규칙 유지. 새 디자인이나 DO 선언 없음.
+- 확인: 하네스 --build, debug APK 설치·명시 실행, resumed Activity 및 실제 화면 캡처 확인. 이전 전체 디자인 시스템 미검증 상태는 유지.
+- PASS: 후속 debug APK assemble/lint 및 하네스 --build 통과. Pleos emulator에서 MAIN/LAUNCHER 명시 Intent로 DesignSystemPreviewActivity 실행 및 resumed 확인. 실제 앱 창에 수신 카드가 표시되는 스크린샷 확인.
+- NOT_TESTED: Studio 빌드는 동일하게 작업 트리가 IDE에 열려 있지 않아 거절. 기존 전체 suite/디자인 시스템 제한은 유지.
