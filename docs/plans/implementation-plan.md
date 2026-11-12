@@ -4,6 +4,8 @@
 
 초기 작성: 2026-11-09. 이 문서는 **제보 → 해당 위치에 쪽지 저장 → 뒤따르는 사용자의 접근 수신**을 구현하기 위한 현행 계획이다. 이전 Sprint 문서의 지명·후속 질문·목격 시각 역산 계획보다 이 문서를 우선한다. 아래 목표 구성은 아직 구현 완료가 아니다.
 
+최신 개발 DB 결정: 미출시이며 보존할 개발 데이터가 없다는 사용자 지시에 따라 현재 전체 구조를 새 Room **버전1**로 고정한다. 원본/수신/시연 상태 테이블·현재 필드/제약은 유지하고 이전 개발용1~4 export/이관 지원은 제거한다. 기존 설치 DB는 앱 데이터 전체 초기화 후 새로 생성해야 하며 시연 reset/행 삭제로 대체하지 않는다. 자동 destructive fallback은 추가하지 않는다. 이 문서의 아래 단계별 migration 설명은 당시 구현 이력이고 현재 지원 계약이 아니다. 새v1 이후 보존할 데이터가 생기면 그 기준부터 명시 migration을 설계한다.
+
 ## 0. 문서 소유권과 브랜치 운영
 
 전체 시스템 설계의 정본은 이 문서 하나다. 도표의 `.mmd` 원본과 `.svg`는 같은 문서의 부속 자산이며 별도 계획 문서가 아니다. Gleo·위치 버퍼 등 기능별 상세 설계/검증은 각 기능 PR에 둔다. 현재 구현 표는 기존 Gleo 기능 브랜치의 상태를 설명하며 설계 브랜치에 앱 기능이 구현됐다는 뜻이 아니다.
@@ -155,7 +157,7 @@ Room 구성은 Database + Entity + DAO로 구현한다. 하나의 DB 인스턴�
 |---|---|---|
 | 메모리 LocationBuffer | 최근45초 샘플, 세션·준비 상태 | 위치 콜백 추가, 오래된 샘플 제거. 역할 전환/중단/재시작 시 삭제 |
 | 메모리 DemoSession | scenarioId, actorId A/B, sessionId, generation, sourceMode, 실행 상태 | 주행·정차 상태와 무관하게 같은 화면에서 가상 사용자 전환. 재시작 시 시연 재생만 정지 상태로 복귀 |
-| Room RoadNote | 03 원본9필드·H3·nullable routeId/direction/progressMeters·06 nullable scenarioId | 기존 값 보존. v3→v4 소속 추가, legacy null 유지. TTL600초, 자동 삭제 없음 |
+| Room RoadNote | 03 원본9필드·H3·nullable routeId/direction/progressMeters·06 nullable scenarioId | 현재 전체 구조를 새v1로 생성. 이전 개발 DB는 초기화 전제. 현재 DB의 소속 없는 행/다른 시나리오 보존·TTL600초/자동 삭제 없음 |
 | Room NoteReceipt | noteId, recipientId, receivedAtUtcMillis, distanceMeters, displayedAtUtcMillis? | 복합 PK(noteId,recipientId), FK CASCADE. null=PENDING·명시 확인 ACK 후 DISPLAYED(확인 시각). recipient 전체 JOIN 큐, 시나리오 필터 없음 |
 | Room 활성 시나리오 | 단일 상태행(id=1, activeScenarioId) | 첫 명시 새 시연에서 생성. reset은 현재 시나리오 원본/이력만 삭제·새 ID 갱신을 한 트랜잭션으로 처리 |
 | 합성 경로 fixture | scenarioId/routeId/direction, 시간 오프셋별 위경도·progress. 경로 허용 띠는 측정 accuracy가 아님 | 저장소 내 시험용 정적 데이터. 실차 이력 아님. A/B 각각 동일 도로의 다른 출발 시점 재생 |
@@ -450,7 +452,7 @@ PR4 05 독립 리뷰 B1/P1/P2/P3의 리뷰이 수용 및 사용자 전달에 따
 
 ## 06단계 시연·규제·보존 확정 계약 (2026-11-12)
 
-06 리뷰이 판단 B1/P1/P2 및 사용자 지시에 따른 정책이다. 새 코드/실행 검증 완료가 아니다. A 기본610±5m·실제 저장 anchor에서 B600m 뒤 요청, 두 실제 SDK 입력·no REPLAY, 현재 시나리오만 원자 reset, CarUx 기능별 제한/NO_SETUP·미연결 설정 차단을 채택한다. 제품 수신함은 **recipient 전체 JOIN·동일 한 건 큐·명시 ACK를 debug/release 모두 유지**한다. null legacy/다른 시나리오도 보존되어 있으면 조회·확인이 가능하다. 후보/등록·신규수신/대상·진행축·시연카운트만 활성 시나리오로 제한한다. v4 nullable scenarioId/단일 활성 상태행, 기존 필드·이력 유지, 소속 추정 없음. reset은 수락 쓰기0·명시 확인 후 현재 시나리오만 삭제·새 ID 갱신하며 실패 시 롤백한다.
+06 리뷰이 판단 B1/P1/P2 및 사용자 지시에 따른 정책이다. 새 코드/실행 검증 완료가 아니다. A 기본610±5m·실제 저장 anchor에서 B600m 뒤 요청, 두 실제 SDK 입력·no REPLAY, 현재 시나리오만 원자 reset, CarUx 기능별 제한/NO_SETUP·미연결 설정 차단을 채택한다. 제품 수신함은 **recipient 전체 JOIN·동일 한 건 큐·명시 ACK를 debug/release 모두 유지**한다. null legacy/다른 시나리오도 보존되어 있으면 조회·확인이 가능하다. 후보/등록·신규수신/대상·진행축·시연카운트만 활성 시나리오로 제한한다. nullable scenarioId/단일 활성 상태행은 현재 새v1에 포함하며 소속 추정은 하지 않는다. 이전 개발v4→새v1 이관 지원은 없고 기존 앱 데이터를 초기화한다. reset은 수락 쓰기0·명시 확인 후 현재 시나리오만 삭제·새 ID 갱신하며 실패 시 롤백한다.
 
 
 ## 07 사용자 추가 범위: 주행 중 제품 화면 사용 (2026-11-12)
