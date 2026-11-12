@@ -172,6 +172,13 @@ class RoadNotesDemoFlowTest {
         h.ready()
         assertEquals(note.route.progressMeters - 600, h.demo.state.value.target!!, 1e-5)
         val b = h.sources.last()
+        val activeScenario = h.store.active.value
+        h.policy.value = UiRestrictions(true, true, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP)
+        runCurrent()
+        h.demo.role("A"); h.demo.reset(true); runCurrent()
+        assertEquals("B", h.actor.value)
+        assertEquals(activeScenario, h.store.active.value)
+        assertEquals(DemoPhase.READY, h.demo.state.value.phase)
         assertEquals(0, b.registrations)
         h.drive(21); assertEquals(1, b.registrations)
         h.drive(25)
@@ -184,6 +191,7 @@ class RoadNotesDemoFlowTest {
         h.confirmPending(); h.confirmPending()
         assertNull(h.receipts.inbox.value.pending)
         assertTrue(h.store.originals.value.contains(note))
+        h.policy.value = UiRestrictions(connected = true); runCurrent()
         val preserved = h.store.received.value.filter { it.note.noteId != note.noteId }
         val scenario = h.store.active.value
         h.store.failReset = true; h.demo.reset(true); runCurrent()

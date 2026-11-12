@@ -11,3 +11,5 @@
 DO 정적 검사 원래 source에서 FAIL 확인(`/private/tmp/step07-do-before.log`) 후 한 줄 추가. Manifest 검사에는 옳은 MainActivity 자식 단일 true와 누락/false/중복/잘못된 부모/debug만 선언 반례4개가 있다. read-only artifact 검사는 source/양 merged/APK Manifest·FGS/권한·release DEX/리소스 제외·v4 schema/FK·ABI ELF·APK 해시를 확인한다. apkanalyzer는 APK 파일 분석이며 앱 실행이 아니다. 서비스 타입은 패키징 도구의0x9 표기와 merged의 심볼 표기를 구분한다.
 
 초기 smoke: 기존 작업 트리 JVM95 PASS(기존93+통합2), Python 반례4 PASS. 최초 통합 fixture compile은 순환 타입 추론 FAIL→Tracking/Repository/Pickup 선언 타입 명시 후 PASS. 기존 dirty 포함 worktree smoke이므로 clean HEAD 결과를 대체하지 않는다. docs/LOCATION-DEMO.md는 실제 시연 대본만 작성했다. 다음은 코드 커밋을 고정하고 별도 detached clean HEAD에서 전체 허용 검사를 실행한다.
+
+첫 clean 지정 커밋8ce80c0dbf34e3ac9f5f6e570e64c22cdc0588c9에서 전체 JVM95·debug/release/계측 compile/lint/harness·Python4·source/merged/APK DO/release/schema/ABI 정적 PASS, 검증 worktree tracked/untracked 상태도 비어 있었다. 원래 polling source는 지정 commit blob과 byte 동일했다. 최종 재검증 전 NO_SETUP 회귀의 기존 숫자32(1 shl5)는 실제 NO_SETUP64 상수가 아니므로 설치 SDK 상수로 대체했다. 신규 통합에서도 실제 NO_SETUP으로 B의 역할/reset이 차단되면서 Ready 수집·접근·명시 ACK는 유지되는지 직접 관찰하도록 강화한다. production CarUx 코드는 바꾸지 않는다.

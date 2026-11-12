@@ -159,7 +159,7 @@ class DemoRuntimeTest {
     }
     @Test fun readyCollectionSurvivesNoSetupButSourceFailureRejectsLateCallbacks() = runTest {
         val h = Harness(this); h.ready()
-        h.ux.value = UiRestrictions(connected = true, optimized = true, flags = 1 shl 5)
+        h.ux.value = UiRestrictions(connected = true, optimized = true, flags = android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP)
         runCurrent()
         assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
         h.runtime.onSourceFailure(); runCurrent()
