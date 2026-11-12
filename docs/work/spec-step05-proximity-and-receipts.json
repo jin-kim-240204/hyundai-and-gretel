@@ -1,0 +1,30 @@
+{
+  "task": "spec-step05-proximity-and-receipts",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "문서만 작성. 코드/Gradle/Manifest/의존성 변경 없음. SDK1.1.3 실제 배포물 소스 및 기존 정본·03/04 계약 정적 대조."
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "05 구현 전. 실제 SDK proximity/Room/서비스/기기 검증은 사용자 금지로 미실행. 독립 스펙 리뷰와 정본 accuracy 충돌 확정 필요."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "원시 위치 메모리/원본과 로컬수신이력 분리·legacy보존·업로드없음 설계. 원문좌표/내용로그 추가 없음."
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "PASS",
+      "evidence": "공식원문 재확인.05 §2/4/8에 동일 SDK 소유·접근/위치 해제 후 release·늦은콜백차단·release 후 재사용금지 설계. 실제 구현/실행 검증과 구분."
+    }
+  ]
+}
