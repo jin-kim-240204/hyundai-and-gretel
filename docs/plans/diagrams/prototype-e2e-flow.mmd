@@ -30,4 +30,4 @@ flowchart TD
     Policy[속도·기어로 수신 차단 안 함] -. 판정 정책 .-> Match
     Match -->|예| Receipt[Room · B 수신 이력 원자적 등록]
     Receipt --> Display[미표시 수신 쪽지 화면 표시]
-    Display --> Mark[표시 완료 기록 · 동일 B 중복 방지]
+    Display --> Mark[명시 확인 ACK 기록 · 동일 B 중복 방지]
