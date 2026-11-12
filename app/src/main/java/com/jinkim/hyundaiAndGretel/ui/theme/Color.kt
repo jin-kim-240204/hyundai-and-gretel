@@ -33,7 +33,7 @@ internal val PleosLightColors = PleosColors(
     buttonFilled = Color(0xFF44464E), buttonFilledPressed = Color(0xFF313236),
     buttonFilledDisabled = Color(0x0D131417),
     buttonText = Color(0xFF131417), buttonFilledText = Color.White,
-    buttonDisabledText = Color(0x4D131417), buttonDisabledBorder = Color(0x1A131417),
+    buttonDisabledText = Color(0x52131417), buttonDisabledBorder = Color(0x1A131417),
     isDark = false,
 )
 

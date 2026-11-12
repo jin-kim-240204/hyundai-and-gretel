@@ -8,4 +8,11 @@
     <string name="sdk_no_value">조회가 완료됐으나 현재 값이 없습니다.</string>
     <string name="sdk_read_success">도어 위치 조회 완료: %1$d</string>
     <string name="sdk_failed">SDK 확인 실패: %1$s</string>
+    <string name="road_note_title">도로 쪽지</string>
+    <string name="road_note_warning_label">주의 · 앞서 온 도로 쪽지</string>
+    <string name="road_note_example_warning">도로에 구덩이가 있어요.</string>
+    <string name="road_note_receiving">●  도로 쪽지 받는 중</string>
+    <string name="road_note_intro">앞서 지나간 운전자의 쪽지</string>
+    <string name="road_note_intro_description">위치로 쪽지를 남기고 받아요.</string>
+    <string name="road_note_start">시작</string>
 </resources>
