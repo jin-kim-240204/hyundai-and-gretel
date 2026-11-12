@@ -2,6 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-feature android:name="android.hardware.type.automotive" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <queries><package android:name="ai.pleos.playground.service.location.fused" /></queries>
     <application
         android:name=".HyundaiAndGretelApplication"
         android:allowBackup="false"
@@ -10,10 +17,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HyundaiAndGretel">
-        <!-- Debug receives test Actions without persistence; release remains internal-only. -->
-        <receiver
-            android:name=".gleo.GleoActionReceiver"
-            android:exported="${gleoReceiverExported}">
+        <uses-library android:name="android.car" android:required="false" />
+
+        <service android:name=".service.RoadNoteService" android:exported="false"
+            android:foregroundServiceType="location|dataSync" />
+        <receiver android:name=".gleo.GleoActionReceiver" android:exported="${gleoReceiverExported}">
             <intent-filter>
                 <action android:name="com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE" />
             </intent-filter>
