@@ -26,3 +26,5 @@ PASS: JVM83(기존73+DemoRuntime8+UiRestrictions2),debug/release Kotlin컴파일
 - NOT_TESTED: 실제 SDK 콜백/CarUx 연결·규제/UI·FGS·mock 권한/provider·웹콘솔 HTTP 형식 호환·Room migration/reset/legacy JOIN·JNI·화면 유지·E2E. 계측은 작성/컴파일만 했다. Studio/adb/기기/앱/에뮬레이터/계측을 실행하지 않았다. 검증 스킬의 Studio/실행 요청보다 사용자 실행 금지를 우선했다.
 
 재현은 승인06 §11 절차를 향후 허용 시 사용한다. 웹콘솔 경로는 ae11722의 loopback 형식 재사용이며 공식 안정 API 보장이 아니다. AppOp 지정/단독 mock writer, 실제 콜백 gate, 두 모드 배타성, CarUx 기능별 제한과 reset 롤백은 실제 환경 검증이 남는다.07/지도 SDK/서버/Gleo/새 계층·의존성은 추가하지 않았다. 현재 상태는 구현 제출·독립 코드 리뷰 대기이며 기능 전체 검증 완료가 아니다.
+
+06 코드 리뷰 P2 두 건은 [수정 기록](step06-review-fixes.md)에서 RED→GREEN을 확인했다. 입력 대기 기한과 ACK 최신 탐색 제한만 보완, JVM93/빌드·lint·정적 PASS. 실제 환경은 계속 NOT_TESTED이며 독립 재검토 대기다.

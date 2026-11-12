@@ -52,13 +52,7 @@ class LocationViewModel(private val app: Application) : AndroidViewModel(app), S
     }
 
     fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) {
-        val state = uiState.value
-        val item = state.inbox.pending ?: return
-        val id = "receipt:${key.recipientId}/${key.noteId}"
-        if (!state.restrictions.canShowBody || !state.restrictions.fits(item.note.content) ||
-            !state.restrictions.allowsContent(id, state.visitedContent)) return
-        markPresented(id)
-        connection.confirmReceipt(key, screenResumed)
+        connection.confirmReceipt(key, screenResumed, visited.value.toSet())
     }
 
     fun submitTestNote(content: String, category: NoteCategory) {

@@ -1,0 +1,72 @@
+package com.jinkim.hyundaiAndGretel.ui.ux
+
+import android.car.drivingstate.CarUxRestrictions as F
+import com.jinkim.hyundaiAndGretel.notes.*
+import com.jinkim.hyundaiAndGretel.notes.pickup.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.test.*
+import org.junit.Assert.*
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class ReceiptAdmissionTest {
+    private val note = RoadNote("00000000-0000-0000-0000-000000000001", "A", "구덩이", NoteCategory.WARNING,
+        37.5, 127.03, 0, 0, 600_000)
+    private val key = ReceiptKey(note.noteId, "B")
+    private val contentId = "receipt:B/${note.noteId}"
+    private inner class Store : ReceiptStore {
+        val rows = MutableStateFlow(listOf(InboxItem(note, "B", 1, 1.0, null)))
+        var calls = 0
+        var gate = CompletableDeferred<Unit>().also { it.complete(Unit) }
+        override fun observeInbox(recipientId: String) = rows
+        override suspend fun receive(request: ReceiptRequest) = ReceiveResult.RECEIVED
+        override suspend fun confirm(noteId: String, recipientId: String) {
+            calls++; gate.await()
+            rows.value = rows.value.map { it.copy(displayedAtUtcMillis = 10) }
+        }
+    }
+    @Test fun rawDepthChangeRejectsQueuedAckBeforeDerivedUiStateCatchesUp() = runTest {
+        val store = Store()
+        val repo = ReceiptRepository(backgroundScope, store, MutableStateFlow("B"), {})
+        val raw = MutableStateFlow(UiRestrictions(connected = true))
+        val displayed = raw.map { it }.stateIn(backgroundScope, SharingStarted.Eagerly, raw.value)
+        runCurrent()
+        raw.value = UiRestrictions(true, true, F.UX_RESTRICTIONS_LIMIT_CONTENT, 100, 10, 0)
+        val visited = setOf(contentId)
+        assertTrue(displayed.value.allowsContent(contentId, visited))
+        // The exact admission function used by Binder reads raw policy, without draining UI work.
+        repo.confirmVisibleReceipt(key, true, raw.value, visited)
+        assertFalse(repo.hasPendingWrites)
+        runCurrent()
+        assertEquals(0, store.calls)
+        assertEquals(visited, setOf(contentId))
+        assertNotNull(repo.inbox.value.pending)
+    }
+    @Test fun currentVisitedBudgetRejectsNewItemButAcceptedAckFinishesAfterRestrictionsChange() = runTest {
+        val store = Store(); store.gate = CompletableDeferred()
+        var finished = 0
+        val repo = ReceiptRepository(backgroundScope, store, MutableStateFlow("B"), { finished++ })
+        val raw = MutableStateFlow(UiRestrictions(true, true, F.UX_RESTRICTIONS_LIMIT_CONTENT, 100, 1, 1))
+        runCurrent()
+        val visited = mutableSetOf("debug:settings")
+        repo.confirmVisibleReceipt(key, true, raw.value, visited.toSet())
+        runCurrent()
+        assertEquals(0, store.calls)
+        assertEquals(setOf("debug:settings"), visited)
+        // Already presented content can be confirmed at the cumulative item boundary.
+        repo.confirmVisibleReceipt(key, false, raw.value, setOf(contentId))
+        assertFalse(repo.hasPendingWrites)
+        repo.confirmVisibleReceipt(key, true, raw.value, setOf(contentId))
+        assertTrue(repo.hasPendingWrites)
+        raw.value = raw.value.copy(depthLimit = 0, itemLimit = 0)
+        runCurrent()
+        assertEquals(1, store.calls)
+        assertNotNull(repo.inbox.value.pending)
+        store.gate.complete(Unit); runCurrent()
+        assertFalse(repo.hasPendingWrites)
+        assertNull(repo.inbox.value.pending)
+        assertEquals(10L, store.rows.value.single().displayedAtUtcMillis)
+        assertEquals(1, finished)
+    }
+}

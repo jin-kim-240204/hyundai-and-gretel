@@ -1,0 +1,30 @@
+{
+  "task": "06 코드 리뷰 P2 입력 기한과 ACK 수락 보완",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "DES-06"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "debug/release/AndroidTest APK compile, lintDebug, verify_harness --build PASS; docs/work/step06-review-fixes.md"
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "소유권/취소/지연 입력 JVM PASS, 실제 SDK/HTTP/provider/서비스·FGS 실행 금지"
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "raw 규제 depth/예산 Main 수락 및 수락 쓰기 JVM PASS, 실제 CarUx/VM/Compose/Binder 실행 금지"
+    },
+    {
+      "id": "DOC-9faba42791f0#기능별규제",
+      "status": "NOT_TESTED",
+      "evidence": "승인06 UX04, UiRestrictions.confirmVisibleReceipt + 최신 raw 규제/VM visited snapshot. host 경계 PASS, 실제 신호/UI 미검증"
+    }
+  ]
+}

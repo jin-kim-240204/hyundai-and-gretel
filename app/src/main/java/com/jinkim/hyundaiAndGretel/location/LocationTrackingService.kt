@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import com.jinkim.hyundaiAndGretel.demo.*
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomScenarioStore
 import com.jinkim.hyundaiAndGretel.ui.ux.CarRestrictionsSource
+import com.jinkim.hyundaiAndGretel.ui.ux.confirmVisibleReceipt
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.RoadNoteRepository
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
@@ -138,12 +139,8 @@ class LocationTrackingService : Service() {
         override val uiRestrictions get() = restrictions.state
         val demoRuntime get() = demo
         fun bufferSummary() = tracking.bufferSummary()
-        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) {
-            val policy = restrictions.state.value
-            val pending = receipts.inbox.value.pending ?: return
-            if (!demo.blocksNewWrites && policy.canShowBody && policy.fits(pending.note.content)) {
-                receipts.confirm(key, screenResumed)
-            }
+        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean, visitedContent: Set<String>) {
+            if (!demo.blocksNewWrites) receipts.confirmVisibleReceipt(key, screenResumed, restrictions.state.value, visitedContent)
         }
 
         override fun submitTestNote(content: String, category: NoteCategory) {

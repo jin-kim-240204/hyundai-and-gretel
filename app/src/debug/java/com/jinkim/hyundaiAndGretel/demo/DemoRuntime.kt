@@ -31,6 +31,7 @@ class DemoRuntime(
     private var owner: Any? = null
     private var work: Job? = null
     private var motion: Job? = null
+    private var inputDeadline: Job? = null
     private var cleanup: Job? = null
     private var gate: StartGate? = null
     private var probeSeen: CompletableDeferred<Unit>? = null
@@ -78,6 +79,7 @@ class DemoRuntime(
         if (setup) check(restrictions.value.canSetup) { "시연 설정이 제한됐습니다" }
     }
     private suspend fun closeInput() {
+        if (inputDeadline !== cleanup) inputDeadline?.cancel()
         motion?.cancelAndJoin(); motion = null
         input.close()
     }
@@ -117,8 +119,10 @@ class DemoRuntime(
                 check(active.value == id) { "시나리오가 변경됐습니다" }
                 val (target, note) = DemoGeometry.start(selected.actor, rows, utc())
                 val probe = DemoGeometry.probe(target, previous)
+                var validatedAt = clock()
                 if (selected.mode == DemoMode.WEB_CONSOLE) {
                     input.prepare()
+                    validatedAt = clock()
                     mutable.value = state.value.copy(inputStatus = "mock 권한/콘솔 응답 확인 · SDK 대기")
                 } else mutable.value = state.value.copy(inputStatus = "앱 provider 정리 · 외부 SDK 입력 대기")
                 ensureActive(); checkOwner(token)
@@ -137,7 +141,7 @@ class DemoRuntime(
                 withTimeout(15_000) { startSeen!!.await() }
                 ensureActive(); checkOwner(token, setup = false)
                 mutable.value = state.value.copy(phase = DemoPhase.READY)
-                if (selected.mode == DemoMode.WEB_CONSOLE) startMotion(token, target)
+                if (selected.mode == DemoMode.WEB_CONSOLE) startMotion(token, target, validatedAt)
             } catch (timeout: TimeoutCancellationException) { fail(token, IllegalStateException("SDK 출발 위치 확인 시간 초과", timeout)) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) { fail(token, error) }
@@ -159,23 +163,42 @@ class DemoRuntime(
         }
         return accepted
     }
-    private fun startMotion(token: Any, initial: Double) {
+    private fun startMotion(token: Any, initial: Double, validatedAt: Long) {
         motion = scope.launch {
+            val currentMotion = coroutineContext.job
+            var deadline: Job? = null
             var progress = initial
             var previous = clock()
+            var lastSuccess = validatedAt
             try {
                 while (isActive) {
+                    // Separate from the blocking reader: expiry stops SDK before awaiting IO cleanup.
+                    deadline = scope.launch expiry@{
+                        delay((lastSuccess + 2_001 - clock()).coerceAtLeast(0))
+                        if (owner !== token || motion !== currentMotion) return@expiry
+                        val expired = coroutineContext.job
+                        cleanup = expired
+                        try { fail(token, IllegalStateException("콘솔 입력이 2초 넘게 지연됐습니다")) }
+                        finally {
+                            if (cleanup === expired) cleanup = null
+                            host.writesFinished()
+                        }
+                    }
+                    inputDeadline = deadline
                     delay(1_000)
                     val (speed, gear) = input.readMotion()
                     ensureActive(); checkOwner(token, setup = false)
                     val now = clock()
+                    check(now - lastSuccess <= 2_000) { "콘솔 입력이 지연됐습니다" }
                     progress += consoleDelta(speed, gear, now - previous)
-                    DemoGeometry.fix(progress, now) // Reject route end rather than clamping.
-                    previous = now
+                    DemoGeometry.fix(progress, now)
+                    lastSuccess = now; previous = now
+                    deadline.cancel(); deadline = null
                     input.inject(progress)
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) { fail(token, error, fromMotion = true) }
+            finally { if (cleanup !== deadline) deadline?.cancel() }
         }
     }
 
@@ -212,7 +235,7 @@ class DemoRuntime(
         val token = Any(); owner = token
         gate = null
         val previousWork = work; previousWork?.cancel()
-        motion?.cancel()
+        inputDeadline?.cancel(); motion?.cancel()
         mutable.value = state.value.copy(phase = DemoPhase.PREPARING, message = reason)
         cleanup = scope.launch {
             try { previousWork?.join(); closeInput() }
@@ -229,21 +252,24 @@ class DemoRuntime(
         if (owner !== token) return
         gate = null
         mutable.value = state.value.copy(phase = DemoPhase.ERROR, message = error.message ?: "시연 입력 실패")
-        try {
-            if (!fromMotion) closeInput() else input.close()
-        } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { mutable.value = state.value.copy(message = "GPS 입력 정리 실패") }
-        finally { host.stopTracking() }
+        try { host.stopTracking() }
+        finally {
+            try {
+                if (!fromMotion) closeInput() else input.close()
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { mutable.value = state.value.copy(message = "GPS 입력 정리 실패") }
+        }
     }
     fun onSourceFailure() {
         owner = null; gate = null
         work?.cancel(); motion?.cancel()
+        if (inputDeadline !== cleanup) inputDeadline?.cancel()
         try { input.close() } catch (_: Exception) { }
         mutable.value = state.value.copy(phase = DemoPhase.ERROR, message = "SDK 위치 연결 실패")
     }
     fun close() {
         owner = null; gate = null
-        work?.cancel(); motion?.cancel(); cleanup?.cancel()
+        work?.cancel(); motion?.cancel(); inputDeadline?.cancel(); cleanup?.cancel()
         input.close()
     }
 }

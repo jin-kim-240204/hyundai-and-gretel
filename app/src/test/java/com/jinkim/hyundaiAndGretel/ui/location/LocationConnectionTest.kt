@@ -18,7 +18,10 @@ class LocationConnectionTest {
         override val submissionState = MutableStateFlow(submission)
         override val inboxState = MutableStateFlow(InboxState())
         override val pickupState = MutableStateFlow<PickupState>(PickupState.Waiting)
-        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) = Unit
+        val acknowledgements = mutableListOf<Set<String>>()
+        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean, visitedContent: Set<String>) {
+            acknowledgements += visitedContent
+        }
         val calls = mutableListOf<Pair<String, NoteCategory>>()
         override fun submitTestNote(content: String, category: NoteCategory) {
             calls += content to category
@@ -139,6 +142,19 @@ class LocationConnectionTest {
         }
     }
 
+    @Test fun queuedAckUsesCurrentSessionAndProvidedVisitedSnapshotWithoutWaitingForUi() = runTest {
+        val a = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val b = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val connection = LocationConnection(backgroundScope)
+        connection.connect(a); runCurrent()
+        val visited = mutableSetOf("debug:settings")
+        val snapshot = visited.toSet()
+        connection.connect(b)
+        visited += "another:shown"
+        connection.confirmReceipt(ReceiptKey(note().noteId, "B"), true, snapshot)
+        assertTrue(a.acknowledgements.isEmpty())
+        assertEquals(listOf(setOf("debug:settings")), b.acknowledgements)
+    }
     @Test fun debugMessagesCoverAllResultsWithoutExposingOriginalText() {
         assertEquals(DebugSubmissionMessage.CONNECTING, null.debugMessage())
         assertEquals(DebugSubmissionMessage.READY, SubmissionState.Idle.debugMessage())

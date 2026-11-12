@@ -12,6 +12,6 @@ interface LocationSession {
     val submissionState: StateFlow<SubmissionState>
     val inboxState: StateFlow<InboxState>
     val pickupState: StateFlow<PickupState>
-    fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean)
+    fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean, visitedContent: Set<String>)
     fun submitTestNote(content: String, category: NoteCategory)
 }

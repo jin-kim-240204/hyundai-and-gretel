@@ -46,8 +46,8 @@ class LocationConnection(scope: CoroutineScope) {
         current.value = session
     }
 
-    fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) {
-        current.value?.confirmReceipt(key, screenResumed)
+    fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean, visitedContent: Set<String>) {
+        current.value?.confirmReceipt(key, screenResumed, visitedContent)
     }
 
     fun submitTestNote(content: String, category: NoteCategory) {

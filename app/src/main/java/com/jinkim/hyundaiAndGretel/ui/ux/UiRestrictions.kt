@@ -1,6 +1,8 @@
 package com.jinkim.hyundaiAndGretel.ui.ux
 
 import android.car.drivingstate.CarUxRestrictions as Flags
+import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
+import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptRepository
 
 data class UiRestrictions(
     val connected: Boolean = false,
@@ -20,4 +22,18 @@ data class UiRestrictions(
     fun allowsContent(key: String, seen: Set<String>, depth: Int = 1) = depth <= maxDepth && (key in seen || seen.size < maxItems)
     fun fits(text: String) = text.codePointCount(0, text.length) <= maxString
     fun label(text: String): String = text.substring(0, text.offsetByCodePoints(0, minOf(text.codePointCount(0, text.length), maxString)))
+}
+
+/** Main admission uses the service's raw policy, not the asynchronously derived screen state. */
+fun ReceiptRepository.confirmVisibleReceipt(
+    key: ReceiptKey,
+    screenResumed: Boolean,
+    policy: UiRestrictions,
+    visitedContent: Set<String>,
+) {
+    val pending = inbox.value.pending ?: return
+    val id = "receipt:${key.recipientId}/${key.noteId}"
+    if (policy.canShowBody && policy.fits(pending.note.content) && policy.allowsContent(id, visitedContent)) {
+        confirm(key, screenResumed)
+    }
 }

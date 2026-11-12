@@ -43,9 +43,11 @@ class DemoRuntimeTest {
         val injected = mutableListOf<Double>()
         var closes = 0; var deny = false
         var motionGate: CompletableDeferred<Unit>? = null
+        var partialResponse = false; var fragments = 0
         override suspend fun prepare() { if (deny) throw SecurityException("mock 권한 없음") }
         override fun inject(progress: Double) { injected += progress }
         override suspend fun readMotion(): Pair<Double, String> {
+            while (partialResponse) { delay(400); fragments++ }
             motionGate?.let { withContext(NonCancellable) { it.await() } }
             return 36.0 to "Drive"
         }
@@ -169,6 +171,69 @@ class DemoRuntimeTest {
         h.runtime.reset(true); runCurrent()
         assertEquals(0, h.store.resets)
         assertFalse(h.runtime.hasPendingWrites)
+        assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
+    }
+    @Test fun inputDeadlineIncludesTickStopsSdkBeforeBlockedReadFinishesAndRejectsLateInjection() = runTest {
+        val h = Harness(this); h.ready()
+        val gate = CompletableDeferred<Unit>(); h.input.motionGate = gate
+        val before = h.input.injected.toList()
+        val stops = h.host.stops
+        advanceTimeBy(2_000); runCurrent()
+        assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
+        advanceTimeBy(1); runCurrent()
+        assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
+        assertTrue(h.host.stops > stops) // No IO completion needed to stop SDK.
+        assertFalse(h.runtime.accept(h.fix(620.0)))
+        h.runtime.requestStart(); runCurrent()
+        assertEquals(1, h.host.starts) // Old reader/provider cleanup still owns the input.
+        gate.complete(Unit); runCurrent()
+        assertEquals(before, h.input.injected)
+        assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
+        h.input.motionGate = null
+        h.ready() // An explicit restart is required after cleanup.
+        advanceTimeBy(1_000); runCurrent()
+        assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
+    }
+    @Test fun onlyWholeSuccessfulResponseRenewsDeadlineAndOldDeadlineCannotFailNewSession() = runTest {
+        val h = Harness(this); h.ready()
+        advanceTimeBy(1_000); runCurrent() // First full response renews at t=1000.
+        val gate = CompletableDeferred<Unit>(); h.input.motionGate = gate
+        advanceTimeBy(2_000); runCurrent()
+        assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
+        advanceTimeBy(1); runCurrent()
+        assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
+        gate.complete(Unit); runCurrent()
+        h.input.motionGate = null
+        h.ready()
+        advanceTimeBy(500); runCurrent()
+        h.runtime.stop(); runCurrent()
+        assertEquals(DemoPhase.STOPPED, h.runtime.state.value.phase)
+        h.ready()
+        advanceTimeBy(1_501); runCurrent() // Pass the prior session's expiry.
+        assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
+    }
+    @Test fun partialResponseProgressDoesNotRenewWholeInputDeadline() = runTest {
+        val h = Harness(this); h.ready(); h.input.partialResponse = true
+        advanceTimeBy(2_001); runCurrent()
+        assertTrue(h.input.fragments > 0)
+        assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
+        val fragments = h.input.fragments
+        val injections = h.input.injected.toList()
+        advanceTimeBy(4_000); runCurrent()
+        assertEquals(fragments, h.input.fragments)
+        assertEquals(injections, h.input.injected)
+        assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
+    }
+    @Test fun sdkGateDoesNotInventANewerConsoleValidationTime() = runTest {
+        val h = Harness(this)
+        h.runtime.requestStart(); runCurrent() // prepare validated the console at t=0.
+        h.runtime.accept(h.fix(h.runtime.state.value.probe!!)); runCurrent()
+        advanceTimeBy(1_500); runCurrent()
+        h.runtime.accept(h.fix(610.0)); runCurrent()
+        assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
+        advanceTimeBy(500); runCurrent()
+        assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
+        advanceTimeBy(1); runCurrent()
         assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
     }
     @Test fun geometryKeepsFirstAnchorMarginAndRejectsInvalidTargetsAndInput() {
