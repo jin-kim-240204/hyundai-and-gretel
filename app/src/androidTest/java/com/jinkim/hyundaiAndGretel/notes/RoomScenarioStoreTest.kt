@@ -11,7 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 
-/** Compile only: fresh schema reset/JOIN/rollback require later Android execution. */
+/** 컴파일만 확인했다. 새 스키마의 초기화·결합 조회·롤백은 별도 Android 실행 검증이 필요하다. */
 class RoomScenarioStoreTest {
     @Test fun currentDatabasePreservesUnscopedHistoryAndOtherScenariosAcrossResetAndRollback() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext

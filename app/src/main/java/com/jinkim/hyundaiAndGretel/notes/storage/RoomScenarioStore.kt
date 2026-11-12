@@ -31,6 +31,7 @@ class RoomScenarioStore internal constructor(private val db: NoteDatabase) : Sce
     override fun observeNotes(scenarioId: String) = db.scenarios().notes(scenarioId).map { rows ->
         rows.map { it.toNote().also { note -> require(note.validationError() == null) } }
     }
+    // 리뷰용: 현재 시연 원본 삭제와 새 활성 ID 선택을 한 트랜잭션으로 처리한다. 다른 시연과 소속 없는 데이터는 삭제하지 않는다.
     override suspend fun reset(): String = db.withTransaction {
         val dao = db.scenarios()
         val next = UUID.randomUUID().toString()

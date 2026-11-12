@@ -35,7 +35,7 @@ class ReceiptAdmissionTest {
         raw.value = UiRestrictions(true, true, F.UX_RESTRICTIONS_LIMIT_CONTENT, 100, 10, 0)
         val visited = setOf(contentId)
         assertTrue(displayed.value.allowsContent(contentId, visited))
-        // The exact admission function used by Binder reads raw policy, without draining UI work.
+        // 바인더가 실제 사용하는 수락 함수로 검증한다. 화면 갱신을 기다리지 않고 최신 규제를 읽어야 한다.
         repo.confirmVisibleReceipt(key, true, raw.value, visited)
         assertFalse(repo.hasPendingWrites)
         runCurrent()
@@ -54,7 +54,7 @@ class ReceiptAdmissionTest {
         runCurrent()
         assertEquals(0, store.calls)
         assertEquals(setOf("debug:settings"), visited)
-        // Already presented content can be confirmed at the cumulative item boundary.
+        // 누적 항목 수 제한에 도달해도 이미 표시한 쪽지는 확인할 수 있어야 한다.
         repo.confirmVisibleReceipt(key, false, raw.value, setOf(contentId))
         assertFalse(repo.hasPendingWrites)
         repo.confirmVisibleReceipt(key, true, raw.value, setOf(contentId))

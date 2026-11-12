@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
 import org.junit.Test
 
-/** Compile only under the current no-device policy. */
+/** 기존 실행 제한에 따라 컴파일만 확인했으며 이 계측 테스트는 아직 실행하지 않았다. */
 class RoomReceiptStoreTest {
     @Test fun transactionUniquenessJoinAckExpiryAndCascade() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -45,7 +45,7 @@ class RoomReceiptStoreTest {
             assertNull(receipts.observeInbox("C").first().single().displayedAtUtcMillis)
             utc = note.expiresAtUtcMillis
             assertEquals(ReceiveResult.INELIGIBLE, receipts.receive(request.copy(recipient = SyntheticSession("D"))))
-            assertEquals(1, receipts.observeInbox("B").first().size) // Expired receipt history remains.
+            assertEquals(1, receipts.observeInbox("B").first().size) // 원본이 만료돼도 수신 이력은 남아 있어야 한다.
             db.openHelper.writableDatabase.execSQL("DELETE FROM road_notes WHERE noteId = ?", arrayOf(note.noteId))
             assertTrue(receipts.observeInbox("B").first().isEmpty())
         } finally { db.close() }

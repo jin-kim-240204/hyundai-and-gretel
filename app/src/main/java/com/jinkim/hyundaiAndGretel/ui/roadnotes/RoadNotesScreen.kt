@@ -47,6 +47,7 @@ fun RoadNotesScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 PolicyText(stringResource(R.string.app_name), policy, style = MaterialTheme.typography.headlineLarge)
+                // 리뷰용: 제품 화면은 전달받은 상태로 문구와 버튼을 그린다. 버튼 콜백을 통해서만 외부 작업을 요청한다.
                 val statusMessage = stringResource(when (status) {
                     TrackingStatus.STOPPED -> R.string.location_stopped
                     TrackingStatus.STARTING -> R.string.location_starting
@@ -72,10 +73,11 @@ fun RoadNotesScreen(
                     is SubmissionState.Failed -> PolicyText("제보를 저장하지 못했습니다", policy)
                     else -> Unit
                 }
+                // 리뷰용: 제품 수신함의 현재 한 건을 표시한다. 확인 버튼만 저장을 요청하며, 화면 구성 자체로 확인 처리하지 않는다.
                 state.inbox.pending?.let { item ->
                     val id = "receipt:${item.recipientId}/${item.note.noteId}"
                     if (policy.canShowBody && policy.fits(item.note.content) && policy.allowsContent(id, state.visitedContent)) {
-                        SideEffect { onContentShown(id) } // Budget accounting only; never an ACK.
+                        SideEffect { onContentShown(id) } // 화면 표시 항목 수만 기록한다. 쪽지 확인 처리는 하지 않는다.
                         PolicyText(stringResource(R.string.receipt_title), policy)
                         PolicyText(item.note.content, policy)
                         Button(onClick = { onConfirmReceipt(ReceiptKey(item.note.noteId, item.recipientId)) },
@@ -86,6 +88,7 @@ fun RoadNotesScreen(
                 }
                 if (permissionMessage.isNotEmpty()) Button(onClick = onOpenSettings, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.location_permission_settings), policy) }
             }
+            // 리뷰용: 시연 패널은 제품 UI와 분리된 빌드별 슬롯이다. 릴리스 구현에서는 시연 도구를 표시하지 않는다.
             debugTools()
             }
         }

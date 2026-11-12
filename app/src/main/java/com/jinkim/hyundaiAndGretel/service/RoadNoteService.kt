@@ -30,17 +30,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class RoadNoteService : Service() {
+    // 리뷰용: 서비스 명령 진입점: 시작·중지·저장 유지 명령을 구분한다. 이후 기능 판단은 각 처리자에게 위임한다.
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> requestStart()
             ACTION_STOP -> { demo.stop(); stopTracking() }
             ACTION_STORAGE_HOLD -> finishWhenStorageIsIdle()
-            // Preserve the existing stop behavior for null or unknown commands.
+            // 명령이 없거나 알 수 없는 경우에도 기존처럼 수집을 중지한다.
             else -> { demo.stop(); stopTracking() }
         }
         return START_NOT_STICKY
     }
 
+    // 리뷰용: 디버그에서는 시연 준비 절차를 먼저 거친다. 릴리스에서는 실제 위치 수집을 바로 시작한다.
     private fun requestStart() {
         if (!demo.enabled) { startTracking(); return }
         try {
@@ -55,6 +57,7 @@ class RoadNoteService : Service() {
         catch (error: Exception) { tracking.fail(error, "DEMO_FOREGROUND") }
     }
 
+    // 리뷰용: 알림으로 포그라운드 전환 → 위치 SDK 시작 → 같은 세션의 쪽지 접근 감시 시작 순서를 지킨다.
     private fun startTracking() {
         if (isTracking || submissions.isSubmitting || receipts.hasPendingWrites) return
         try {
@@ -77,6 +80,7 @@ class RoadNoteService : Service() {
         if (pickupDelegate.isInitialized()) pickup.stop()
     }
 
+    // 리뷰용: 근접 등록을 먼저 정리하고 위치 SDK를 해제한다. 이미 수락한 DB 쓰기는 여기서 취소하지 않는다.
     private fun stopTracking() {
         try {
             stopReceiving()
@@ -86,6 +90,7 @@ class RoadNoteService : Service() {
         }
     }
 
+    // 리뷰용: 종료 판단: 쓰기가 남으면 서비스를 유지하고, 수집·전환·쓰기 모두 끝났을 때만 종료를 요청한다.
     private fun finishWhenStorageIsIdle() {
         if (submissions.isSubmitting || receipts.hasPendingWrites || (demoDelegate.isInitialized() && demo.hasPendingWrites)) {
             if (isTracking) {
@@ -94,7 +99,7 @@ class RoadNoteService : Service() {
                 try { promoteStorageForeground() }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) {
-                    // Already accepted writes still finish even if the type transition fails.
+                    // 포그라운드 유형 전환에 실패해도 이미 수락한 쓰기는 완료까지 유지한다.
                     if (BuildConfig.DEBUG) Log.d("RoadNote", "STORAGE_FOREGROUND ${error.javaClass.simpleName}")
                 }
             }
@@ -103,9 +108,10 @@ class RoadNoteService : Service() {
         }
     }
 
+    // 리뷰용: 수집이 멈춰 있어도 수신 확인 등의 쓰기를 수락하기 전에 저장용 포그라운드 상태를 확보한다.
     private fun holdStorageForeground() {
         if (isTracking) return
-        // A bound-only service must become started before an accepted ACK outlives unbinding.
+        // 화면 연결이 해제돼도 수락한 확인 저장을 끝낼 수 있도록 서비스를 시작 상태로 유지한다.
         promoteStorageForeground()
         try {
             startService(Intent(this, RoadNoteService::class.java).setAction(ACTION_STORAGE_HOLD))
@@ -127,6 +133,7 @@ class RoadNoteService : Service() {
         stopSelf()
     }
 
+    // 리뷰용: 기능 연결 지점: 서비스 수명의 코루틴, 실제 SDK 소스, Room 저장소를 생성해 처리자들에게 전달한다.
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val activeScenario = MutableStateFlow<String?>(null)
     private val scenarioStore by lazy { RoomScenarioStore(this) }
@@ -159,6 +166,7 @@ class RoadNoteService : Service() {
     }
     private var setup = SyntheticSession()
     private val recipient = MutableStateFlow(setup.actorId)
+    // 리뷰용: 수신·확인 쓰기 수락 시 역할 전환 여부와 서비스 유지 가능성을 확인한다. DB 구현은 RoomReceiptStore다.
     private val receipts: NoteReceiptProcessor by lazy {
         NoteReceiptProcessor(scope, RoomReceiptStore(this, onError = { error ->
             if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
@@ -191,6 +199,7 @@ class RoadNoteService : Service() {
             },
         )
     }
+    // 리뷰용: 디버그 시연은 이 계약을 통해 기존 수집·역할·쓰기 수명을 조작한다. 별도 위치 수집기를 만들지 않는다.
     private val demoDelegate: Lazy<DemoRuntime> = lazy {
         DemoRuntime(this, scope, object : DemoServiceContract {
             override val busy get() = submissions.isSubmitting || receipts.hasPendingWrites
@@ -223,6 +232,7 @@ class RoadNoteService : Service() {
     private val notifications by lazy { RoadNoteServiceNotification(this) }
     private val binder = LocalBinder()
 
+    // 리뷰용: 화면이 접근하는 실제 연결 객체다. 상태를 공개하고 제보·확인 요청을 해당 처리자에게 전달한다.
     inner class LocalBinder : Binder(), RoadNoteServiceContract {
         override val status get() = tracking.status
         override val submissionState get() = submissions.state
@@ -242,6 +252,7 @@ class RoadNoteService : Service() {
 
     override fun onBind(intent: Intent): IBinder = binder
 
+    // 리뷰용: 서비스 최종 해제: 시연 입력·차량 규제·근접 감시·위치 SDK를 정리한 뒤 코루틴을 취소한다.
     override fun onDestroy() {
         try {
             try { if (demoDelegate.isInitialized()) demo.close() }

@@ -22,7 +22,7 @@ import kotlinx.coroutines.*
 import org.junit.Assert.*
 import org.junit.Test
 
-/** Inject GPS through adb emu geo fix while waiting for the real SDK callback. */
+/** 실제 SDK 콜백을 기다리는 동안 adb emu geo fix로 GPS 좌표를 주입하는 통합 테스트다. */
 class SubmissionServiceTest {
     @Test fun acceptedSaveOutlivesStopAndLastUnbindOnSuccessAndFailure() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()

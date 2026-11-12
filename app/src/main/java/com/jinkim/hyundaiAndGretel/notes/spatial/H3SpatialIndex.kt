@@ -16,14 +16,16 @@ class H3SpatialIndex(private val create: () -> H3Core = H3Core::newSystemInstanc
         }
     }
 
+    // 리뷰용: 저장 시 쪽지 좌표를 해상도 9의 H3 셀 ID로 바꾼다.
     override fun cell(latitude: Double, longitude: Double): String {
         require(latitude.isFinite() && longitude.isFinite() && latitude in -90.0..90.0 && longitude in -180.0..180.0)
         return access { it.latLngToCellAddress(latitude, longitude, RESOLUTION) }
     }
 
+    // 리뷰용: 조회 시 400미터 주변을 덮는 셀 집합을 만든다. 실제 원형 거리 판정은 후보 처리자가 별도로 수행한다.
     override fun cover(latitude: Double, longitude: Double): Set<String> {
         require(CandidateArea.contains(latitude, longitude))
-        // shortcut: this conservative planar cover is validated only in the fixed Seoul prototype area.
+        // shortcut: 보수적인 평면 근사 조회 범위는 고정된 서울 프로토타입 구역에서만 검증했다. 구역 확장 시 다시 검증한다.
         val latitudeMargin = CandidateArea.RADIUS_METERS / 111_000.0
         val longitudeMargin = CandidateArea.RADIUS_METERS / (111_000.0 * cos(Math.toRadians(latitude)))
         val boundary = listOf(

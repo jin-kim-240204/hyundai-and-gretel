@@ -23,7 +23,7 @@ sealed interface SubmissionState {
 
 enum class SubmissionFailure { LOCATION_UNAVAILABLE, INVALID_TIME, INVALID_INPUT, DUPLICATE, STORAGE, CANCELLED }
 
-/** Owned by the service; commands, anchor capture and state changes run on Main. */
+/** 서비스가 소유한다. 제보 요청, 기준 위치 선택과 상태 변경은 메인 실행 문맥에서 처리한다. */
 class RoadNoteSubmission(
     private val scope: CoroutineScope,
     private val store: RoadNoteStore,
@@ -41,6 +41,7 @@ class RoadNoteSubmission(
 
     fun clearResult() { if (!isSubmitting) mutableState.value = SubmissionState.Idle }
 
+    // 리뷰용: 제보 처리 진입점: 중복 요청을 막고 현재 버퍼에서 기준 위치를 먼저 고정한다.
     fun submit(content: String, category: NoteCategory) {
         if (isSubmitting) return
         val selection = captureAnchor() as? AnchorSelection.Selected
@@ -55,6 +56,7 @@ class RoadNoteSubmission(
         }
         val anchor = selection.anchor
         val context = setup()
+        // 리뷰용: 고정한 좌표·작성자·시나리오·UTC 만료시각으로 저장할 쪽지 원본을 구성한다.
         val note = RoadNote(
             noteId = newId(), authorId = context.actorId, content = content, category = category,
             latitude = anchor.sample.latitude, longitude = anchor.sample.longitude,
@@ -64,6 +66,7 @@ class RoadNoteSubmission(
             scenarioId = scenarioId(),
         )
         mutableState.value = SubmissionState.Submitting
+        // 리뷰용: 서비스 수명의 작업으로 저장을 요청한다. 실제 저장 계약의 결과를 화면용 제보 상태로 변환한다.
         scope.launch {
             try {
                 mutableState.value = when (val result = store.create(note)) {
@@ -78,6 +81,7 @@ class RoadNoteSubmission(
             } catch (error: Exception) {
                 mutableState.value = SubmissionState.Failed(SubmissionFailure.STORAGE)
                 onUnexpectedError(error)
+            // 리뷰용: 성공·오류·취소 모두 서비스에 쓰기 종료를 알린다. 화면 이탈만으로 수락한 저장을 끊지 않는다.
             } finally {
                 onFinished()
             }

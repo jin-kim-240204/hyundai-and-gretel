@@ -12,6 +12,7 @@ import com.jinkim.hyundaiAndGretel.R
 
 /** 알림 내용만 구성한다. foreground 전환과 서비스 수명은 RoadNoteService가 소유한다. */
 internal class RoadNoteServiceNotification(private val context: Context) {
+    // 리뷰용: 알림의 내용과 버튼만 만든다. 이 함수 자체가 서비스를 시작하거나 종료하지는 않는다.
     fun build(savingOnly: Boolean = false): Notification {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.location_channel_name), NotificationManager.IMPORTANCE_LOW))

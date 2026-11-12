@@ -17,7 +17,7 @@ class H3SpatialIndexTest {
         assertTrue(CandidateArea.contains(37.49, 127.02))
         assertTrue(CandidateArea.contains(37.51, 127.05))
         assertFalse(CandidateArea.contains(37.489999, 127.02))
-        assertNotNull(index.cell(35.0, 129.0)) // Storage is not restricted to query centers.
+        assertNotNull(index.cell(35.0, 129.0)) // 저장 가능한 위치를 후보 조회 중심 구역으로 제한하지 않는다.
         assertThrows(IllegalArgumentException::class.java) { index.cell(Double.NaN, 127.0) }
         assertThrows(IllegalArgumentException::class.java) { index.cover(35.0, 129.0) }
     }

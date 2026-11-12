@@ -46,7 +46,7 @@ class RoadNoteServiceConnectionTest {
         runCurrent()
         assertEquals(RoadNotesUiState(), connection.state.value)
         connection.connect(b)
-        // Even before the UI collector catches up, commands use the current session.
+        // 화면 관찰 결과가 갱신되기 전에도 명령은 현재 연결된 세션으로 전달해야 한다.
         connection.submitTestNote("차단", NoteCategory.WARNING)
         runCurrent()
         a.submissionState.value = SubmissionState.Failed(SubmissionFailure.STORAGE)
@@ -86,7 +86,7 @@ class RoadNoteServiceConnectionTest {
             }
             if (disconnectFirst) connection.connect(null)
             connection.connect(b)
-            // Do not drain the scheduler between A, optional null, and B.
+            // A, 선택적 연결 해제, B 사이에 대기 작업을 처리하지 않아 빠른 연결 전환을 재현한다.
             assertEquals(displayedA, connection.state.value)
             connection.submitTestNote("차단", NoteCategory.WARNING)
             assertTrue(a.calls.isEmpty())
@@ -95,7 +95,7 @@ class RoadNoteServiceConnectionTest {
             val stoppedB = RoadNotesUiState(TrackingStatus.STOPPED, SubmissionState.Idle)
             assertEquals(stoppedB, connection.state.value)
             assertTrue(observed.all { it == stoppedB || it == RoadNotesUiState() })
-            // A fast null may be conflated; its emission is not required.
+            // 빠른 연결 해제 값은 상태 흐름에서 합쳐질 수 있으므로 중간 null 관찰을 강제하지 않는다.
             a.status.value = TrackingStatus.RECEIVING
             a.submissionState.value = SubmissionState.Idle
             runCurrent()

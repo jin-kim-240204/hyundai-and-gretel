@@ -5,7 +5,7 @@ import com.jinkim.hyundaiAndGretel.notes.RoadNote
 import com.jinkim.hyundaiAndGretel.notes.spatial.distanceMeters
 import kotlinx.coroutines.flow.Flow
 
-/** Frozen on Main when the current registration/location is accepted. */
+/** 현재 등록과 위치를 수락하는 시점에 메인 실행 문맥에서 입력을 고정한다. */
 data class ReceiptRequest(val noteId: String, val recipient: SyntheticSession, val position: LocationFix, val scenarioId: String? = null)
 data class InboxItem(
     val note: RoadNote,
@@ -23,7 +23,7 @@ interface ReceiptStore {
     suspend fun confirm(noteId: String, recipientId: String)
 }
 
-/** Spatial eligibility only; session and receipt-clock freshness are checked at Main acceptance. */
+/** 공간 조건만 판단한다. 세션과 위치 수신 시각의 최신성은 메인 실행 문맥의 수락 시점에 확인한다. */
 fun eligibleDistance(note: RoadNote, setup: SyntheticSession, position: LocationFix, nowUtc: Long): Double? {
     if (note.authorId == setup.actorId || !note.isActiveAt(nowUtc)) return null
     val route = note.route ?: return null

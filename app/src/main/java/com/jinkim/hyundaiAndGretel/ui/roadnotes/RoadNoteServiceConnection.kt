@@ -17,10 +17,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 
-/** Main-confined connection switching, also used directly by JVM tests. */
+/** 메인 실행 문맥에서 서비스 연결을 전환한다. JVM 테스트에서도 같은 연결 처리를 사용한다. */
 class RoadNoteServiceConnection(scope: CoroutineScope) {
     private val current = MutableStateFlow<RoadNoteServiceContract?>(null)
 
+    // 리뷰용: 현재 연결의 상태 흐름만 구독한다. 연결이 바뀌면 이전 서비스 관찰을 취소하고 새 상태로 화면을 구성한다.
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<RoadNotesUiState> = current.flatMapLatest { session ->
         if (session == null) flowOf(RoadNotesUiState())
@@ -37,6 +38,7 @@ class RoadNoteServiceConnection(scope: CoroutineScope) {
         current.value?.confirmReceipt(key, screenResumed, visitedContent)
     }
 
+    // 리뷰용: 명령은 화면에 마지막으로 보인 복사본이 아니라 현재 연결된 서비스의 최신 상태를 확인해 전달한다.
     fun submitTestNote(content: String, category: NoteCategory) {
         val session = current.value ?: return
         val latest = RoadNotesUiState(session.status.value, session.submissionState.value)

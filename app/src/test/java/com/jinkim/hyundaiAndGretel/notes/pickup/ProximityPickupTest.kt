@@ -80,7 +80,7 @@ class ProximityPickupTest {
         h.source.requests.first().registered("closest")
         runCurrent()
         assertEquals(16, h.source.requests.size)
-        assertTrue(h.store.inputs.isEmpty()) // Pre-registration outside 150m does not receive.
+        assertTrue(h.store.inputs.isEmpty()) // 등록 전이며 150미터 밖인 상태에서는 수신하면 안 된다.
     }
 
     @Test fun lateIdsKeepSlotsAndOldEnterCannotReceiveNewSameKeyRequest() = runTest {
@@ -122,7 +122,7 @@ class ProximityPickupTest {
             old.error(IOException("registration")); runCurrent()
             assertEquals(PickupState.Failed(PickupFailure.PROXIMITY), h.pickup.state.value)
             repeat(3) { h.signal(); runCurrent() }
-            h.start(); runCurrent() // duplicate start is not a retry
+            h.start(); runCurrent() // 중복 시작 호출로 실패한 세션을 재시도하지 않는다.
             assertEquals(1, h.source.requests.size)
             if (registeredFirst) assertTrue("known" in h.source.removed)
             h.pickup.stop()

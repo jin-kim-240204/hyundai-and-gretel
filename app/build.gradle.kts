@@ -47,7 +47,7 @@ dependencies {
 
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 
-// The H3 jar's Android resources must also be packaged as system-loadable JNI libraries.
+// H3의 Android용 네이티브 파일을 시스템에서 불러올 수 있도록 JNI 라이브러리로도 패키징한다.
 val h3Natives by configurations.creating
 dependencies { h3Natives(libs.uber.h3) { isTransitive = false } }
 val extractH3Natives by tasks.registering(Copy::class) {

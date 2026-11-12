@@ -61,7 +61,7 @@ class DemoRuntimeTest {
         fun ready() {
             runtime.requestStart(); scope.runCurrent()
             assertEquals(DemoPhase.PROBE, runtime.state.value.phase)
-            assertFalse(runtime.accept(fix(610.0))) // Cached target is not enough before probe.
+            assertFalse(runtime.accept(fix(610.0))) // 준비점 확인 전에는 캐시된 목표 좌표만으로 시작할 수 없다.
             assertFalse(runtime.accept(fix(runtime.state.value.probe!!)))
             scope.runCurrent()
             assertEquals(DemoPhase.START, runtime.state.value.phase)
@@ -75,7 +75,7 @@ class DemoRuntimeTest {
         val h = Harness(this); h.ready()
         advanceTimeBy(1_000); runCurrent()
         assertEquals(620.0, h.input.injected.last(), 1e-8)
-        assertEquals(610.0, h.runtime.state.value.current!!, 1e-6) // Injection is not an SDK callback.
+        assertEquals(610.0, h.runtime.state.value.current!!, 1e-6) // 주입 성공만으로 SDK가 실제 좌표를 수신한 것은 아니다.
         assertTrue(h.runtime.accept(h.fix(620.0)))
         assertEquals(620.0, h.runtime.state.value.current!!, 1e-6)
     }
@@ -182,21 +182,21 @@ class DemoRuntimeTest {
         assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
         advanceTimeBy(1); runCurrent()
         assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
-        assertTrue(h.host.stops > stops) // No IO completion needed to stop SDK.
+        assertTrue(h.host.stops > stops) // 입출력 완료를 기다리지 않고 SDK를 중지해야 한다.
         assertFalse(h.runtime.accept(h.fix(620.0)))
         h.runtime.requestStart(); runCurrent()
-        assertEquals(1, h.host.starts) // Old reader/provider cleanup still owns the input.
+        assertEquals(1, h.host.starts) // 이전 입력 읽기와 위치 제공자 정리가 끝나기 전에는 새 입력을 시작하지 않는다.
         gate.complete(Unit); runCurrent()
         assertEquals(before, h.input.injected)
         assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
         h.input.motionGate = null
-        h.ready() // An explicit restart is required after cleanup.
+        h.ready() // 정리 후에도 명시적으로 다시 시작해야 한다.
         advanceTimeBy(1_000); runCurrent()
         assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
     }
     @Test fun onlyWholeSuccessfulResponseRenewsDeadlineAndOldDeadlineCannotFailNewSession() = runTest {
         val h = Harness(this); h.ready()
-        advanceTimeBy(1_000); runCurrent() // First full response renews at t=1000.
+        advanceTimeBy(1_000); runCurrent() // 첫 전체 응답이 1000밀리초 시점에 입력 기한을 갱신한다.
         val gate = CompletableDeferred<Unit>(); h.input.motionGate = gate
         advanceTimeBy(2_000); runCurrent()
         assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
@@ -209,7 +209,7 @@ class DemoRuntimeTest {
         h.runtime.stop(); runCurrent()
         assertEquals(DemoPhase.STOPPED, h.runtime.state.value.phase)
         h.ready()
-        advanceTimeBy(1_501); runCurrent() // Pass the prior session's expiry.
+        advanceTimeBy(1_501); runCurrent() // 이전 세션의 만료 시각을 넘겨도 새 세션에 영향이 없는지 확인한다.
         assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
     }
     @Test fun partialResponseProgressDoesNotRenewWholeInputDeadline() = runTest {
@@ -227,7 +227,7 @@ class DemoRuntimeTest {
     @Test fun sdkGateDoesNotInventANewerConsoleValidationTime() = runTest {
         val h = Harness(this)
         val blocked = CompletableDeferred<Unit>(); h.input.motionGate = blocked
-        h.runtime.requestStart(); runCurrent() // prepare validated the console at t=0.
+        h.runtime.requestStart(); runCurrent() // 입력 준비 단계가 0밀리초 시점에 콘솔을 확인했다.
         h.runtime.accept(h.fix(h.runtime.state.value.probe!!)); runCurrent()
         advanceTimeBy(1_500); runCurrent()
         h.runtime.accept(h.fix(610.0)); runCurrent()

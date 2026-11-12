@@ -20,7 +20,7 @@ object DemoGeometry {
             .sortedWith(compareByDescending<RoadNote> { it.createdAtUtcMillis }.thenBy { it.noteId }).firstOrNull()
             ?: error("출발 기준 쪽지가 없습니다")
         val start = note.route!!.progressMeters - 600
-        fix(start, 0) // Never clamp an invalid anchor into the supported route.
+        fix(start, 0) // 경로 밖 출발점은 경계값으로 강제 보정하지 않고 거절한다.
         return start to note
     }
     fun probe(target: Double, previous: Double?): Double =
@@ -39,7 +39,7 @@ data class DemoState(
     val receivedAtElapsed: Long? = null, val inputStatus: String = "입력/권한 미확인",
 ) { val transitioning get() = phase in setOf(DemoPhase.PREPARING, DemoPhase.PROBE, DemoPhase.START, DemoPhase.RESETTING) }
 
-/** Deliberately a two-point cache heuristic, not SDK measurement authentication. */
+/** 서로 다른 두 좌표로 이전 캐시를 걸러내는 방식이며, SDK 측정의 출처를 인증하는 것은 아니다. */
 class StartGate(val probe: Double, val target: Double, private val now: () -> Long) {
     var phase = DemoPhase.PROBE; private set
     private var commandAt = now()
@@ -50,7 +50,7 @@ class StartGate(val probe: Double, val target: Double, private val now: () -> Lo
         if (phase == DemoPhase.START && !targetArmed) return false
         val progress = DemoGeometry.progress(fix) ?: return false
         val expected = if (phase == DemoPhase.PROBE) probe else target
-        // Latitude/longitude round trips can exceed an exact boundary by nanometers.
+        // 위경도 왕복 변환의 부동소수점 오차로 경계가 극미세하게 초과될 수 있다.
         if (abs(progress - expected) > 5.0 + 1e-6) return false
         if (phase == DemoPhase.PROBE) { phase = DemoPhase.START; commandAt = now(); return false }
         phase = DemoPhase.READY

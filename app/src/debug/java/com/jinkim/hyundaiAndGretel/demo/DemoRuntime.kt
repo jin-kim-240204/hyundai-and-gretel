@@ -8,7 +8,7 @@ import com.jinkim.hyundaiAndGretel.notes.RoadNote
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-/** Debug-only orchestration; the existing service retains SDK and accepted database write ownership. */
+/** 디버그 시연 흐름을 연결한다. SDK와 수락한 DB 쓰기의 수명은 기존 서비스가 관리한다. */
 class DemoRuntime(
     private val scope: CoroutineScope,
     private val host: DemoServiceContract,
@@ -43,6 +43,7 @@ class DemoRuntime(
     val canSubmit get() = state.value.phase == DemoPhase.READY && state.value.actor == "A" && active.value != null
     val blocksNewWrites get() = transitioning
 
+    // 리뷰용: 현재 시나리오 원본과 차량 규제를 관찰한다. 설정 도중 규제가 바뀌면 미수락 준비 작업을 취소한다.
     init {
         scope.launch {
             active.collectLatest { id ->
@@ -63,6 +64,7 @@ class DemoRuntime(
         }
     }
 
+    // 리뷰용: 역할·모드·초기화 변경 전에 규제, 수락 쓰기, 진행 중인 전환·정리 작업을 함께 검사한다.
     private fun allowed(): Boolean {
         val reason = when {
             !restrictions.value.canSetup -> "규제 미연결 또는 설정 제한으로 조작할 수 없습니다"
@@ -83,6 +85,7 @@ class DemoRuntime(
         motion?.cancelAndJoin(); motion = null
         input.close()
     }
+    // 리뷰용: 기존 콘솔 입력과 SDK를 정리한 후 역할·입력 모드를 바꾼다. 저장된 쪽지를 여기서 지우지는 않는다.
     private fun configure(change: (DemoState) -> DemoState) {
         if (!allowed()) return
         val token = Any(); owner = token
@@ -102,6 +105,7 @@ class DemoRuntime(
     fun role(actor: String) { require(actor in setOf("A", "B")); configure { it.copy(actor = actor) } }
     fun mode(mode: DemoMode) = configure { it.copy(mode = mode) }
 
+    // 리뷰용: 시연 시작: 기준 쪽지·출발점 결정 → 입력 권한·콘솔 검증 → 준비점 SDK 확인 → 출발점 SDK 확인 순서다.
     fun requestStart(): Boolean {
         if (state.value.phase == DemoPhase.READY) return true
         if (!allowed()) return true
@@ -151,6 +155,7 @@ class DemoRuntime(
         return true
     }
 
+    // 리뷰용: SDK에서 받은 좌표만 받는다. 준비점·출발점 확인 전 좌표는 일반 버퍼와 제보 흐름으로 넘기지 않는다.
     fun accept(fix: LocationFix?): Boolean {
         if (fix == null) return state.value.phase == DemoPhase.READY
         val currentGate = gate ?: return false
@@ -165,6 +170,7 @@ class DemoRuntime(
         }
         return accepted
     }
+    // 리뷰용: 준비 중에는 확인할 좌표를 반복 주입하고, READY 이후에는 콘솔 속도·기어를 적분해 GPS를 이동시킨다.
     private fun startMotion(token: Any, initial: Double, validatedAt: Long) {
         motion = scope.launch {
             val currentMotion = coroutineContext.job
@@ -174,7 +180,7 @@ class DemoRuntime(
             var lastSuccess = validatedAt
             try {
                 while (isActive) {
-                    // Separate from the blocking reader: expiry stops SDK before awaiting IO cleanup.
+                    // 입력 읽기가 막혀도 기한 감시는 별도로 실행하여, 입출력 정리를 기다리기 전에 SDK를 중지한다.
                     deadline = scope.launch expiry@{
                         delay((lastSuccess + 2_001 - clock()).coerceAtLeast(0))
                         if (owner !== token || motion !== currentMotion) return@expiry
@@ -193,7 +199,7 @@ class DemoRuntime(
                     val now = clock()
                     check(now - lastSuccess <= 2_000) { "콘솔 입력이 지연됐습니다" }
                     val delta = consoleDelta(speed, gear, now - previous)
-                    // Keep each gate point stationary until the real SDK confirms it.
+                    // 실제 SDK가 확인할 때까지 준비점과 출발점 좌표를 각각 고정한다.
                     val position = when (state.value.phase) {
                         DemoPhase.PROBE -> checkNotNull(state.value.probe)
                         DemoPhase.START -> initial
@@ -211,6 +217,7 @@ class DemoRuntime(
         }
     }
 
+    // 리뷰용: 명시 확인한 초기화만 수락한다. 수락한 DB 트랜잭션은 화면이나 역할 변경과 분리해 끝까지 완료한다.
     fun reset(confirmed: Boolean) {
         if (!confirmed || !allowed()) return
         val token = Any(); owner = token
@@ -219,7 +226,7 @@ class DemoRuntime(
             try {
                 try { closeInput() } finally { host.stopTracking() }
                 ensureActive(); checkOwner(token)
-                host.holdStorage() // Failure is before database acceptance.
+                host.holdStorage() // 이 단계에서 실패하면 DB 쓰기를 아직 수락하지 않은 상태다.
                 resetWriting = true
                 mutable.value = state.value.copy(phase = DemoPhase.RESETTING)
                 scope.launch {
@@ -239,8 +246,9 @@ class DemoRuntime(
             catch (error: Exception) { fail(token, error) }
         }
     }
+    // 리뷰용: 입력 작업을 취소하고 위치 제공자 정리가 끝난 다음 SDK를 중지한다. 이미 수락한 초기화는 건드리지 않는다.
     fun stop(reason: String? = null) {
-        if (resetWriting || cleanup?.isActive == true) return // Accepted reset and an existing cleanup retain ownership.
+        if (resetWriting || cleanup?.isActive == true) return // 이미 수락한 초기화와 진행 중인 정리는 기존 작업이 끝까지 담당한다.
         val token = Any(); owner = token
         gate = null
         val previousWork = work; previousWork?.cancel()

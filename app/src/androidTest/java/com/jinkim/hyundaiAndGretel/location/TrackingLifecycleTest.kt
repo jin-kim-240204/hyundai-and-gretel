@@ -147,7 +147,7 @@ class TrackingLifecycleTest {
                 assertTrue(model.startCommandFailed.value)
                 model.onServiceConnected(ComponentName(context, RoadNoteService::class.java), binder)
             }
-            // Allow the ViewModel's collector to receive the service's initial state.
+            // 뷰모델의 관찰 작업이 서비스 초기 상태를 받을 때까지 진행한다.
             withContext(Dispatchers.Main) {
                 val model = store.get("test") as RoadNotesViewModel
                 assertEquals((binder as RoadNoteService.LocalBinder).status.value, model.status.value)

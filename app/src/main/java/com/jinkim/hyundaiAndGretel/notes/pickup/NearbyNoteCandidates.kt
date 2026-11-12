@@ -24,12 +24,12 @@ enum class CandidateFailure { H3_UNAVAILABLE, INDEX_ERROR, STORAGE_ERROR, OUTSID
 sealed interface CandidateState {
     data object WaitingForLocation : CandidateState
     data object Loading : CandidateState
-    /** Historical evaluation only. Consumers must use currentCandidates(). */
+    /** 평가 당시 결과일 뿐이다. 실제 사용 시에는 currentCandidates()로 유효성을 다시 확인해야 한다. */
     data class Ready(val snapshot: CandidateSnapshot) : CandidateState
     data class Failed(val reason: CandidateFailure) : CandidateState
 }
 
-/** All commands/collection/consumption are confined to the service's Main scope. */
+/** 명령, 결과 관찰과 후보 사용은 서비스의 메인 코루틴 실행 문맥에서만 처리한다. */
 class NearbyNoteCandidates(
     private val scope: CoroutineScope,
     private val positions: StateFlow<TrackedPosition?>,
@@ -52,6 +52,7 @@ class NearbyNoteCandidates(
         scope.launch { positions.collect { update(it) } }
     }
 
+    // 리뷰용: 위치가 바뀌면 최신성·지원 구역을 검사하고 주변 H3 셀을 계산한다. 셀이나 세션이 바뀔 때 DB 관찰을 교체한다.
     private fun update(position: TrackedPosition?) {
         staleDeadline?.cancel()
         if (position == null || !isFresh(position)) {
@@ -84,6 +85,7 @@ class NearbyNoteCandidates(
             key = nextKey
             mutableState.value = CandidateState.Loading
             observation = scope.launch {
+                // 리뷰용: 이 관찰 작업 자신의 취소 여부를 검사한다. 같은 셀로 돌아와도 이전 작업의 늦은 결과가 새 후보를 덮지 못하게 한다.
                 val observationContext = coroutineContext
                 try {
                     store.observeNearby(cells).collect { result ->
@@ -110,6 +112,7 @@ class NearbyNoteCandidates(
         } else {
             publish(position, cells)
         }
+        // 리뷰용: 새 위치가 더 오지 않아도 5초가 지나면 기존 후보를 무효화하는 타이머다.
         val remaining = FRESHNESS_MILLIS - (elapsedMillis() - position.fix.receivedElapsedMillis) + 1
         staleDeadline = scope.launch {
             delay(remaining.coerceAtLeast(1))
@@ -123,7 +126,8 @@ class NearbyNoteCandidates(
         mutableState.value = CandidateState.Ready(CandidateSnapshot(position, cells, evaluate(originals, position, now), now))
     }
 
-    /** No suspension: validity is checked against the current session, receipt clock, UTC and location. */
+    /** 실행을 양보하지 않고 현재 세션, 수신 단조시각, UTC와 위치를 기준으로 유효성을 확인한다. */
+    // 리뷰용: 수신 처리자가 후보를 쓰기 직전에 호출한다. 화면에 남은 Ready 상태를 그대로 신뢰하지 않는다.
     fun currentCandidates(): List<NearbyCandidate>? {
         val ready = mutableState.value as? CandidateState.Ready ?: return null
         val position = positions.value ?: return null
@@ -132,6 +136,7 @@ class NearbyNoteCandidates(
         return evaluate(rows ?: return null, position, utcMillis())
     }
 
+    // 리뷰용: 저장 원본 검증 → 중복 제거 → 만료 제외 → 실제 거리 계산 → 400미터 이내 정렬 순으로 후보를 좁힌다.
     private fun evaluate(originals: List<RoadNote>, position: TrackedPosition, nowUtc: Long): List<NearbyCandidate> =
         originals.onEach { require(it.validationError() == null) }
             .distinctBy { it.noteId }

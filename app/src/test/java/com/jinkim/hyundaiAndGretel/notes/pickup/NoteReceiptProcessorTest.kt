@@ -40,7 +40,7 @@ class NoteReceiptProcessorTest {
         store.rows.value = listOf(InboxItem(note, "B", 10, 0.0, null))
         runCurrent()
         val key = ReceiptKey(note.noteId, "B")
-        runCurrent() // Collection/composition/re-entry do not acknowledge anything.
+        runCurrent() // 관찰·화면 구성·재진입만으로 확인 처리가 발생하지 않아야 한다.
         assertEquals(0, store.confirmCalls)
         repo.confirm(key, false)
         repo.confirm(key.copy(recipientId = "A"), true)
@@ -148,7 +148,7 @@ class NoteReceiptProcessorTest {
             assertFalse(repo.inbox.value.error)
             assertNull(repo.inbox.value.confirming)
             repo.confirm(oldKey, true); runCurrent()
-            assertEquals(1, store.confirmCalls) // Observation replacement must not unlock the accepted ACK.
+            assertEquals(1, store.confirmCalls) // 관찰 대상을 바꿔도 이미 수락한 확인 저장의 잠금을 풀면 안 된다.
             assertTrue(repo.hasPendingWrites)
             store.gate.complete(Unit); runCurrent()
             assertFalse(repo.inbox.value.error)
@@ -156,13 +156,13 @@ class NoteReceiptProcessorTest {
             assertEquals(listOf(oldKey), store.confirmations)
             assertEquals(1, finished)
             assertFalse(repo.hasPendingWrites)
-            // A successful old DB commit remains observable through the new owner's normal Flow.
+            // 이전 작업의 정상 DB 커밋은 새 관찰자의 일반 데이터 흐름을 통해서도 조회할 수 있다.
             assertEquals(if (oldFails) null else 50L, repo.inbox.value.items.single().displayedAtUtcMillis)
             val next = note.copy(noteId = "00000000-0000-0000-0000-000000000002")
             store.rows.value = listOf(InboxItem(next, "B", 20, 0.0, null)); runCurrent()
             store.fail = true
             repo.confirm(ReceiptKey(next.noteId, "B"), true); runCurrent()
-            assertTrue(repo.inbox.value.error) // A current owner's own failure is still visible.
+            assertTrue(repo.inbox.value.error) // 현재 관찰자 자신의 저장 실패는 화면에 계속 표시돼야 한다.
             assertEquals(next, repo.inbox.value.pending!!.note)
             assertEquals(2, finished)
             assertFalse(repo.hasPendingWrites)

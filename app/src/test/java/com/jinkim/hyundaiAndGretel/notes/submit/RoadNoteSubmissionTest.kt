@@ -44,7 +44,7 @@ class RoadNoteSubmissionTest {
         assertEquals(1_000, original.createdAtUtcMillis)
         assertEquals(601_000, original.expiresAtUtcMillis)
         assertEquals(37.5, original.latitude, 0.0)
-        // Simulates tracking stop/reset after acceptance; it must not cancel the write.
+        // 수락 후 수집 중지·버퍼 초기화를 재현한다. 이미 수락한 쓰기를 취소하면 안 된다.
         release.complete(Unit)
         advanceUntilIdle()
         assertEquals(SubmissionState.Saved(original), repo.state.value)

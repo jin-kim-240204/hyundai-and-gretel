@@ -21,7 +21,7 @@ private val LightColorScheme = lightColorScheme(
     secondary = PurpleGrey40,
     tertiary = Pink40
 
-    /* Other default colors to override
+    /* 필요할 때 바꿀 수 있는 다른 기본 색상 예시
     background = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),
     onPrimary = Color.White,
@@ -35,7 +35,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun HyundaiAndGretelTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
+    // 동적 색상은 Android 12 이상에서 사용할 수 있다.
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {

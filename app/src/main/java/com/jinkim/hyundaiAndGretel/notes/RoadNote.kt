@@ -29,7 +29,7 @@ data class RoadNote(
 
 enum class InvalidNote { ID, AUTHOR, CONTENT, COORDINATES, OFFSET, TIME, ROUTE, SCENARIO }
 
-/** Validates normalized input at the storage boundary, including callers without a UI. */
+/** 화면을 거치지 않는 호출도 포함하여, 저장 직전에 정규화된 입력을 검증한다. */
 internal fun RoadNote.validationError(): InvalidNote? = when {
     !noteId.isCanonicalUuid() -> InvalidNote.ID
     authorId.isBlank() -> InvalidNote.AUTHOR

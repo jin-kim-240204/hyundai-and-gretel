@@ -21,6 +21,7 @@ class RoomRoadNoteStore internal constructor(
     constructor(context: Context, spatial: SpatialIndex = H3SpatialIndex(), scenario: StateFlow<String?>? = null, onIndexError: (Exception) -> Unit = {}) :
         this(NoteDatabase.getInstance(context), spatial, onIndexError, scenario)
 
+    // 리뷰용: 실제 원본 저장 구현: 입력 정리·검증 후 H3 셀을 계산해 삽입한다. DB 저장 성공 후에만 Created를 반환한다.
     override suspend fun create(note: RoadNote): CreateNoteResult {
         val normalized = note.copy(content = note.content.trim())
         normalized.validationError()?.let { return CreateNoteResult.Invalid(it) }
@@ -40,7 +41,7 @@ class RoomRoadNoteStore internal constructor(
         }
     }
 
-    // After a constraint error, an existing ID means Duplicate; revisit if adding other constraints.
+    // 제약 위반 후 같은 ID가 있으면 중복으로 분류한다. 다른 제약을 추가하면 이 분류도 재검토한다.
     private suspend fun classifyConstraint(noteId: String): CreateNoteResult = try {
         if (database.notes().findById(noteId) != null) CreateNoteResult.Duplicate
         else CreateNoteResult.StorageFailure
@@ -49,6 +50,7 @@ class RoomRoadNoteStore internal constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    // 리뷰용: DB가 셀 범위의 변경을 Flow로 전달한다. 활성 시나리오가 있으면 그 범위로 좁히고, 각 행의 H3 정보도 재검증한다.
     override fun observeNearby(cells: Set<String>): Flow<List<RoadNote>> {
         require(cells.isNotEmpty() && cells.size <= CandidateArea.MAX_QUERY_CELLS)
         val rows = scenario?.flatMapLatest { id ->

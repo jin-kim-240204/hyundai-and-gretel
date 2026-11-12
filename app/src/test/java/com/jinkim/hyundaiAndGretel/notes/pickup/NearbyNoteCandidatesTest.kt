@@ -67,7 +67,7 @@ class NearbyNoteCandidatesTest {
             override fun observeNearby(cells: Set<String>): Flow<List<RoadNote>> {
                 if (++requests != 1) return updates.receiveAsFlow().map { it.getOrThrow() }
                     .onStart { replacementActive = true }.onCompletion { replacementActive = false }
-                // Deliberately non-cooperative cleanup exercises the cancelled observation's own Job.
+                // 취소에 바로 반응하지 않는 정리 과정을 만들어, 취소된 관찰 작업 자체의 활성 여부 검사를 검증한다.
                 return object : Flow<List<RoadNote>> {
                     override suspend fun collect(collector: FlowCollector<List<RoadNote>>) {
                         try {
@@ -129,13 +129,13 @@ class NearbyNoteCandidatesTest {
         runCurrent()
         assertEquals(listOf(1,2), nearby.currentCandidates()!!.map { it.note.noteId.takeLast(1).toInt() })
         assertEquals(1, store.active)
-        // A database emission without a new position makes a new stationary note visible.
+        // 위치가 바뀌지 않아도 DB 변경을 관찰하여 새 주변 쪽지를 후보에 반영해야 한다.
         store.requests.single().rows.value = listOf(note(4))
         runCurrent()
         assertEquals(note(4), nearby.currentCandidates()!!.single().note)
         advanceTimeBy(1_000)
         positions.value = position(1_000, longitude = 127.039)
-        assertNull(nearby.currentCandidates()) // Old evaluation cannot be consumed before processing the new position.
+        assertNull(nearby.currentCandidates()) // 새 위치를 처리하기 전에 이전 위치의 평가 결과를 사용할 수 없어야 한다.
         runCurrent()
         assertEquals(1, store.requests.size)
         assertTrue(nearby.currentCandidates()!!.isEmpty())

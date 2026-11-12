@@ -10,6 +10,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import kotlinx.coroutines.flow.Flow
 
+// 리뷰용: DAO는 Room이 SQL 실행 코드를 생성하는 내부 인터페이스다. 화면이나 기능 처리자가 직접 사용하지 않는다.
 @Dao
 internal interface RoadNoteDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
@@ -25,6 +26,7 @@ internal interface RoadNoteDao {
     suspend fun findById(noteId: String): RoadNoteEntity?
 }
 
+// 리뷰용: 원본·수신 이력·시연 상태를 같은 DB에 둔다. 현재는 미출시 개발 데이터를 초기화하는 새 버전 1 기준이다.
 @Database(entities = [RoadNoteEntity::class, ReceiptEntity::class, DemoStateEntity::class], version = 1, exportSchema = true)
 internal abstract class NoteDatabase : RoomDatabase() {
     abstract fun notes(): RoadNoteDao
@@ -34,6 +36,7 @@ internal abstract class NoteDatabase : RoomDatabase() {
     companion object {
         @Volatile private var instance: NoteDatabase? = null
 
+        // 리뷰용: 앱 프로세스 안에서 하나의 Room 인스턴스를 재사용한다. Activity 대신 애플리케이션 문맥만 보관한다.
         fun getInstance(context: Context): NoteDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext, NoteDatabase::class.java, "road-notes.db",

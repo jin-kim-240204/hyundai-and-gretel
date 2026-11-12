@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class RoadNotesViewModel(private val app: Application) : AndroidViewModel(app), ServiceConnection {
+    // 리뷰용: 뷰모델은 서비스 연결 상태와 화면 표시 이력을 조합한다. 직접 위치 SDK를 생성하거나 SQL을 실행하지 않는다.
     private val connection = RoadNoteServiceConnection(viewModelScope)
     private val visited = MutableStateFlow<Set<String>>(emptySet())
     val uiState = combine(connection.state, visited) { state, seen -> state.copy(visitedContent = seen) }
@@ -40,6 +41,7 @@ class RoadNotesViewModel(private val app: Application) : AndroidViewModel(app), 
     val startCommandFailed = mutableStartCommandFailed.asStateFlow()
     private val bound = app.bindService(Intent(app, RoadNoteService::class.java), this, Context.BIND_AUTO_CREATE)
 
+    // 리뷰용: 바인더를 받으면 화면 상태 관찰과 디버그 연결을 현재 서비스로 바꾼다.
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
         currentBinder = binder as RoadNoteService.LocalBinder
         connection.connect(binder)
@@ -59,6 +61,7 @@ class RoadNotesViewModel(private val app: Application) : AndroidViewModel(app), 
         connection.submitTestNote(content, category)
     }
 
+    // 리뷰용: 화면의 시작 요청을 서비스 명령으로 바꾼다. 디버그 시연 설정 제한을 통과해야 새 입력을 시작할 수 있다.
     fun start() {
         if (!uiState.value.canStart) return
         if (demoRuntime.value?.enabled == true && !uiState.value.restrictions.canSetup) {
@@ -80,6 +83,7 @@ class RoadNotesViewModel(private val app: Application) : AndroidViewModel(app), 
         app.startService(Intent(app, RoadNoteService::class.java).setAction(RoadNoteService.ACTION_STOP))
     }
 
+    // 리뷰용: 뷰모델 종료 시 화면의 바인딩만 해제한다. 서비스가 보관한 수락 쓰기를 여기서 직접 취소하지 않는다.
     override fun onCleared() {
         if (bound) app.unbindService(this)
     }

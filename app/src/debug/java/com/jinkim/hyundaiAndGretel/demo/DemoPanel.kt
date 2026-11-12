@@ -28,7 +28,7 @@ private fun RoadNotesViewModel.demoRole(actor: String) { demoRuntime.value?.role
 private fun RoadNotesViewModel.demoMode(mode: DemoMode) { demoRuntime.value?.mode(mode) }
 private fun RoadNotesViewModel.resetDemo(confirmed: Boolean) { demoRuntime.value?.reset(confirmed) }
 
-/** An app-window overlay only. Closing never stops input or consumes a receipt. */
+/** 앱 창 안에만 표시하는 시연 패널이다. 닫아도 입력을 중지하거나 수신 쪽지를 확인 처리하지 않는다. */
 @Composable
 fun DemoPanel(viewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> Unit) {
     val runtime by viewModel.demoRuntime.collectAsStateWithLifecycle()
@@ -44,7 +44,7 @@ fun DemoPanel(viewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> 
     var tick by remember { mutableLongStateOf(0L) }
     BackHandler(open) { open = false; confirmReset = false }
     if (open) LaunchedEffect(tools) { while (true) { delay(1_000); tick++ } }
-    // Reserve within this composition too: SideEffect accounting runs after all rows render.
+    // 표시 이력 반영은 렌더링 이후이므로, 이번 화면을 구성하는 동안에도 표시 가능한 항목 수를 계산한다.
     var reserved = ui.visitedContent
     ui.inbox.pending?.let { pending ->
         val key = "receipt:${pending.recipientId}/${pending.note.noteId}"
@@ -57,6 +57,7 @@ fun DemoPanel(viewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> 
         return true
     }
     val settingsVisible = content("settings")
+    // 리뷰용: 설정 버튼의 활성 조건이다. 주행 규제·전환·저장 작업 중에는 설정을 잠그지만 중지와 닫기는 유지한다.
     val allowed = policy.canSetup && !demo.transitioning && !tools.writesBusy && ui.submission != SubmissionState.Submitting && ui.inbox.confirming == null
     Box(Modifier.fillMaxSize()) {
         if (!open) {
@@ -97,6 +98,7 @@ fun DemoPanel(viewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> 
                         }
                         Button(onClick = { details = !details }, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(if (details) "상세 접기" else "상세 진단", policy) }
                     } else PolicyText("플랫폼 탐색 제한으로 시연 설정/상세 표시를 보류합니다", policy)
+                    // 리뷰용: 상세 진단은 SDK 수신·버퍼·후보·등록·수신 이력을 보여준다. 원본 데이터나 ACK 상태를 바꾸지 않는다.
                     if (details) {
                         val rows = listOf(
                             "scenario" to "시나리오 ${demo.scenarioId ?: "없음"}",
@@ -113,6 +115,7 @@ fun DemoPanel(viewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> 
                             if (content(key)) { SideEffect { viewModel.markPresented("debug:$key") }; PolicyText(text, policy) }
                         }
                     }
+                    // 리뷰용: 파랑은 실제 수락한 SDK 위치, 빨강은 저장된 쪽지다. 그림은 표시 허용 시에만 그리며 숨겨져도 수집은 계속된다.
                     if (policy.canShowPlot && content("plot")) {
                         SideEffect { viewModel.markPresented("debug:plot") }
                         PolicyText("합성 경로 · 실제 지도 아님 · 파랑=SDK현재 / 빨강=쪽지", policy)

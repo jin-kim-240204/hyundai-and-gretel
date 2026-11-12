@@ -159,7 +159,7 @@ class LocationTrackingTest {
             source.event(LocationFix(37.0, 127.0, at), at)
             runCurrent()
         }
-        // An external request waits; the newer callback is processed before selection begins.
+        // 외부 요청은 대기시키고, 새 콜백을 먼저 처리한 뒤 기준 위치를 선택한다.
         now = 141_000
         source.event(LocationFix(37.0, 127.0, now), now)
         runCurrent()

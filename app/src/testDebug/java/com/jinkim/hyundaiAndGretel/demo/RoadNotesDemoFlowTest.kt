@@ -16,7 +16,7 @@ import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
 
-/** Production orchestration with in-memory ports; not Android service/Room/SDK evidence. */
+/** 실제 처리 흐름을 메모리 가짜 저장소로 검증한다. Android 서비스·Room·SDK 실제 동작의 증거는 아니다. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RoadNotesDemoFlowTest {
     private fun id(value: Long) = UUID(0, value).toString()

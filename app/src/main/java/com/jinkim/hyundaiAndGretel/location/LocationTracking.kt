@@ -15,7 +15,7 @@ enum class TrackingStatus {
     }
 }
 
-/** Commands and callback delivery are serialized on the owner's Main scope. */
+/** 시작·중지 명령과 콜백 처리는 소유자의 메인 코루틴 실행 문맥에서 순서대로 실행한다. */
 class LocationTracking(
     private val scope: CoroutineScope,
     private val createSource: () -> LocationSource,
@@ -35,6 +35,7 @@ class LocationTracking(
     fun ownsSource(owner: ProximitySource): Boolean = source === owner
     private val buffer = LocationBuffer()
 
+    // 리뷰용: 수집 시작 흐름: 중복 시작 방지 → 새 세션 준비 → SDK 소스 생성 → 콜백 등록 → 등록 결과 반영.
     fun start() {
         if (source != null) return
         val session = prepareSession()
@@ -59,6 +60,7 @@ class LocationTracking(
         return session
     }
 
+    // 리뷰용: SDK 콜백은 나중에 들어온다. 원래 세션 번호를 함께 잡아두고 메인 실행 문맥으로 전달한다.
     private fun registerCallbacks(current: LocationSource, session: Long): Boolean = current.start(
         onLocation = { fix, receivedElapsedMillis ->
             scope.launch { handleLocation(session, fix, receivedElapsedMillis) }
@@ -79,6 +81,7 @@ class LocationTracking(
         update(TrackingStatus.WAITING)
     }
 
+    // 리뷰용: 실제 처리 시점에 이전 세션을 거른 뒤, 시연 출발점 확인과 버퍼 정책을 통과한 위치만 현재 위치로 공개한다.
     private fun handleLocation(session: Long, fix: LocationFix?, receivedElapsedMillis: Long) {
         if (generation != session) return
         if (!acceptLocation(fix)) return
@@ -101,6 +104,7 @@ class LocationTracking(
         if (generation == session) fail(error)
     }
 
+    // 리뷰용: 세션 번호부터 바꿔 늦은 콜백을 차단하고 메모리 버퍼를 비운 뒤 기존 SDK 소스를 정리한다.
     fun stop() {
         mutablePosition.value = null
         ++generation
@@ -117,6 +121,7 @@ class LocationTracking(
         }
     }
 
+    // 리뷰용: 일반 실패는 수집 중지와 실패 상태로 바꾸지만, 코루틴 취소는 정리 후 반드시 다시 던진다.
     fun fail(error: Exception, operation: String = "SDK") {
         if (error is CancellationException) {
             stop()
@@ -128,7 +133,7 @@ class LocationTracking(
         onFailure()
     }
 
-    /** Called on the tracking context; reading the clock and selecting never suspends. */
+    /** 위치 수집 실행 문맥에서 호출한다. 시각 조회와 표본 선택 중에는 실행을 양보하지 않는다. */
     fun bufferSummary(): String = "표본 ${buffer.size} · 수신 ${buffer.oldestElapsedMillis ?: "-"}..${buffer.latestElapsedMillis ?: "-"}ms"
 
     fun selectAnchor(): AnchorSelection = buffer.select(clock())
