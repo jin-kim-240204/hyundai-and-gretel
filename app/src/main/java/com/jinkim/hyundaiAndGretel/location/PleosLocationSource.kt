@@ -9,9 +9,19 @@ import ai.pleos.playground.location.fused.model.ProximityTransition
 import ai.pleos.playground.location.fused.model.LocationData
 import android.content.Context
 import android.os.SystemClock
+import android.util.Log
+import com.jinkim.hyundaiAndGretel.BuildConfig
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class PleosLocationSource(context: Context) : LocationSource {
     private val sdk = FusedLocation(context.applicationContext)
+    private var polling: Job? = null
     private var initialized = false
     private var listener: FusedLocationListener? = null
 
@@ -29,6 +39,27 @@ class PleosLocationSource(context: Context) : LocationSource {
             override fun onError(exception: Exception) = onError.invoke(exception)
         }
         sdk.registerFusedLocationCallback(checkNotNull(listener))
+        // shortcut: 임시 1초 캐시 조회 로그, 확인 후 이 polling 코드를 제거한다.
+        if (BuildConfig.DEBUG) polling = CoroutineScope(Dispatchers.Main).launch {
+            val probe = object : FusedLocationListener {
+                override fun onChanged(location: LocationData?) {
+                    if (listener != null) Log.d("RoadLocation", "POLL_1S cached lat=${location?.latitude} lon=${location?.longitude}")
+                }
+                override fun onError(exception: Exception) {
+                    Log.d("RoadLocation", "POLL_1S_ERROR ${exception.javaClass.simpleName}")
+                }
+            }
+            while (isActive) {
+                try {
+                    sdk.getLastKnownLocation(probe)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    probe.onError(error)
+                }
+                delay(1_000)
+            }
+        }
         return true
     }
 
@@ -57,6 +88,8 @@ class PleosLocationSource(context: Context) : LocationSource {
 
     // 리뷰용: 보관한 동일 리스너로 등록을 해제하고, 중간에 예외가 발생해도 SDK release는 실행한다.
     override fun stop() {
+        polling?.cancel()
+        polling = null
         val previous = listener
         listener = null
         try {
