@@ -85,12 +85,12 @@ flowchart TD
     Policy[속도·기어로 수신 차단 안 함] -. 판정 정책 .-> Match
     Match -->|예| Receipt[Room · B 수신 이력 원자적 등록]
     Receipt --> Display[미표시 수신 쪽지 화면 표시]
-    Display --> Mark[표시 완료 기록 · 동일 B 중복 방지]
+    Display --> Mark[명시 확인 ACK 기록 · 동일 B 중복 방지]
 ```
 
 [Mermaid 원본](diagrams/prototype-e2e-flow.mmd)
 
-한 에뮬레이터에서 A와 B를 순차 실행하며 주행 중 동작을 메인 시연으로 검증한다. 정차도 지원하며 주행 유지는 기능의 필수 조건이 아니다. A/B 전환은 가상 사용자/경로의 교체이며 차량 정차나 주행 감지에 따른 화면 전환이 아니다. 역할 전환 후에도 Room 쪽지는 남고 위치 버퍼는 섞이지 않는다. 홈 이동·다른 앱 전환·Activity 재생성 중에도 이미 시작한 추적 세션과 위치 수집을 유지한다. 최근45초 버퍼를 화면 밖에서도 계속 갱신하고, 이후 후보 조회·접근 판정·수신 저장도 추적 수명에 연결한다. 화면 복귀는 같은 추적 상태에 재연결한다. 화면 비가시 중에는 표시 완료를 기록하지 않으며 수신된 항목은 복귀 후 표시한다. 강제 종료·프로세스 사망·차량 재시작 자동 복구와 debug 이동 재생 수명은 별도 검토한다.
+한 에뮬레이터에서 A와 B를 순차 실행하며 주행 중 동작을 메인 시연으로 검증한다. 정차도 지원하며 주행 유지는 기능의 필수 조건이 아니다. A/B 전환은 가상 사용자/경로의 교체이며 차량 정차나 주행 감지에 따른 화면 전환이 아니다. 역할 전환 후에도 Room 쪽지는 남고 위치 버퍼는 섞이지 않는다. 홈 이동·다른 앱 전환·Activity 재생성 중에도 이미 시작한 추적 세션과 위치 수집을 유지한다. 최근45초 버퍼를 화면 밖에서도 계속 갱신하고, 이후 후보 조회·접근 판정·수신 저장도 추적 수명에 연결한다. 화면 복귀는 같은 추적 상태에 재연결한다. 화면 비가시 중에는 확인 ACK를 기록하지 않으며 수신된 항목은 복귀 후 표시한다. composition·노출·화면 복귀만으로 자동 ACK하지 않는다. 강제 종료·프로세스 사망·차량 재시작 자동 복구와 debug 이동 재생 수명은 별도 검토한다.
 
 ## 4. 구성 요소와 인터페이스
 
@@ -152,8 +152,8 @@ Room 구성은 Database + Entity + DAO로 구현한다. 하나의 DB 인스턴�
 | 메모리 LocationBuffer | 최근 30초 샘플, 세션·품질·준비 상태 | 위치 콜백 추가, 오래된 샘플 제거. 역할 전환/중단/재시작 시 삭제 |
 | 메모리 DemoSession | scenarioId, actorId A/B, sessionId, generation, sourceMode, 실행 상태 | 주행·정차 상태와 무관하게 같은 화면에서 가상 사용자 전환. 재시작 시 시연 재생만 정지 상태로 복귀 |
 | Room RoadNote | noteId(UUID), requestId(UNIQUE), scenarioId, authorActorId, content, category, receivedAtUtc, anchorLat/Lon, anchorAccuracy, anchorOffsetMillis, routeId, direction, progressMeters, source, isSynthetic, expiresAtUtc | 심기 트랜잭션에서 1회 생성. 배치 좌표는 이후 변경하지 않음. TTL 10분, 세션 초기화 시 삭제 |
-| Room NoteReceipt | scenarioId, noteId, recipientActorId, receivedAtUtc, distanceMeters, displayState(PENDING/DISPLAYED), displayedAtUtc? | 복합 PK(noteId, recipientActorId). 수신 대상이면 INSERT OR IGNORE, 실제 UI 표시 후 DISPLAYED. note 삭제 시 cascade |
-| 합성 경로 fixture | scenarioId/routeId/direction, 시간 오프셋별 위경도·progress·accuracy | 저장소 내 시험용 정적 데이터. 실차 이력 아님. A/B 각각 동일 도로의 다른 출발 시점 재생 |
+| Room NoteReceipt | scenarioId, noteId, recipientActorId, receivedAtUtc, distanceMeters, displayedAtUtc?(null=PENDING, 값 있음=DISPLAYED) | 복합 PK(noteId, recipientActorId). 수신 대상이면 INSERT OR IGNORE, 사용자 명시 확인 ACK 커밋 후 DISPLAYED. displayedAtUtc는 확인 시각이며 최초 노출/읽음 보장이 아님. note 삭제 시 cascade |
+| 합성 경로 fixture | scenarioId/routeId/direction, 시간 오프셋별 위경도·progress. 경로 허용 띠는 측정 accuracy가 아님 | 저장소 내 시험용 정적 데이터. 실차 이력 아님. A/B 각각 동일 도로의 다른 출발 시점 재생 |
 | 기존 DraftStore | 기존 동의·암호화 초안 | 기존 파일 보존. 새 공유 Room 저장과 중복 쓰기하지 않음 |
 | 시연 설정 | 화면 유지 선호, 합성 데이터 사용 동의 | 기존 설정 방식 재사용. 위치 권한 허용과 별도로 목적 고지. 초기값 문서화 |
 
@@ -266,11 +266,11 @@ Room 저장 대상은 합성 시연 데이터로 제한한다. source(SDK/REPLAY
 B의 새 유효 위치, 활성 쪽지의 추가/변경, B 세션 시작을 트리거로 최신 유효 위치와 쪽지 후보를 결합해 다음 순서로 평가한다. 위치가 바뀌지 않아도 새 쪽지를 받을 수 있도록 Room Flow도 평가를 깨운다. 이번 소규모 시연에서는 메모리/Room 후보 조회로 충분하며 백그라운드 주기 폴링·OS geofence·서버 공간 인덱스는 도입하지 않는다.
 
 1. 활성 scenarioId의 미만료 RoadNote 중 authorActorId != B이고 B 수신 이력이 없는 후보를 조회한다.
-2. 같은 routeId·같은 direction인지 확인한다. 후보와 B의 경로 진행값으로 `aheadMeters = note.progressMeters - B.progressMeters`를 계산한다.
-3. `0 <= aheadMeters <= 150m`, 위경도 거리도 150m 이하, B 샘플 신선도 2초 이내·accuracy 20m 이하인 후보만 받는다. 이미 지나간 음수 진행값은 제외한다.
-4. 여러 후보는 전방 거리 오름차순으로 처리한다. 한 번에 한 쪽지만 핵심 화면에 표시하고 나머지는 PENDING 수신함에서 순차 처리한다. 반복 팝업/음성은 이번 범위에 없다.
+2. 같은 routeId·같은 direction인지 확인한다. 후보와 B의 경로 진행값으로 `aheadMeters = (note.progressMeters - B.progressMeters) * directionSign`(+1 정방향/-1 역방향)를 계산한다.
+3. `0 <= aheadMeters <= 150m`, 위경도 거리도 150m 이하, B 샘플 신선도 2초 이내인 후보만 받는다. 이번 합성 전용 프로토타입은 신뢰된 내부 경로/방향 설정과 알려진 fixture 투영으로 자격을 확인한다. SDK1.1.3에는 미터 accuracy가 없으며 confidence나 경로 허용 띠20m를 GPS accuracy로 간주하지 않는다. 실제 도로 위치 품질은 미검증·범위 밖이다. 이미 지나간 음수 진행값은 제외한다.
+4. 여러 후보는 실제 거리 오름차순→noteId로 처리한다. 전방 거리는 자격 판정에 사용하며 역방향에도 부호를 적용한다. 한 번에 한 쪽지만 핵심 화면에 표시하고 나머지는 PENDING 수신함에서 순차 처리한다. 반복 팝업/음성은 이번 범위에 없다.
 5. 조건 충족 시 Room 트랜잭션에서 만료·scenarioId·사용자·중복 여부를 재검증하고 NoteReceipt를 INSERT OR IGNORE한다. 오직 INSERT 성공 때 새 수신 이벤트를 발생시킨다.
-6. Compose가 DB의 PENDING을 읽어 표시한다. 최초 실제 렌더 후 DISPLAYED로 기록한다. 프로세스가 표시 전에 종료되면 복귀 후 PENDING을 보여준다. 표시와 DB ACK 사이 종료 시 한 번 더 보일 수 있지만 이력 행은 중복 생성되지 않는다.
+6. Compose가 DB의 PENDING 맨 앞 한 건을 표시하고 사용자의 명시 ‘확인’ 동작으로만 ACK한다. Main에서 화면 RESUMED·현재 수신자·맨 앞 항목 키를 재검사한다. composition/노출/스크롤/화면 복귀는 ACK가 아니다. 수락한 ACK는 원래 키로 끝내고 연타를 차단하며 커밋 전 다음 항목으로 넘기지 않는다. 실패 시 같은 PENDING과 오류를 유지하고 다음 명시 클릭에서만 재시도한다. displayedAtUtc는 확인 ACK 시각(수신 시각 이상)이며 최초 노출이나 읽음 보장이 아니다. 종료 후 재표시는 가능하지만 복합키 이력 행은 중복 생성되지 않는다.
 
 실제로 구현할 계산 단위는 미터이며 degree 위경도 차이를 거리로 직접 사용하지 않는다. 경로 투영/거리 함수는 알려진 좌표 fixture로 검증한다.
 
@@ -293,7 +293,7 @@ stateDiagram-v2
     Ready --> Receiving : 같은 화면에서 B 전환
     Receiving --> Receiving : 화면 밖 수집·45초 버퍼 갱신 유지
     Receiving --> Pending : 위치 조건 충족 및 이력 INSERT 성공
-    Pending --> Displayed : 화면 표시 및 ACK
+    Pending --> Displayed : 사용자 명시 확인 ACK 커밋
     Displayed --> Receiving : 위치·쪽지 변경 시 재평가
     Receiving --> Idle : 명시적 중단 또는 권한 철회
     note right of Receiving
@@ -304,7 +304,7 @@ stateDiagram-v2
 
 [Mermaid 원본](diagrams/prototype-e2e-states.mmd)
 
-별도로 Room 쪽지는 생성 즉시 ACTIVE이고 TTL 이후 EXPIRED다. 수신함의 DISPLAYED는 B에게 보여줬다는 상태이며 원본 쪽지의 만료/삭제 상태와 혼합하지 않는다. B는 30초 버퍼가 찰 때까지 기다리지 않고 **현재의 유효한 위치**만 있으면 줍기를 시작한다.
+별도로 Room 쪽지는 생성 즉시 ACTIVE이고 TTL 이후 EXPIRED다. 수신함의 DISPLAYED는 B가 명시 확인 ACK를 커밋한 상태이며 최초 노출/읽음 보장이 아니고 원본 쪽지의 만료/삭제 상태와 혼합하지 않는다. B는 30초 버퍼가 찰 때까지 기다리지 않고 **현재의 유효한 위치**만 있으면 줍기를 시작한다.
 
 ## 9. FusedLocation 수명·권한·화면 유지
 
@@ -371,7 +371,7 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 | 테스트 | 재현 | 기대 결과 |
 |---|---|---|
 | 짧은 이력 | A 시작10초 안에 신선한 표본으로 제보 | 가장 오래된 실제 표본 선택, 실제 offset 기록.30초 대기 없음 |
-| 위치 품질/단절 | null/error/3초 공백/accuracy 50m 입력 | 준비 해제 또는 fail, 현재 위치 대체 없음 |
+| 위치 품질/단절 | null/error/수신 위치2초 초과·후보5초 초과/합성 경로 문맥 불명 입력 | 준비 해제 또는 fail, 현재 위치 대체 없음 |
 | 자기 제보 | A로 쪽지 부근 이동 | A는 자기 쪽지를 새로 줍지 않음 |
 | 정차 수신 | B가 반경 안의 유효 위치에서 정차한 상태로 시작하거나 새 쪽지 생성 | 속도 0이어도 위치·경로·방향 조건이 맞으면 1회 수신 |
 | 반경 밖 정차 | B가 반경 밖에서 정차 | 정차 여부와 무관하게 수신 없음 |
@@ -433,3 +433,14 @@ NAMED_PLACE는 명시 장소 검색·후보 선택·좌표 확정 및 별도 입
 - 후보 raw snapshot은 조회 자료이며 유효성 보장 목록이 아니다.05는§8.1의 현재 세션/UTC/위치 신선도/거리 재검사 진입점만 사용한다. 만료/위치 없음/stale/세션 불일치에서는 유효 후보를 내보내지 않는다. 이전 구독/느린 결과는 적용 직전 무효화한다.
 - 후보 중심 허용 범위는 위도[37.4900,37.5100],경도[127.0200,127.0500] 닫힌 사각형이다. 서울 행정구역/실도로 보장이 아닌 합성 프로토타입 제한이다. 검증 여유 영역은 위도[37.4800,37.5200],경도[127.0100,127.0600]이며 R=6,371,000m haversine으로 중심별400m 원 포함을 확인한다. 중심 경계 바깥의400m 내 원본도 전체 cover로 조회하고 중심 영역으로 원본을 자르지 않는다. 이 제한은03 원본 저장·보존 범위를 축소하지 않는다.
 - 유한 격자/셀변·꼭짓점/영역 경계/399.99·400·400.01m fixture의 통과는 연속영역 전체 무누락 증명과 구분한다. 중심cover+이웃링을 먼저 검증하고 누락/셀상한 문제가 나올 때만 overlap API와 보수적 확장 중 단일 방식을 선택한다. 아직04 H3/JNI/Room 구현 및 실제 검증은 미실행이다.
+
+
+## 05단계 접근·수신 확정 계약 (2026-11-12)
+
+PR4 05 독립 리뷰 B1/P1/P2/P3의 리뷰이 수용 및 사용자 전달에 따른 공통 정책이다. 위 과거 계획과 충돌하면 이 절과 갱신된§8.1을 우선한다. 구현/런타임 검증 완료를 뜻하지 않는다.
+
+- 합성 전용 수신 자격: 내부 actor/route/direction 설정과 fixture 투영으로 판단한다. 경로 띠20m는 위치 측정 정확도가 아니다. 일반 실도로 GPS에서 합성 방향/accuracy를 만들어내지 않는다. anchor 과거 좌표를 투영하며, 메타데이터 없는 legacy는 보존하되 수신 제외한다. 문맥 없는 신규 원본은03대로 저장 가능하다. 수신150m/2초, 후보400m/5초, TTL600초 유지. 선정은 실제 거리→noteId이고 전방 판정에는 directionSign을 곱한다.
+- 접근 등록은 가까운 최대16개(pending 포함, 앱 상한), 등록 성공은 onRegistered 기준이다. ENTER와 등록 후 이미 반경 안 보완은 동일 앱 조건을 검사한다. proximity 등록 동기 실패 및 등록 전/후 onError는 **현재 수신 세션 Failed 유지**로 처리한다. 먼저 전체 요청을 무효화하고 알려진 ID는 소유 SDK에서 제거 시도한다. 오류가 온 등록 전 요청은 로컬 제거 근거에 따라 pending 종료 가능하나 대체 등록은 금지한다. 다른 미지 ID는 tombstone/슬롯을 유지하고 늦은 ID를 정리한다. 등록 후 onError는 SDK 자동 해제가 아니다. 해제 예외가 있어도 다른 정리를 계속하며 원격 해제 완료/물리적16개 보장은 하지 않는다.
+- 실패한 수신 세션은 신규 등록·ENTER/이미 안 보완·수신 수락을 차단한다. 공유 SDK 위치 수집과03·05의 이미 수락된 쓰기는 유지한다. 명시 추적 중지에서 접근 정리→위치 리스너 해제→finally release를 계속 시도하고 **stop→새 start**의 새 추적 세션에서만 수신을 재허용한다. null 복구·위치/DB/화면 신호·중복 start는 실패를 해제하지 않는다.
+- 수신 INSERT의 StorageFailure도 동일 세션 실패/전체 요청 정리 정책을 따른다. 이후 위치/후보/이력 Flow로 자동 재시도하지 않는다. 기존 수신함 조회·명시 확인 ACK·수락된 쓰기는 유지하고 이전 세션의 늦은 실패/결과는 새 세션에 반영하지 않는다. AlreadyReceived/Ineligible은 저장 실패와 구분한다. 항목별 재시도 버튼/영속 큐 없음.
+- 수신이력은 복합 PK(noteId,recipientId)와 원본 FK CASCADE, 한 JOIN으로 읽는다. PENDING은 displayedAtUtc null에서 파생한다. 사용자 확인 ACK만 최초 값을 멱등 기록하고 ACK 실패는 수신 INSERT 실패와 별개로 PENDING 유지 후 명시 확인 클릭에서만 재시도한다. 자동 composition/노출 ACK는 없다. 이미 수락한 수신/ACK 쓰기는03처럼 서비스 종료를 지연하고 원래 사용자로 끝내며 새 세션 UI와 격리한다.
