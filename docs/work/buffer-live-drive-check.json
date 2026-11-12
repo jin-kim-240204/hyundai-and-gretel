@@ -1,0 +1,24 @@
+{
+  "task": "buffer-live-drive-check",
+  "selected_rules": [
+    "VEH-03",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "VEH-03",
+      "status": "PASS",
+      "evidence": "실제SDK LOCATION/BUFFER_APPEND 로그로60초변화좌표·45초창유지 확인; docs/work/buffer-live-drive-check.md"
+    },
+    {
+      "id": "DOC-9844e9eaad3c#콜백",
+      "status": "PASS",
+      "evidence": "ADB응답이아닌 실제 연속콜백·61 LOCATION 및 마지막좌표 수신 대조; docs/work/buffer-live-drive-check.md"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "PASS",
+      "evidence": "합성좌표·메모리만사용, 실제차량제어/DB삭제/서버전송 없음; docs/work/buffer-live-drive-check.md"
+    }
+  ]
+}

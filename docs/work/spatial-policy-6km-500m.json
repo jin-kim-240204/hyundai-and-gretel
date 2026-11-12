@@ -1,0 +1,24 @@
+{
+  "task": "공간 정책 변경 및 구현 전용 PR 분리",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "새 브랜치0a9c39e 주석/임시polling 제외 JVM102/debug/release/계측compile/lint/harness/artifacts PASS. docs/work/spatial-policy-6km-500m.md"
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "500mSDK요청 전달 및 모든 host 회귀PASS. 실제500m ENTER/주행은미실행. 새앱기기설치안함."
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "NOT_TESTED",
+      "evidence": "기존 초기화/해제 순서와 세션격리는보존. 변경정책의 기기등록/해제/늦은SDK결과는실행하지않음."
+    }
+  ]
+}

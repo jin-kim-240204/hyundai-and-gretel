@@ -37,3 +37,11 @@ NOT_TESTED — 권한 요청 팝업 대기 중 재생성→늦은 허용→등�
 최종 확인: 답글12개를 GET 재조회해 각 원본 댓글에 연결된 것을 확인했다. 마지막 IDE 재호출 시 worktree 프로젝트가 더 이상 열려 있지 않아 거절됐다. 앞서 운영 코드 수정 후 IDE 빌드 PASS는 유효하나, 이후 추가 테스트 파일까지 포함한 최종 IDE 재빌드는 NOT_TESTED이며 CLI 계측 컴파일/기기3개/harness 빌드로 확인했다. 이번에 시작한 에뮬레이터는 테스트 후 종료했다. 설치 APK와 허용 권한은 기존 AVD에 남아 있다.
 
 후속 요청: 사용자가 리뷰 반영 변경의 커밋·푸시를 승인했다. 이전 검사 이후 운영 코드 변경 없음. 기존 단위5개·계측3개 및 빌드 결과를 재사용하고 diff/보고서를 재확인한다. 권한 대기 중 재생성 등 NOT_TESTED는 유지한다.
+
+## 임시 로컬 1초 위치 조회 (사용자 요청)
+
+PleosLocationSource에 debug 전용 getLastKnownLocation 1초 폴링 로그(POLL_1S cached)만 임시 추가. VEH-01/03, DOC-402de45b9f3d#권한 및 DOC-1ba06876919b#수명 적용: 기존 권한 승인 후 시작하며 stop에서 polling Job을 먼저 취소한 뒤 기존 해제 수행. SDK onChanged 주기를 강제하지 않으며 캐시 응답을 기존 LocationFix/버퍼 신선도 입력으로 전달하지 않음. 공식 location-data-access의 마지막 위치는 새 측정이 아니라는 계약 유지. PASS: debug assemble·기존 단위5개·lint·diff. NOT_TESTED: 실제 1초 로그/취소 계측, IDE는 worktree 미열림으로 미실행. 커밋/푸시 안 함. 롤백은 이 문서와 PleosLocationSource.kt의 임시 변경만 git restore로 복원. 사전 원본은 /tmp/pr4-before-location-polling.kt.
+
+## 작업 폴더 정리
+
+사용자 요청으로 PR 브랜치 ny/spec-driven-road-notes를 원래 프로젝트 폴더 /Users/jinnayeong/hyundai-challenge/project/hyundai-and-gretel에서 체크아웃했다. 기존 ny/feat-fused-location-notes는 ae11722에 그대로 보존하며 병합하지 않았다. 미커밋 임시 폴링/기록은 /tmp/pr4-local-transfer.patch로 백업 후 현재 폴더로 옮겨 원본과 바이트 일치를 확인했다. 이전 /private/tmp/hyundai-road-notes-sdd는 fd3140a detached/clean이며 이후 작업에 사용하지 않는다. ENV-02 기존 앱 구조 불변. PASS: 패치 일치·diff·harness 정적. 빌드/기기 재실행은 경로 이동만으로 반복하지 않았다. 임시 로그는 여전히 로컬 미커밋이다.
