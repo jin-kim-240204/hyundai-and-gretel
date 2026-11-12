@@ -39,14 +39,14 @@ val Typography = Typography(
     labelSmall = textStyle(20, 24, FontWeight.Normal),
 )
 
-// Design screen typography differs from the Foundation component samples.
+// App sizes use the Foundation hierarchy, enlarged after emulator readability review.
 object RoadNoteTypography {
-    val header = TextStyle(fontFamily = AstaSans, fontSize = 29.sp, fontWeight = FontWeight.Bold)
-    val cardTitle = TextStyle(fontFamily = AstaSans, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-    val supporting = TextStyle(fontFamily = AstaSans, fontSize = 16.sp)
-    val messageLabel = TextStyle(fontFamily = AstaSans, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-    val message = TextStyle(fontFamily = AstaSans, fontSize = 38.sp, fontWeight = FontWeight.Bold)
-    val compactMessage = message.copy(fontSize = 31.sp)
-    val status = TextStyle(fontFamily = AstaSans, fontSize = 19.sp, fontWeight = FontWeight.Medium)
-    val action = TextStyle(fontFamily = AstaSans, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+    val header = Typography.titleMedium
+    val cardTitle = Typography.titleSmall
+    val supporting = Typography.bodySmall
+    val messageLabel = Typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+    val message = Typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+    val compactMessage = Typography.titleLarge
+    val status = Typography.bodySmall.copy(fontWeight = FontWeight.Medium)
+    val action = Typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
 }

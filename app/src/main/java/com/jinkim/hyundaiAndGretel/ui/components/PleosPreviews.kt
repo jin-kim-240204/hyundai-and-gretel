@@ -40,8 +40,8 @@ internal fun ReceivedNotePreview() {
     }
 }
 
-@Preview(name = "시작 전", widthDp = 376, heightDp = 292)
-@Preview(name = "시작 전 · 야간", widthDp = 376, heightDp = 292,
+@Preview(name = "시작 전", widthDp = 376, heightDp = 400)
+@Preview(name = "시작 전 · 야간", widthDp = 376, heightDp = 400,
     uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun StateCardPreview() {

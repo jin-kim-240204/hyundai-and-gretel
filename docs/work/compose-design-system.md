@@ -82,3 +82,16 @@
 - 수정: debug Activity의 `screen=permission` fixture와 debug 문자열만 추가. 실제 권한 요청·설정 이동·위치 수집은 구현하지 않는다. 공용 RoadNoteHeader/StateCard/Action 재사용.
 - 기존 DES-03/04 및 ComponentActivity 구조 적용. 검증은 build/lint, 실행 Intent, 실제 표시 캡처로 수행한다. 버튼은 UI 시안용이며 onClick은 빈 콜백이다.
 - PASS: 하네스 --build/assembleDebug/lintDebug 통과. screen=permission 명시 Intent 실행 후 실제 화면에서 안내 제목·설명·설정 열기 버튼 표시 확인. 실제 권한 허용은 N/A(UI만 요청).
+
+
+## 사용자 피드백: 가독성 확대 및 경고 라벨 간소화
+
+- 요청: 전체 앱 화면 글자 확대, 수신 경고 라벨을 "주의"로 간소화. UI만 변경한다.
+- 원문 재확인(2026-11-12): Typography는 중립 서체와 일관된 위계·최소 크기를 권장하며 현재 화면 시안의 16~29sp를 강제하지 않는다. Introduction의 중요 5mm/보조 3mm는 물리 기준이며 sp와 동일시하지 않는다.
+- 적용: DES-02 / DOC-728dd6fe8092#위계, DOC-9c1fe6a8475c#텍스트, 기존 DES-03/04. 원본 Foundation 토큰은 유지하고 앱 RoadNoteTypography를 Foundation의 더 큰 스타일로 연결한다.
+- 수정 범위: Type.kt, 화면 액션 최소 크기·compact 메시지 폭, 문자열과 Preview·동일 문구를 쓰는 UI 테스트. 호출자 전체 rg 확인 완료. 데이터/외부 연동 영향 없음.
+- 계획: 제목 36/44, 카드 제목 32/40, 설명·상태 26/34, 경고 라벨·액션 28/36, 메시지 48/64 및 compact 40/52(sp). 액션 최소 높이 64dp, compact 메시지 폭 280dp로 확대. 상태 Preview 높이는 긴 설명 줄바꿈을 고려해 400dp로 확장.
+- 검증: build/lint, 기존 메시지 줄바꿈·overflow 검사, 권한 안내/수신 화면 실제 캡처. 실물 mm·모든 번역/큰 시스템 글꼴은 계속 NOT_TESTED.
+- PASS: 최종 하네스 --build / assembleDebug / lintDebug, diff whitespace.
+- PASS: 확대 후 day 1줄·overflow 검사 통과. night 최초 검사에서 "있"이 첫 줄에 남아 compact 폭을 280dp로 수정하고 night 2줄·첫 줄·overflow 검사를 재실행하여 통과. readable-night-test.xml 및 화면 캡처 readable-permission.png / readable-received.png 저장.
+- PASS: Pleos Android 14 / 2560×1440 / 160dpi 실제 앱 창에서 권한 안내와 수신 카드를 육안 검토. 마지막은 수신 카드 표시. 실차 글자 높이 mm는 계속 NOT_TESTED.

@@ -40,12 +40,12 @@
     {
       "id": "DOC-9c1fe6a8475c#텍스트",
       "status": "NOT_TESTED",
-      "evidence": "수신 예시 주간 1줄/야간 2줄, compact 첫 줄 및 overflow 개별 검사 통과. 모든 문구/번역 3줄과 물리 5mm/3mm는 미확인."
+      "evidence": "확대한 수신 예시 day 1줄 및 overflow 검사 PASS, compact 280dp 수정 후 night 2줄·첫 줄·overflow 재검사 PASS(readable-night-test.xml). 물리 mm·모든 번역/큰 글꼴은 미검증."
     },
     {
       "id": "DOC-728dd6fe8092#위계",
       "status": "PASS",
-      "evidence": "Foundation 67:12330/12341/12352/12363 및 공식 Typography 확인. ui/theme/Type.kt의 크기·행간, Asta Sans ttf와 OFL 포함."
+      "evidence": "Foundation 67:12330/12341/12352/12363 및 공식 Typography 확인. ui/theme/Type.kt의 크기·행간, Asta Sans ttf와 OFL 포함. 사용자 가독성 피드백으로 RoadNoteTypography를 Foundation 26~48sp 스타일에 연결; Foundation 원본 값은 유지. readable-permission.png/readable-received.png 실제 화면 검토."
     },
     {
       "id": "DOC-94caa75424dd#색상",

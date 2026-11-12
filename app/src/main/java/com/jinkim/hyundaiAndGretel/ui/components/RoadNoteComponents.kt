@@ -113,7 +113,7 @@ fun RoadNoteStatus(text: String, modifier: Modifier = Modifier, loading: Boolean
     }
 }
 
-// Design's 49px actions differ from the Foundation's minimum 64px basic buttons.
+// Screen actions share the enlarged app text style and a 64dp minimum touch height.
 @Composable
 fun RoadNoteAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val colors = PleosTheme.colors

@@ -67,7 +67,7 @@ class PleosComponentsTest {
                     color = PleosTheme.colors.background) {
                     Column(Modifier.padding(horizontal = RoadNoteDimensions.pagePadding)) {
                         RoadNoteHeader("도로 쪽지")
-                        RoadNoteMessageCard("주의 · 앞서 온 도로 쪽지", "도로에 구덩이가 있어요.",
+                        RoadNoteMessageCard("주의", "도로에 구덩이가 있어요.",
                             Modifier.padding(top = RoadNoteDimensions.sectionGap), compact = dark)
                         RoadNoteStatus("●  도로 쪽지 받는 중",
                             Modifier.padding(top = if (PleosTheme.colors.isDark) RoadNoteDimensions.compactStatusGap else RoadNoteDimensions.statusGap))
