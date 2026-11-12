@@ -1,0 +1,23 @@
+{
+  "task": "gleo-receipt-time",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "코드/빌드/단위 검증 PASS. 신규 APK 설치 및 실제 Gleo 호출은 미실행."
+    },
+    {
+      "id": "DOC-24357cf5e59a#즉시제보",
+      "status": "PASS",
+      "evidence": "schema observedAt 제거. parser의 시각 질문/STALE_CURRENT_ROAD 제거. 시간 없는 입력 및 과거 날짜 무시 테스트 PASS. Receiver receivedAt을 store에 전달하는 테스트 PASS."
+    },
+    {
+      "id": "DOC-c6fc94252d66#응답데이터",
+      "status": "PASS",
+      "evidence": "GleoJson에서 observedAt 출력 제거 단정 PASS. 디버그 성공 메시지 수신 완료 안내로 변경. 전체 testDebugUnitTest/계측 테스트 컴파일/빌드/린트/IDE 빌드 PASS."
+    }
+  ]
+}

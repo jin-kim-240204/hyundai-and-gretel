@@ -1,4 +1,5 @@
 <resources>
+    <string name="draft_operation_failed">초안을 처리하지 못했습니다. 다시 시도해 주세요.</string>
     <string name="app_name">hyundai-and-gretel</string>
     <string name="app_description">hyundai-and-gretel</string>
     <string name="sdk_not_checked">개발 환경 확인 전</string>

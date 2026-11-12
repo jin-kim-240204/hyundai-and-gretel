@@ -1,0 +1,33 @@
+{
+  "task": "gleo-followup-context",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "asking 문맥 보존/최종 report 분리 구현. Gleo가 후속 발화를 앱 action으로 재분류하는지 실제 음성 검증 미실행."
+    },
+    {
+      "id": "DOC-c6fc94252d66#상태",
+      "status": "PASS",
+      "evidence": "processor/probe가 askForReportField 공유. 시각/지명/방향 누락에서 asking+pendingReport, 최종 report=null 및 미저장, 완성 시 success 회귀 테스트 PASS. 전체 44 tests/0 failures/0 errors."
+    },
+    {
+      "id": "DOC-c6fc94252d66#문맥",
+      "status": "NOT_TESTED",
+      "evidence": "GleoJson.kt asking data에 pendingReport/missingField 추가, success에만 최종 report. 반환 객체의 문맥은 단위 테스트 PASS, Android JSON 직렬화와 실제 Gleo 수신은 미실행."
+    },
+    {
+      "id": "DOC-c6fc94252d66#기한",
+      "status": "PASS",
+      "evidence": "Receiver 내부 5초/즉시 중간 Callback 유지. 사용자 답변 대기 방식 미도입."
+    },
+    {
+      "id": "DOC-24357cf5e59a#설명",
+      "status": "PASS",
+      "evidence": "schema와 계획 동기화, 영어로 후속 완성 의미 명시, JSON 유효성 및 IDE build PASS."
+    }
+  ]
+}

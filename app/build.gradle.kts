@@ -1,4 +1,6 @@
 plugins {
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
@@ -6,19 +8,28 @@ android {
     namespace = "com.jinkim.hyundaiAndGretel"
     compileSdk = 35
     defaultConfig {
-        applicationId = "com.jinnayeong.wakeup"
+        applicationId = "com.jinkim.hyundaiAndGretel"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        manifestPlaceholders["gleoReceiverExported"] = "false"
+        testInstrumentationRunner = "com.jinkim.hyundaiAndGretel.gleo.DraftIntegrationInstrumentation"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    buildFeatures { compose = true }
+    buildTypes {
+        getByName("debug") {
+            manifestPlaceholders["gleoReceiverExported"] = "true"
+        }
+    }
+    buildFeatures { compose = true; buildConfig = true }
 }
 dependencies {
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
     implementation("ai.pleos.playground:Vehicle:2.3.2")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

@@ -1,0 +1,18 @@
+{
+  "task": "gleo-report-description",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "설명 변경의 실제 Gleo 함수 선택 효과 미검증."
+    },
+    {
+      "id": "DOC-24357cf5e59a#설명",
+      "status": "PASS",
+      "evidence": "영어 단문 함수 설명, 스키마와 계획 동기화 및 JSON 파싱 PASS."
+    }
+  ]
+}

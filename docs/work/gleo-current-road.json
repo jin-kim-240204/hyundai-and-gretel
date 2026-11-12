@@ -1,0 +1,33 @@
+{
+  "task": "gleo-current-road",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "정적 계약/빌드/단위 테스트 PASS. 실제 Gleo 재등록 및 CREATE_ROAD_NOTE 음성 호출 미실행."
+    },
+    {
+      "id": "DOC-24357cf5e59a#이름",
+      "status": "PASS",
+      "evidence": "assets/schema.json, GleoActionParser 상수, Manifest, GleoJson 콜백, GleoActionTest 식별자 동기화. JSON 단정/단위 테스트 PASS."
+    },
+    {
+      "id": "DOC-24357cf5e59a#설명",
+      "status": "PASS",
+      "evidence": "후속 정정 반영: directionDescription 제거, 모든 description/appDescription ASCII 영어 단정 PASS. directionMode enum은 CURRENT_VEHICLE만 노출."
+    },
+    {
+      "id": "DOC-c6fc94252d66#함수명일치",
+      "status": "PASS",
+      "evidence": "GleoJson functionName=CREATE_ROAD_NOTE. Studio/Gradle 빌드 및 GleoActionTest PASS."
+    },
+    {
+      "id": "DOC-2bec764daf11#등록",
+      "status": "NOT_TESTED",
+      "evidence": "assets/schema.json과 Manifest action 정적 수정 완료. 실제 Gleo 스키마 재등록 미실행."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "task": "gleo-time-diagnosis",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "PASS",
+      "evidence": "docs/work/gleo-time-diagnosis.md: 실제 logcat에서 2023년 값이 Gleo ACTIONPLANNER OUTPUT부터 존재함을 확인. 시스템 시각은 2026년. 날짜 설정 화면 열기 성공."
+    },
+    {
+      "id": "DOC-24357cf5e59a#시각입력",
+      "status": "NOT_TESTED",
+      "evidence": "스키마의 절대시각 계산 요구와 실제 생성 값 불일치 확인. Gleo 내부 시각 문맥/프롬프트 미접근."
+    },
+    {
+      "id": "DOC-c6fc94252d66#실패응답",
+      "status": "PASS",
+      "evidence": "실제 콜백 status=fail, reason=STALE_CURRENT_ROAD 확인. 앱 수신 이전의 2023년 값이 원인."
+    }
+  ]
+}

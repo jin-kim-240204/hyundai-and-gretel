@@ -1,0 +1,53 @@
+{
+  "task": "sprint-1-friday",
+  "selected_rules": [
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "PRIV-01",
+      "status": "FAIL",
+      "evidence": "저장소 자동 테스트 10개/빌드/lint PASS. 공식 민감정보 암호화 요구 미충족 및 Android 실환경 미검증으로 전체 개인정보 준수 완료 아님. 상세 docs/work/sprint-1-friday.md."
+    },
+    {
+      "id": "DOC-72a5d7ab4ebb#최소수집",
+      "status": "PASS",
+      "evidence": "개인정보 최소 수집 절. LocalDraftStore.kt:8 앱 전용 noBackupFilesDir, DraftFileStore.kt 저장 필드 한정, Log/네트워크 호출 없음. 코드 검토 및 LocalDraftStoreTest consentRecoveryClearAndRevocation."
+    },
+    {
+      "id": "DOC-72a5d7ab4ebb#운전자전환",
+      "status": "NOT_TESTED",
+      "evidence": "계정/세션 관리 절. Android 사용자 샌드박스만 적용. adb devices 연결 기기 0개로 사용자 격리 미검증, 동일 Android 사용자 운전자 분리는 제공하지 않으며 출시 전 해결 필요."
+    },
+    {
+      "id": "DOC-4036191ed19c#명시동의",
+      "status": "PASS",
+      "evidence": "저장 경계 한정: DraftFileStore.kt hasConsent 기본 false 및 save 동의 재확인. LocalDraftStoreTest consentRecoveryClearAndRevocation PASS. 실제 동의 버튼/고지는 이디스 및 자비스 통합 범위로 별도 검증."
+    },
+    {
+      "id": "DOC-4036191ed19c#철회삭제",
+      "status": "PASS",
+      "evidence": "보안 표 사용자 데이터 무단 사용 절. setConsent(false)에서 false/빈 목록 원자 교체. consentRecoveryClearAndRevocation, failedReplacementPreservesDataAndConsent, corruptionIsNotSilentlyOverwrittenAndRevocationCanEraseIt, multipleInstancesDoNotLoseConcurrentSavesAndDeletes PASS."
+    },
+    {
+      "id": "DOC-27ac8605961f#저장보호",
+      "status": "PASS",
+      "evidence": "민감 데이터 관리 절 중 내부 앱 전용 저장/백업 제외/민감 로그 한정. LocalDraftStore.kt:8 noBackupFilesDir 코드 검토, DraftFileStore.kt 외부 전송/로그/권한 추가 없음. 임시 파일 cleanup도 abandonedTemporaryFileIsRemovedWithoutChangingCommittedData PASS."
+    },
+    {
+      "id": "DOC-27ac8605961f#민감정보암호화",
+      "status": "FAIL",
+      "evidence": "민감 데이터 관리 절은 샌드박스와 별개 앱 수준 암호화 의무. 이번 계획의 새 암호화 시스템 제외 지시에 따라 평문 파일 포맷 사용. 민감 실데이터/출시 전 암호화 범위 확정 및 구현 필요. 적합성 완료 주장 금지."
+    },
+    {
+      "id": "DOC-4036191ed19c#출시고지",
+      "status": "N/A",
+      "evidence": "개인정보처리방침 공개/약관 제출/국가별 위치정보 규제 증거는 이번 로컬 저장 모듈 작업 범위 밖이며 출시 전 필요."
+    },
+    {
+      "id": "ENV-01",
+      "status": "NOT_TESTED",
+      "evidence": "minSdk 28 기존 설정 유지. JVM/macOS 핵심 10개 테스트, harness --build와 Studio MCP build_project PASS. Android 기기 연결 0개라 실파일시스템 원자 교체/앱 프로세스 재시작 미검증."
+    }
+  ]
+}

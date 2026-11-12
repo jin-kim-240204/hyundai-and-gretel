@@ -3,42 +3,24 @@ package com.jinkim.hyundaiAndGretel
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import com.jinkim.hyundaiAndGretel.gleo.GleoProbeRoute
+import com.jinkim.hyundaiAndGretel.ui.drafts.DraftRoute
+import com.jinkim.hyundaiAndGretel.ui.drafts.DraftsViewModel
 import com.jinkim.hyundaiAndGretel.ui.theme.HyundaiAndGretelTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    /** 빌드 종류에 맞는 진단/초안 화면을 선택하고 Compose 화면을 시작한다. */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val drafts = if (BuildConfig.DEBUG) null else ViewModelProvider(this)[DraftsViewModel::class.java]
+
         setContent {
-            HyundaiAndGretelTheme { HyundaiAndGretelScreen() }
+            HyundaiAndGretelTheme {
+                if (drafts == null) GleoProbeRoute() else DraftRoute(drafts)
+            }
         }
     }
-}
-
-@Composable
-private fun HyundaiAndGretelScreen() {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text("hyundai-and-gretel", style = MaterialTheme.typography.headlineLarge)
-            Text("Pleos Connect 차량용 앱")
-        }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 1280, heightDp = 720)
-@Composable
-private fun HyundaiAndGretelPreview() {
-    HyundaiAndGretelTheme { HyundaiAndGretelScreen() }
 }

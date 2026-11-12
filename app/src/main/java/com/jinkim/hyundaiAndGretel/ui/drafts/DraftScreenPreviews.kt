@@ -1,0 +1,78 @@
+package com.jinkim.hyundaiAndGretel.ui.drafts
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
+import com.jinkim.hyundaiAndGretel.roadnote.DirectionMode
+import com.jinkim.hyundaiAndGretel.roadnote.DraftState
+import com.jinkim.hyundaiAndGretel.roadnote.LocationMode
+import com.jinkim.hyundaiAndGretel.roadnote.RoadNoteDraft
+import com.jinkim.hyundaiAndGretel.roadnote.RoadNoteInput
+import com.jinkim.hyundaiAndGretel.ui.theme.HyundaiAndGretelTheme
+import java.time.Instant
+
+/** 저장 미동의 화면을 좁은 창에서 미리 확인한다. */
+@Preview(name = "미동의 · 좁은 창", widthDp = 360, heightDp = 800)
+@Composable
+private fun ConsentPreview() {
+    HyundaiAndGretelTheme(dynamicColor = false) {
+        DraftScreen(DraftUiState(), {}, {}, {})
+    }
+}
+
+/** 초안 목록의 주간 가로·좁은 창·큰 글꼴 배치를 미리 확인한다. */
+@Preview(name = "초안 · 주간 가로", widthDp = 1280, heightDp = 720)
+@Preview(name = "초안 · 좁은 창", widthDp = 360, heightDp = 800)
+@Preview(name = "초안 · 큰 글꼴", widthDp = 480, heightDp = 800, fontScale = 1.5f)
+@Composable
+private fun DraftListPreview() {
+    HyundaiAndGretelTheme(darkTheme = false, dynamicColor = false) {
+        DraftScreen(DraftUiState(consentGranted = true, drafts = previewDrafts), {}, {}, {})
+    }
+}
+
+/** 초안 목록의 야간 세로 배치를 미리 확인한다. */
+@Preview(name = "초안 · 야간 세로", widthDp = 600, heightDp = 900)
+@Composable
+private fun NightDraftsPreview() {
+    HyundaiAndGretelTheme(darkTheme = true, dynamicColor = false) {
+        DraftScreen(DraftUiState(consentGranted = true, drafts = previewDrafts), {}, {}, {})
+    }
+}
+
+/** 저장 동의 후 초안이 없는 상태를 미리 확인한다. */
+@Preview(name = "빈 목록", widthDp = 600, heightDp = 800)
+@Composable
+private fun EmptyDraftsPreview() {
+    HyundaiAndGretelTheme(dynamicColor = false) {
+        DraftScreen(DraftUiState(consentGranted = true), {}, {}, {})
+    }
+}
+
+/** 처리 중 표시와 오류 안내가 함께 있을 때의 화면을 미리 확인한다. */
+@Preview(name = "처리 중 · 오류", widthDp = 480, heightDp = 800)
+@Composable
+private fun BusyErrorPreview() {
+    HyundaiAndGretelTheme(dynamicColor = false) {
+        DraftScreen(DraftUiState(consentGranted = true, drafts = previewDrafts, busy = true, hasError = true), {}, {}, {})
+    }
+}
+
+private val previewDrafts = LocationMode.entries.mapIndexed { index, mode ->
+    RoadNoteDraft(
+        id = "preview-$index",
+        input = RoadNoteInput(
+            content = "오른쪽 차로에 떨어진 물체가 있어요. 뒤따르는 차량은 안전거리를 확보해 주세요. ".repeat(6),
+            locationMode = mode,
+            placeQuery = if (mode == LocationMode.NAMED_PLACE) "아주 긴 지명과 교차로 이름 ".repeat(12) else null,
+            directionMode = if (mode == LocationMode.CURRENT_ROAD) DirectionMode.CURRENT_VEHICLE else DirectionMode.USER_DESCRIPTION,
+            directionDescription = "서울에서 부산으로 향하는 방향 ".repeat(8),
+        ),
+        receivedAt = Instant.parse("2026-11-08T09:00:00Z"),
+        updatedAt = Instant.parse("2026-11-08T09:00:00Z"),
+        state = if (mode == LocationMode.CURRENT_ROAD || mode == LocationMode.NAMED_PLACE) {
+            DraftState.PENDING_LOCATION
+        } else {
+            DraftState.AWAITING_LOCATION
+        },
+    )
+}
