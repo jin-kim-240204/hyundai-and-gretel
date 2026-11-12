@@ -29,3 +29,11 @@
 PASS/NOT_TESTED 결과는 아래 최종 검사 후 기록한다. 문서만 변경하므로 JVM/Gradle 재실행은 N/A. 앱/Room/SDK/서비스/JNI/화면 실행은 NOT_TESTED. 다음 행동: 독립 스펙 리뷰→리뷰이 판단→정본 충돌 확정·부모 반영→재검토. 이번에는 docs 커밋/push·PR4 AI 스펙 작성자 리뷰 요청 게시 후 대기, 구현/05 완료 보고/06 진행 없음.
 
 최종 정적 검사: PASS 하네스(133원문/27게이트),05 로컬 링크·코드펜스, diff --check, 원격 부모 정본과 현재 implementation-plan 파일 차이 없음. JSON 보고서는 최초 개별 DOC 항목 누락으로 FAIL→해당 초기화/해제 원문 추적 항목 추가 후 형식검사 통과. 최종 exit2는 VEH-03 NOT_TESTED를 유지한 결과이며 런타임 완료를 뜻하지 않는다. 문서의 정책 충돌은 미확정으로 명시했다. 앱 코드/의존성/부모 정본 변경 없음.
+
+## 05 독립 스펙 리뷰4건 수용 반영
+
+docs/work/pr4-05-spec-review.md/response.md를 읽고 B1/P1/P2/P3 판단대로 반영했다. 부모 정본 fdc51fa를 별도 docs 커밋·push하고 기능 브랜치에 de92dca로 병합했다. 정본본문/분리 Mermaid/상태 정의·05/00 동기화. B1 자동 composition/노출 ACK를 명시 확인 ACK로 교체·현재 사용자/맨앞항목/RESUMED 검사·확인시각 의미·실패 후 클릭 재시도. P1 등록 동기/전후 오류는 Failed 유지/전체 무효화/알려진ID제거·미지tombstone, 위치/수락쓰기 유지·stop/newstart만 재허용. P2 합성 전용 자격과 미터accuracy 날조 금지·2초 유지. P3 수신 StorageFailure 같은 세션 Failed·자동 재시도 금지, 기존 수신함/ACK·수락쓰기는 유지.
+
+적용 규칙은 기존 ENV-02/VEH-03/PRIV-01·초기화해제 추적 유지. 기존 SDK 소스/공식 근거는 재사용, 새 API/권한/의존성 없음. 이번에는 문서 정적 일치 검사만 수행하고 기능 테스트/런타임 PASS로 주장하지 않는다. 코드·기존 미커밋/다른 역할 기록 보존, resolve/구현/06 진행 없음. PR 네 스레드에 반영 SHA 답글 후 독립 재검토 대기.
+
+반영 후 정적 결과: PASS 하네스/로컬 링크·코드펜스/수용 핵심 문구/부모 정본·분리 Mermaid와 기능 사본 diff 없음/diff --check. 보고서 exit2는 VEH-03 NOT_TESTED 유지. 원격 인라인4544866200/6211/6219/6222 원문도 각각 대조. 문서만 변경하여 JVM/빌드 N/A. 실제 Compose/Room/SDK/서비스 실행 NOT_TESTED.

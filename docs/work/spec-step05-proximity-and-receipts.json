@@ -14,7 +14,7 @@
     {
       "id": "VEH-03",
       "status": "NOT_TESTED",
-      "evidence": "05 구현 전. 실제 SDK proximity/Room/서비스/기기 검증은 사용자 금지로 미실행. 독립 스펙 리뷰와 정본 accuracy 충돌 확정 필요."
+      "evidence": "리뷰 B1/P1/P2/P3 수용을 부모fdc51fa 별도커밋/push·기능병합 후05/00 동기화. 독립 재검토 전.05 구현/실제 SDK/Room/서비스/기기는 NOT_TESTED. 사용자 금지로 미실행."
     },
     {
       "id": "PRIV-01",
