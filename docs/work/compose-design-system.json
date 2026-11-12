@@ -1,0 +1,71 @@
+{
+  "task": "compose-design-system",
+  "selected_rules": [
+    "DES-01",
+    "DES-02",
+    "DES-03",
+    "DES-04"
+  ],
+  "checks": [
+    {
+      "id": "DES-01",
+      "status": "FAIL",
+      "evidence": "주요 색상 대비 및 클릭 차단은 확인. 원본 비활성 버튼 대비 약 2.08:1로 기준 미달. docs/work/evidence/compose-design-system/contrast.json; 실제 인지시간·한손 조작·지연은 미검증."
+    },
+    {
+      "id": "DES-02",
+      "status": "NOT_TESTED",
+      "evidence": "Foundation 크기/행간 이식. 수신 예시 주간 1줄/야간 2줄 및 첫 줄/overflow 개별 검사 통과. 물리 mm와 모든 번역·큰 글꼴은 미검증."
+    },
+    {
+      "id": "DES-03",
+      "status": "NOT_TESTED",
+      "evidence": "주야간 앱 색상/캡처 있음. 전체 Foundation 색상과 야간 버튼은 Figma Starter 호출 한도로 확인 불가."
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "Pleos Android 14 / 2560x1440 / 160dpi에서 1030x377 및 512x377 fixture. 실제 split-window 전환·세로·다른 차종·시스템 오버레이 미검증."
+    },
+    {
+      "id": "DOC-9c1fe6a8475c#대비",
+      "status": "FAIL",
+      "evidence": "원문 Color & Contrast 4.5:1. 주요 텍스트/버튼/아이콘 내부 통과, 원본 disabled 텍스트 약 2.08:1. contrast.json 참조."
+    },
+    {
+      "id": "DOC-9c1fe6a8475c#피드백",
+      "status": "NOT_TESTED",
+      "evidence": "PleosButton loading은 CircularProgressIndicator 및 클릭 차단 제공. 0.25초 실제 업무 응답 측정은 UI 범위 밖."
+    },
+    {
+      "id": "DOC-9c1fe6a8475c#텍스트",
+      "status": "NOT_TESTED",
+      "evidence": "수신 예시 주간 1줄/야간 2줄, compact 첫 줄 및 overflow 개별 검사 통과. 모든 문구/번역 3줄과 물리 5mm/3mm는 미확인."
+    },
+    {
+      "id": "DOC-728dd6fe8092#위계",
+      "status": "PASS",
+      "evidence": "Foundation 67:12330/12341/12352/12363 및 공식 Typography 확인. ui/theme/Type.kt의 크기·행간, Asta Sans ttf와 OFL 포함."
+    },
+    {
+      "id": "DOC-94caa75424dd#색상",
+      "status": "NOT_TESTED",
+      "evidence": "주야간 앱 의미 토큰은 Design 39675:4528/4537에서 추출. Foundation 전체 의미 색상은 미확보."
+    },
+    {
+      "id": "DOC-e12e49cc3efc#레이아웃",
+      "status": "NOT_TESTED",
+      "evidence": "시스템 UI를 복제하지 않으며 공용 UI만 제공. 모든 실제 앱 창 크기 동작 검토 미완료."
+    },
+    {
+      "id": "DOC-189d894e8124#앱창",
+      "status": "NOT_TESTED",
+      "evidence": "주간 전체/야간 분할 예시 크기로 렌더링. 시스템의 실제 창 전환 및 Connect-W는 미실행."
+    },
+    {
+      "id": "DOC-d771e574367a#버튼상태",
+      "status": "NOT_TESTED",
+      "evidence": "PleosButton enabled/pressed/disabled/loading 구현. initial-ui-tests.xml에서 클릭 차단 테스트 PASS; 버튼 소스 이후 변경 없음. 최종 전체 suite는 runtime-limit.txt의 vendor homescreen crash로 중단. pressed 실화면/야간 원본 미확인."
+    }
+  ]
+}

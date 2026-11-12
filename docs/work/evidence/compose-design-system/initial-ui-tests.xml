@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="3" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-11-12T09:00:39" hostname="localhost">
+  <testsuite name="com.jinkim.hyundaiAndGretel.ui.PleosComponentsTest" tests="3" failures="0" errors="0" skipped="0" time="15.548" timestamp="2026-11-12T09:00:39" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="receivedNoteNightFitsSplitWindow" classname="com.jinkim.hyundaiAndGretel.ui.PleosComponentsTest" time="7.298" />
+    <testcase name="onlyEnabledButtonEmitsClick" classname="com.jinkim.hyundaiAndGretel.ui.PleosComponentsTest" time="3.980" />
+    <testcase name="receivedNoteDayMatchesSourceLayout" classname="com.jinkim.hyundaiAndGretel.ui.PleosComponentsTest" time="4.270" />
+  </testsuite>
+</testsuites>
