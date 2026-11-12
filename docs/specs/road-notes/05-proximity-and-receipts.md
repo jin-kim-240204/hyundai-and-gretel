@@ -117,7 +117,7 @@ Main 수락 시점이 위치/세션 자격의 선형화 시점이다. DB 대기 
 
 수신 저장/조회는 로컬 사용자 이력 책임으로 분리하되 필요한 작은 Store/Repository만 둔다. 원본 저장·주변 조회의 향후 서버 경계와 receipts 로컬 경계를 혼동하지 않는다. 현재 ViewModel → 서비스 세션/저장 경계 구조를 유지하고 Compose가 DAO/SDK를 호출하지 않는다.
 
-`note_receipts INNER JOIN road_notes ON noteId` 한 observable query로 원본+recipientId+receivedAt+distance+displayedAt를 읽는다. 조회 후 noteId별 N+1 findById 금지. recipientId로 한정하고 receivedAt 오름차순→noteId로 결정적 정렬한다. 수신 여부는 TTL과 무관한 이력이며 원본이 만료되어도 기록/ACK를 자동 삭제하지 않는다. 이미 수신했지만 표시 전 만료된 PENDING은 과거 수신임을 드러내는 표시로 처리하며 새 위험 경고처럼 표현하지 않는다. 원본 실제 삭제 시 FK CASCADE. 자동 만료 청소/삭제 UI는05에서 추가하지 않는다.
+`note_receipts INNER JOIN road_notes ON noteId` 한 observable query로 원본+recipientId+receivedAt+distance+displayedAt를 읽는다. 조회 후 noteId별 N+1 findById 금지. recipientId로만 한정하고 receivedAt 오름차순→noteId로 결정적 정렬한다.06 도입 후에도 제품 수신함은 debug/release 모두 null legacy·다른 시나리오를 포함한 recipient 전체의 같은 한 건 큐를 유지한다. 활성 시나리오 없음/생성/reset 뒤에도 보존 이력 조회·원래 키 명시 ACK는 가능하며 별도 legacy 화면이나 제품 JOIN의 scenario 필터는 추가하지 않는다. 후보/등록·신규 수신/대상·도식·시연 카운트만 활성 시나리오로 제한한다. 수신 여부는 TTL과 무관한 이력이며 원본이 만료되어도 기록/ACK를 자동 삭제하지 않는다. 이미 수신했지만 표시 전 만료된 PENDING은 과거 수신임을 드러내는 표시로 처리하며 새 위험 경고처럼 표현하지 않는다. 원본 실제 삭제 시 FK CASCADE. 자동 만료 청소/삭제 UI는05에서 추가하지 않는다.
 
 핵심 화면은 현재 수신자 PENDING의 맨 앞 한 건과 작은 ‘확인’ 동작을 표시한다. **composition 적용·재구성·노출·스크롤·RESUMED 진입·화면 재진입만으로는 ACK하지 않는다.** 사용자 확인 이벤트를 Main에서 처리할 때 화면 RESUMED·현재 수신자·현재 맨 앞 항목 키를 재검사한다. 옛 사용자/항목의 예약 이벤트는 수락 전에 거절한다. 이미 수락한 ACK는 불변 원래 키로 끝내고 연타를 차단하며 커밋 전 다음 항목으로 넘기지 않는다.
 

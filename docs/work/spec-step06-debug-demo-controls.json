@@ -5,23 +5,25 @@
     "VEH-03",
     "PRIV-01",
     "DES-04",
-    "DES-06"
+    "DES-06",
+    "SAF-01",
+    "SAF-02"
   ],
   "checks": [
     {
       "id": "ENV-02",
       "status": "PASS",
-      "evidence": "06명세·00/05상태·작업기록만변경. 코드/의존성/Manifest/부모정본변경없음. release debug도구제외/실제SDK경로를계획."
+      "evidence": "06 리뷰 수용을 부모2ca00c0 별도 docs커밋/push·기능병합 후06/00/05/요구사항매핑/기록 동기화. 코드/Manifest/의존성 변경 없음."
     },
     {
       "id": "VEH-03",
       "status": "NOT_TESTED",
-      "evidence": "06구현전. mock권한/provider정리·실제SDK캐시gate/웹콘솔/ADB/서비스 runtime 사용자금지로미실행. 정책충돌은독립리뷰대상."
+      "evidence": "수용값610±5/B600·두모드실제SDK/25m·5m·15초/D한정 문서반영. 06구현전·실제SDK/CarUx/mock/Room/reset/서비스실행금지로 NOT_TESTED, 독립재검토대기."
     },
     {
       "id": "PRIV-01",
       "status": "PASS",
-      "evidence": "계획에서현재시나리오reset확인·legacy보존·역할전환이력유지·원시위치메모리·자동가짜입력없음을명시. 실제DB삭제/소속변경없음."
+      "evidence": "현재시나리오만원자reset·legacy/다른소속보존,recipient전체JOIN큐/명시ACK debug/release보존. 실제DB삭제/소속변경없음."
     },
     {
       "id": "DES-04",
@@ -37,6 +39,21 @@
       "id": "DOC-1ba06876919b#초기화해제",
       "status": "PASS",
       "evidence": "06§5/9에서입력정리·접근/위치리스너해제·release·새instance/처리시점소유권·gate계획. 기존1.1.3계약재사용,새구현/기기PASS아님."
+    },
+    {
+      "id": "SAF-01",
+      "status": "NOT_TESTED",
+      "evidence": "공식9faba42791f0·CarUx 원문 재확인,06 UX01~09에 기능/NO_SETUP·미연결설정불가·stop/닫기유지·상한적용/DB불변을매핑. 현재DO없음·새선언없음, 실제규제수신/UI실행미검증."
+    },
+    {
+      "id": "SAF-02",
+      "status": "NOT_TESTED",
+      "evidence": "06 UX06 진행축/영상 제한 표시안·자동재개없음·원시SDK수집과UI제한분리 계획. 실제화면/주행미검증."
+    },
+    {
+      "id": "DOC-9faba42791f0#기능별규제",
+      "status": "PASS",
+      "evidence": "공식Pleos원문재확인·부모§9/06§2.1 UX01~09에 기능별요구사항/프로젝트분류/확인조건 연결. 문서추적PASS이며규제구현·기기준수PASS아님."
     }
   ]
 }
