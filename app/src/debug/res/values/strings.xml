@@ -1,0 +1,5 @@
+<resources>
+    <string name="preview_location_permission_title">위치 권한이 필요해요</string>
+    <string name="preview_location_permission_description">쪽지를 받으려면 위치를 허용해 주세요.</string>
+    <string name="preview_open_settings">설정 열기</string>
+</resources>

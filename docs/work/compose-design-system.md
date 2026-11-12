@@ -74,3 +74,11 @@
 - 확인: 하네스 --build, debug APK 설치·명시 실행, resumed Activity 및 실제 화면 캡처 확인. 이전 전체 디자인 시스템 미검증 상태는 유지.
 - PASS: 후속 debug APK assemble/lint 및 하네스 --build 통과. Pleos emulator에서 MAIN/LAUNCHER 명시 Intent로 DesignSystemPreviewActivity 실행 및 resumed 확인. 실제 앱 창에 수신 카드가 표시되는 스크린샷 확인.
 - NOT_TESTED: Studio 빌드는 동일하게 작업 트리가 IDE에 열려 있지 않아 거절. 기존 전체 suite/디자인 시스템 제한은 유지.
+
+
+## 위치 권한 안내 UI 표시
+
+- 요청: Figma의 위치 권한 필요 페이지 표시. 기존 Design 39675:4557 메타데이터 및 4548의 공용 상태 카드 스타일을 사용하며, 4557 자체의 고해상도 상세는 호출 한도로 미확인이다.
+- 수정: debug Activity의 `screen=permission` fixture와 debug 문자열만 추가. 실제 권한 요청·설정 이동·위치 수집은 구현하지 않는다. 공용 RoadNoteHeader/StateCard/Action 재사용.
+- 기존 DES-03/04 및 ComponentActivity 구조 적용. 검증은 build/lint, 실행 Intent, 실제 표시 캡처로 수행한다. 버튼은 UI 시안용이며 onClick은 빈 콜백이다.
+- PASS: 하네스 --build/assembleDebug/lintDebug 통과. screen=permission 명시 Intent 실행 후 실제 화면에서 안내 제목·설명·설정 열기 버튼 표시 확인. 실제 권한 허용은 N/A(UI만 요청).
