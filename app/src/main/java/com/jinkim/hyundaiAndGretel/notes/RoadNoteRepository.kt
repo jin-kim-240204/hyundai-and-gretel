@@ -29,10 +29,13 @@ class RoadNoteRepository(
     private val newId: () -> String = { UUID.randomUUID().toString() },
     private val onUnexpectedError: (Exception) -> Unit = {},
     private val setup: () -> SyntheticSession = { SyntheticSession() },
+    private val scenarioId: () -> String? = { null },
 ) {
     private val mutableState = MutableStateFlow<SubmissionState>(SubmissionState.Idle)
     val state = mutableState.asStateFlow()
     val isSubmitting get() = state.value == SubmissionState.Submitting
+
+    fun clearResult() { if (!isSubmitting) mutableState.value = SubmissionState.Idle }
 
     fun submit(content: String, category: NoteCategory) {
         if (isSubmitting) return
@@ -54,6 +57,7 @@ class RoadNoteRepository(
             anchorOffsetMillis = anchor.offsetMillis, createdAtUtcMillis = createdAt,
             expiresAtUtcMillis = createdAt + RoadNote.TTL_MILLIS,
             route = SyntheticRoute.project(anchor.sample.latitude, anchor.sample.longitude, context),
+            scenarioId = scenarioId(),
         )
         mutableState.value = SubmissionState.Submitting
         scope.launch {

@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.RoadNote
 
-@Entity(tableName = "road_notes", indices = [Index("h3CellId")])
+@Entity(tableName = "road_notes", indices = [Index("h3CellId"), Index(value = ["scenarioId", "h3CellId"])])
 internal data class RoadNoteEntity(
     @PrimaryKey val noteId: String,
     val authorId: String,
@@ -22,13 +22,14 @@ internal data class RoadNoteEntity(
     val routeId: String? = null,
     val direction: Int? = null,
     val progressMeters: Double? = null,
+    val scenarioId: String? = null,
 ) {
     fun toNote() = RoadNote(
         noteId = noteId, authorId = authorId, content = content,
         category = NoteCategory.valueOf(category), latitude = latitude, longitude = longitude,
         anchorOffsetMillis = anchorOffsetMillis, createdAtUtcMillis = createdAtUtcMillis,
         expiresAtUtcMillis = expiresAtUtcMillis,
-        route = routeContext(),
+        route = routeContext(), scenarioId = scenarioId,
     )
 
     private fun routeContext(): RouteContext? {
@@ -42,5 +43,5 @@ internal fun RoadNote.toEntity(h3CellId: String) = RoadNoteEntity(
     category = category.name, latitude = latitude, longitude = longitude,
     anchorOffsetMillis = anchorOffsetMillis, createdAtUtcMillis = createdAtUtcMillis,
     expiresAtUtcMillis = expiresAtUtcMillis, h3CellId = h3CellId,
-    routeId = route?.routeId, direction = route?.direction, progressMeters = route?.progressMeters,
+    routeId = route?.routeId, direction = route?.direction, progressMeters = route?.progressMeters, scenarioId = scenarioId,
 )

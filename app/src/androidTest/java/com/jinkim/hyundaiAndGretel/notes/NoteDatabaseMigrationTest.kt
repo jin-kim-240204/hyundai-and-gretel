@@ -44,7 +44,7 @@ class NoteDatabaseMigrationTest {
                 old.version = version
             }
             val db = Room.databaseBuilder(context, NoteDatabase::class.java, name)
-                .addMigrations(NoteDatabase.MIGRATION_1_2, NoteDatabase.MIGRATION_2_3).build()
+                .addMigrations(NoteDatabase.MIGRATION_1_2, NoteDatabase.MIGRATION_2_3, NoteDatabase.MIGRATION_3_4).build()
             try {
                 val store = RoomRoadNoteStore(db, index)
                 assertEquals(fixture, store.findById(fixture.noteId))

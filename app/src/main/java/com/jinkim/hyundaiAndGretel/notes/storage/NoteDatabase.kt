@@ -20,14 +20,18 @@ internal interface RoadNoteDao {
     @Query("SELECT * FROM road_notes WHERE h3CellId IN (:cells) OR h3CellId IS NULL")
     fun observeNearby(cells: List<String>): Flow<List<RoadNoteEntity>>
 
+    @Query("SELECT * FROM road_notes WHERE scenarioId = :scenarioId AND (h3CellId IN (:cells) OR h3CellId IS NULL)")
+    fun observeNearbyScoped(cells: List<String>, scenarioId: String): Flow<List<RoadNoteEntity>>
+
     @Query("SELECT * FROM road_notes WHERE noteId = :noteId")
     suspend fun findById(noteId: String): RoadNoteEntity?
 }
 
-@Database(entities = [RoadNoteEntity::class, ReceiptEntity::class], version = 3, exportSchema = true)
+@Database(entities = [RoadNoteEntity::class, ReceiptEntity::class, DemoStateEntity::class], version = 4, exportSchema = true)
 internal abstract class NoteDatabase : RoomDatabase() {
     abstract fun notes(): RoadNoteDao
     abstract fun receipts(): ReceiptDao
+    abstract fun scenarios(): ScenarioDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -47,12 +51,20 @@ internal abstract class NoteDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE road_notes ADD COLUMN scenarioId TEXT")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_road_notes_scenarioId_h3CellId ON road_notes (scenarioId, h3CellId)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS demo_state (id INTEGER NOT NULL, activeScenarioId TEXT NOT NULL, PRIMARY KEY(id))")
+            }
+        }
+
         @Volatile private var instance: NoteDatabase? = null
 
         fun getInstance(context: Context): NoteDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext, NoteDatabase::class.java, "road-notes.db",
-            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
         }
     }
 }

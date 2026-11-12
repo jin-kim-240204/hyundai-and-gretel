@@ -6,7 +6,7 @@ import com.jinkim.hyundaiAndGretel.notes.spatial.distanceMeters
 import kotlinx.coroutines.flow.Flow
 
 /** Frozen on Main when the current registration/location is accepted. */
-data class ReceiptRequest(val noteId: String, val recipient: SyntheticSession, val position: LocationFix)
+data class ReceiptRequest(val noteId: String, val recipient: SyntheticSession, val position: LocationFix, val scenarioId: String? = null)
 data class InboxItem(
     val note: RoadNote,
     val recipientId: String,

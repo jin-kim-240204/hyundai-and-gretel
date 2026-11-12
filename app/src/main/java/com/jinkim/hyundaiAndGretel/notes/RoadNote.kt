@@ -18,6 +18,7 @@ data class RoadNote(
     val createdAtUtcMillis: Long,
     val expiresAtUtcMillis: Long,
     val route: RouteContext? = null,
+    val scenarioId: String? = null,
 ) {
     fun isActiveAt(nowUtcMillis: Long): Boolean = nowUtcMillis < expiresAtUtcMillis
 
@@ -26,7 +27,7 @@ data class RoadNote(
     }
 }
 
-enum class InvalidNote { ID, AUTHOR, CONTENT, COORDINATES, OFFSET, TIME, ROUTE }
+enum class InvalidNote { ID, AUTHOR, CONTENT, COORDINATES, OFFSET, TIME, ROUTE, SCENARIO }
 
 /** Validates normalized input at the storage boundary, including callers without a UI. */
 internal fun RoadNote.validationError(): InvalidNote? = when {
@@ -39,6 +40,7 @@ internal fun RoadNote.validationError(): InvalidNote? = when {
     createdAtUtcMillis > Long.MAX_VALUE - RoadNote.TTL_MILLIS ||
         expiresAtUtcMillis != createdAtUtcMillis + RoadNote.TTL_MILLIS -> InvalidNote.TIME
     route != null && !SyntheticRoute.matches(route, latitude, longitude) -> InvalidNote.ROUTE
+    scenarioId != null && !scenarioId.isCanonicalUuid() -> InvalidNote.SCENARIO
     else -> null
 }
 

@@ -50,6 +50,7 @@ class RoomReceiptStore internal constructor(
             val note = database.notes().findById(request.noteId)?.toNote()
                 ?: return@withTransaction ReceiveResult.INELIGIBLE
             require(note.validationError() == null)
+            if (note.scenarioId != request.scenarioId) return@withTransaction ReceiveResult.INELIGIBLE
             val now = utcMillis()
             val distance = eligibleDistance(note, request.recipient, request.position, now)
                 ?: return@withTransaction ReceiveResult.INELIGIBLE

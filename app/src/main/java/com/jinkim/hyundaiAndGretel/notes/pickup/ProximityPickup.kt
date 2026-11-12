@@ -24,6 +24,7 @@ class ProximityPickup(
     private val elapsedMillis: () -> Long,
     private val utcMillis: () -> Long,
     private val onError: (String, Exception) -> Unit = { _, _ -> },
+    private val scenarioId: () -> String? = { null },
 ) {
     private class Run(val session: Long, val source: ProximitySource, val setup: SyntheticSession) {
         var failed = false
@@ -140,7 +141,7 @@ class ProximityPickup(
         owner.accepted += note.noteId
         invalidate(request)
         if (!current(owner)) return
-        receipts.receive(ReceiptRequest(note.noteId, owner.setup, position.fix)) { result ->
+        receipts.receive(ReceiptRequest(note.noteId, owner.setup, position.fix, scenarioId())) { result ->
             if (current(owner)) {
                 if (result == ReceiveResult.STORAGE_FAILURE) fail(owner, PickupFailure.STORAGE, IllegalStateException("Receipt storage failed"))
                 else refresh()

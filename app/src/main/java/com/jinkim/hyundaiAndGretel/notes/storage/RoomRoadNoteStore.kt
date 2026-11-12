@@ -9,15 +9,17 @@ import com.jinkim.hyundaiAndGretel.notes.RoadNoteStore
 import com.jinkim.hyundaiAndGretel.notes.validationError
 import com.jinkim.hyundaiAndGretel.notes.spatial.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 class RoomRoadNoteStore internal constructor(
     private val database: NoteDatabase,
     private val spatial: SpatialIndex = H3SpatialIndex(),
     private val onIndexError: (Exception) -> Unit = {},
+    private val scenario: StateFlow<String?>? = null,
 ) : RoadNoteStore, NearbyNoteStore {
-    constructor(context: Context, spatial: SpatialIndex = H3SpatialIndex(), onIndexError: (Exception) -> Unit = {}) :
-        this(NoteDatabase.getInstance(context), spatial, onIndexError)
+    constructor(context: Context, spatial: SpatialIndex = H3SpatialIndex(), scenario: StateFlow<String?>? = null, onIndexError: (Exception) -> Unit = {}) :
+        this(NoteDatabase.getInstance(context), spatial, onIndexError, scenario)
 
     override suspend fun create(note: RoadNote): CreateNoteResult {
         val normalized = note.copy(content = note.content.trim())
@@ -46,9 +48,13 @@ class RoomRoadNoteStore internal constructor(
         CreateNoteResult.StorageFailure
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeNearby(cells: Set<String>): Flow<List<RoadNote>> {
         require(cells.isNotEmpty() && cells.size <= CandidateArea.MAX_QUERY_CELLS)
-        return database.notes().observeNearby(cells.sorted()).map { rows ->
+        val rows = scenario?.flatMapLatest { id ->
+            if (id == null) flowOf(emptyList()) else database.notes().observeNearbyScoped(cells.sorted(), id)
+        } ?: database.notes().observeNearby(cells.sorted())
+        return rows.map { rows ->
             rows.mapNotNull { row ->
                 val note = row.toNote()
                 require(note.validationError() == null)
