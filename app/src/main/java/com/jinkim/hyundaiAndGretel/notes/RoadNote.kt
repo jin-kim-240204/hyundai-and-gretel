@@ -1,5 +1,7 @@
 package com.jinkim.hyundaiAndGretel.notes
 
+import com.jinkim.hyundaiAndGretel.notes.pickup.RouteContext
+import com.jinkim.hyundaiAndGretel.notes.pickup.SyntheticRoute
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -15,6 +17,7 @@ data class RoadNote(
     val anchorOffsetMillis: Long,
     val createdAtUtcMillis: Long,
     val expiresAtUtcMillis: Long,
+    val route: RouteContext? = null,
 ) {
     fun isActiveAt(nowUtcMillis: Long): Boolean = nowUtcMillis < expiresAtUtcMillis
 
@@ -23,7 +26,7 @@ data class RoadNote(
     }
 }
 
-enum class InvalidNote { ID, AUTHOR, CONTENT, COORDINATES, OFFSET, TIME }
+enum class InvalidNote { ID, AUTHOR, CONTENT, COORDINATES, OFFSET, TIME, ROUTE }
 
 /** Validates normalized input at the storage boundary, including callers without a UI. */
 internal fun RoadNote.validationError(): InvalidNote? = when {
@@ -35,6 +38,7 @@ internal fun RoadNote.validationError(): InvalidNote? = when {
     anchorOffsetMillis !in 0L..MAX_ANCHOR_OFFSET_MILLIS -> InvalidNote.OFFSET
     createdAtUtcMillis > Long.MAX_VALUE - RoadNote.TTL_MILLIS ||
         expiresAtUtcMillis != createdAtUtcMillis + RoadNote.TTL_MILLIS -> InvalidNote.TIME
+    route != null && !SyntheticRoute.matches(route, latitude, longitude) -> InvalidNote.ROUTE
     else -> null
 }
 

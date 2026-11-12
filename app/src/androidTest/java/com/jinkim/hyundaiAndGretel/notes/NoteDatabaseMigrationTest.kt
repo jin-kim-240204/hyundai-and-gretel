@@ -22,7 +22,11 @@ class NoteDatabaseMigrationTest {
         override fun cover(latitude: Double, longitude: Double) = setOf("fixture-cell")
     }
 
-    @Test fun versionOneRowsSurviveAndAreObservableWithoutBackfill() = runBlocking {
+    @Test fun versionOneRowsSurviveAndAreObservableWithoutBackfill() = checkMigration(1)
+
+    @Test fun versionTwoRowsSurviveWithNullRouteMetadata() = checkMigration(2)
+
+    private fun checkMigration(version: Int) = runBlocking {
         val name = "road-note-migration-fixture.db"
         context.deleteDatabase(name)
         context.getDatabasePath(name).parentFile!!.mkdirs()
@@ -33,13 +37,20 @@ class NoteDatabaseMigrationTest {
                     fixture.noteId, fixture.authorId, fixture.content, fixture.category.name,
                     fixture.latitude, fixture.longitude, fixture.anchorOffsetMillis, fixture.createdAtUtcMillis, fixture.expiresAtUtcMillis,
                 ))
-                old.version = 1
+                if (version == 2) {
+                    old.execSQL("ALTER TABLE road_notes ADD COLUMN h3CellId TEXT")
+                    old.execSQL("CREATE INDEX index_road_notes_h3CellId ON road_notes (h3CellId)")
+                }
+                old.version = version
             }
             val db = Room.databaseBuilder(context, NoteDatabase::class.java, name)
-                .addMigrations(NoteDatabase.MIGRATION_1_2).build()
+                .addMigrations(NoteDatabase.MIGRATION_1_2, NoteDatabase.MIGRATION_2_3).build()
             try {
                 val store = RoomRoadNoteStore(db, index)
                 assertEquals(fixture, store.findById(fixture.noteId))
+                assertNull(db.notes().findById(fixture.noteId)?.routeId)
+                assertNull(db.notes().findById(fixture.noteId)?.direction)
+                assertNull(db.notes().findById(fixture.noteId)?.progressMeters)
                 assertNull(db.notes().findById(fixture.noteId)?.h3CellId)
                 // Time is deliberately not filtered by the observable storage query.
                 assertEquals(listOf(fixture), store.observeNearby(setOf("fixture-cell")).first())

@@ -6,6 +6,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.jinkim.hyundaiAndGretel.notes.pickup.SyntheticSession
+import com.jinkim.hyundaiAndGretel.notes.pickup.SyntheticRoute
 import java.util.UUID
 
 sealed interface SubmissionState {
@@ -26,6 +28,7 @@ class RoadNoteRepository(
     private val onFinished: () -> Unit,
     private val newId: () -> String = { UUID.randomUUID().toString() },
     private val onUnexpectedError: (Exception) -> Unit = {},
+    private val setup: () -> SyntheticSession = { SyntheticSession() },
 ) {
     private val mutableState = MutableStateFlow<SubmissionState>(SubmissionState.Idle)
     val state = mutableState.asStateFlow()
@@ -44,11 +47,13 @@ class RoadNoteRepository(
             return
         }
         val anchor = selection.anchor
+        val context = setup()
         val note = RoadNote(
-            noteId = newId(), authorId = "A", content = content, category = category,
+            noteId = newId(), authorId = context.actorId, content = content, category = category,
             latitude = anchor.sample.latitude, longitude = anchor.sample.longitude,
             anchorOffsetMillis = anchor.offsetMillis, createdAtUtcMillis = createdAt,
             expiresAtUtcMillis = createdAt + RoadNote.TTL_MILLIS,
+            route = SyntheticRoute.project(anchor.sample.latitude, anchor.sample.longitude, context),
         )
         mutableState.value = SubmissionState.Submitting
         scope.launch {

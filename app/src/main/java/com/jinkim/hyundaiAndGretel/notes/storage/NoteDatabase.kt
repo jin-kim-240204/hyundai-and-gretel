@@ -24,7 +24,7 @@ internal interface RoadNoteDao {
     suspend fun findById(noteId: String): RoadNoteEntity?
 }
 
-@Database(entities = [RoadNoteEntity::class], version = 2, exportSchema = true)
+@Database(entities = [RoadNoteEntity::class, ReceiptEntity::class], version = 3, exportSchema = true)
 internal abstract class NoteDatabase : RoomDatabase() {
     abstract fun notes(): RoadNoteDao
 
@@ -36,12 +36,22 @@ internal abstract class NoteDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE road_notes ADD COLUMN routeId TEXT")
+                db.execSQL("ALTER TABLE road_notes ADD COLUMN direction INTEGER")
+                db.execSQL("ALTER TABLE road_notes ADD COLUMN progressMeters REAL")
+                db.execSQL("CREATE TABLE IF NOT EXISTS note_receipts (noteId TEXT NOT NULL, recipientId TEXT NOT NULL, receivedAtUtcMillis INTEGER NOT NULL, distanceMeters REAL NOT NULL, displayedAtUtcMillis INTEGER, PRIMARY KEY(noteId, recipientId), FOREIGN KEY(noteId) REFERENCES road_notes(noteId) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_note_receipts_recipientId_displayedAtUtcMillis_receivedAtUtcMillis_noteId ON note_receipts (recipientId, displayedAtUtcMillis, receivedAtUtcMillis, noteId)")
+            }
+        }
+
         @Volatile private var instance: NoteDatabase? = null
 
         fun getInstance(context: Context): NoteDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext, NoteDatabase::class.java, "road-notes.db",
-            ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
         }
     }
 }

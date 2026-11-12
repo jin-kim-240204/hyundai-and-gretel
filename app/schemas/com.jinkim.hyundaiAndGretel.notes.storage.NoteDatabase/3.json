@@ -1,0 +1,179 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "7723f0a3d242f5d492fea01a83e178ca",
+    "entities": [
+      {
+        "tableName": "road_notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` TEXT NOT NULL, `authorId` TEXT NOT NULL, `content` TEXT NOT NULL, `category` TEXT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `anchorOffsetMillis` INTEGER NOT NULL, `createdAtUtcMillis` INTEGER NOT NULL, `expiresAtUtcMillis` INTEGER NOT NULL, `h3CellId` TEXT, `routeId` TEXT, `direction` INTEGER, `progressMeters` REAL, PRIMARY KEY(`noteId`))",
+        "fields": [
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorId",
+            "columnName": "authorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "anchorOffsetMillis",
+            "columnName": "anchorOffsetMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtUtcMillis",
+            "columnName": "createdAtUtcMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAtUtcMillis",
+            "columnName": "expiresAtUtcMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "h3CellId",
+            "columnName": "h3CellId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "routeId",
+            "columnName": "routeId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "direction",
+            "columnName": "direction",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "progressMeters",
+            "columnName": "progressMeters",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "noteId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_road_notes_h3CellId",
+            "unique": false,
+            "columnNames": [
+              "h3CellId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_road_notes_h3CellId` ON `${TABLE_NAME}` (`h3CellId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "note_receipts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` TEXT NOT NULL, `recipientId` TEXT NOT NULL, `receivedAtUtcMillis` INTEGER NOT NULL, `distanceMeters` REAL NOT NULL, `displayedAtUtcMillis` INTEGER, PRIMARY KEY(`noteId`, `recipientId`), FOREIGN KEY(`noteId`) REFERENCES `road_notes`(`noteId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recipientId",
+            "columnName": "recipientId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "receivedAtUtcMillis",
+            "columnName": "receivedAtUtcMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "distanceMeters",
+            "columnName": "distanceMeters",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayedAtUtcMillis",
+            "columnName": "displayedAtUtcMillis",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "noteId",
+            "recipientId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_note_receipts_recipientId_displayedAtUtcMillis_receivedAtUtcMillis_noteId",
+            "unique": false,
+            "columnNames": [
+              "recipientId",
+              "displayedAtUtcMillis",
+              "receivedAtUtcMillis",
+              "noteId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_note_receipts_recipientId_displayedAtUtcMillis_receivedAtUtcMillis_noteId` ON `${TABLE_NAME}` (`recipientId`, `displayedAtUtcMillis`, `receivedAtUtcMillis`, `noteId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "road_notes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "noteId"
+            ],
+            "referencedColumns": [
+              "noteId"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7723f0a3d242f5d492fea01a83e178ca')"
+    ]
+  }
+}
