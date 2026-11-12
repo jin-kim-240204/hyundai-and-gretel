@@ -15,3 +15,7 @@
 금지실행/코드변경없음. 신규구현/JVM/ABI로딩/Room실제동작/성능/UI/시연은NOT_TESTED. 문서단계이므로Gradle/JVM실행N/A. 문서정적검사후docs커밋·push/PR4 AI스펙작성자·SHA·미검증·리뷰요청게시,04구현은하지않고조정자독립리뷰대기.
 
 정적검사 PASS:04/00상대링크, diff검사, verify_harness.py --report(4checks/exit0). PR4 head899fd88/base·head이름확인. 앱/JVM/Gradle/기기실행없음(N/A또는상기NOT_TESTED). 이번관련6파일만명시stage한다.03-c독립리뷰의타역할실행결과는그기록의작성자검증이며이번직접실행으로주장하지않음.
+
+## 04 리뷰이 채택5건 반영
+
+pr4-04-spec-review/response를읽고P1현재시점소비진입점·P2명시영역/바깥후보/03저장보존·P3RoomFlow/폴링제거·O1cover실패시에만overlap비교·O2Androidsystem/hostresource로더구분을반영. 부모정본2ef41ce를먼저별도docs커밋push후기능브랜치에병합.04/00과관련작업기록을동기화하고독립재검토를위해5스레드반영SHA답글만남긴다. resolve·앱구현·의존성/기기실행없음. 원래미커밋/다른역할자료보존.
