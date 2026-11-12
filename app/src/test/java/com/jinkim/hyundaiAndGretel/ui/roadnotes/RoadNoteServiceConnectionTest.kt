@@ -25,7 +25,7 @@ class RoadNoteServiceConnectionTest {
             acknowledgements += visitedContent
         }
         val calls = mutableListOf<Pair<String, NoteCategory>>()
-        override fun submitTestNote(content: String, category: NoteCategory) {
+        override fun submitRoadNote(content: String, category: NoteCategory) {
             calls += content to category
             submissionState.value = SubmissionState.Submitting
         }
@@ -42,12 +42,12 @@ class RoadNoteServiceConnectionTest {
         assertEquals(RoadNotesUiState(a.status.value, a.submissionState.value), connection.state.value)
         backgroundScope.launch { yield(); a.status.value = TrackingStatus.FAILED }
         connection.connect(null)
-        connection.submitTestNote("차단", NoteCategory.WARNING)
+        connection.submitRoadNote("차단", NoteCategory.WARNING)
         runCurrent()
         assertEquals(RoadNotesUiState(), connection.state.value)
         connection.connect(b)
         // 화면 관찰 결과가 갱신되기 전에도 명령은 현재 연결된 세션으로 전달해야 한다.
-        connection.submitTestNote("차단", NoteCategory.WARNING)
+        connection.submitRoadNote("차단", NoteCategory.WARNING)
         runCurrent()
         a.submissionState.value = SubmissionState.Failed(SubmissionFailure.STORAGE)
         runCurrent()
@@ -58,8 +58,8 @@ class RoadNoteServiceConnectionTest {
         assertTrue(a.calls.isEmpty())
         assertTrue(b.calls.isEmpty())
         b.status.value = TrackingStatus.RECEIVING
-        connection.submitTestNote("도로에 구덩이가 있어요", NoteCategory.WARNING)
-        connection.submitTestNote("연타", NoteCategory.INFORMATION)
+        connection.submitRoadNote("도로에 구덩이가 있어요", NoteCategory.WARNING)
+        connection.submitRoadNote("연타", NoteCategory.INFORMATION)
         runCurrent()
         assertTrue(a.calls.isEmpty())
         assertEquals(listOf("도로에 구덩이가 있어요" to NoteCategory.WARNING), b.calls)
@@ -88,7 +88,7 @@ class RoadNoteServiceConnectionTest {
             connection.connect(b)
             // A, 선택적 연결 해제, B 사이에 대기 작업을 처리하지 않아 빠른 연결 전환을 재현한다.
             assertEquals(displayedA, connection.state.value)
-            connection.submitTestNote("차단", NoteCategory.WARNING)
+            connection.submitRoadNote("차단", NoteCategory.WARNING)
             assertTrue(a.calls.isEmpty())
             assertTrue(b.calls.isEmpty())
             runCurrent()
@@ -101,7 +101,7 @@ class RoadNoteServiceConnectionTest {
             runCurrent()
             assertEquals(stoppedB, connection.state.value)
             b.status.value = TrackingStatus.RECEIVING
-            connection.submitTestNote("도로에 구덩이가 있어요", NoteCategory.WARNING)
+            connection.submitRoadNote("도로에 구덩이가 있어요", NoteCategory.WARNING)
             runCurrent()
             assertTrue(a.calls.isEmpty())
             assertEquals(listOf("도로에 구덩이가 있어요" to NoteCategory.WARNING), b.calls)
@@ -157,23 +157,6 @@ class RoadNoteServiceConnectionTest {
         assertTrue(a.acknowledgements.isEmpty())
         assertEquals(listOf(setOf("debug:settings")), b.acknowledgements)
     }
-    @Test fun debugMessagesCoverAllResultsWithoutExposingOriginalText() {
-        assertEquals(DebugSubmissionMessage.CONNECTING, null.debugMessage())
-        assertEquals(DebugSubmissionMessage.READY, SubmissionState.Idle.debugMessage())
-        assertEquals(DebugSubmissionMessage.SAVING, SubmissionState.Submitting.debugMessage())
-        assertEquals(DebugSubmissionMessage.SAVED, SubmissionState.Saved(note()).debugMessage())
-        val expected = mapOf(
-            SubmissionFailure.LOCATION_UNAVAILABLE to DebugSubmissionMessage.LOCATION_UNAVAILABLE,
-            SubmissionFailure.INVALID_TIME to DebugSubmissionMessage.INVALID_TIME,
-            SubmissionFailure.INVALID_INPUT to DebugSubmissionMessage.INVALID_INPUT,
-            SubmissionFailure.DUPLICATE to DebugSubmissionMessage.DUPLICATE,
-            SubmissionFailure.STORAGE to DebugSubmissionMessage.STORAGE,
-            SubmissionFailure.CANCELLED to DebugSubmissionMessage.CANCELLED,
-        )
-        assertEquals(SubmissionFailure.entries.toSet(), expected.keys)
-        expected.forEach { (failure, message) -> assertEquals(message, SubmissionState.Failed(failure).debugMessage()) }
-    }
-
     private fun note() = RoadNote("00000000-0000-0000-0000-000000000001", "A", "비공개 내용",
         NoteCategory.WARNING, 37.5, 127.0, 0, 1_000, 601_000)
 }

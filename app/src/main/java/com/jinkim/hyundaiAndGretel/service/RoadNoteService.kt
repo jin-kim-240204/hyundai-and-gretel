@@ -64,9 +64,8 @@ class RoadNoteService : Service() {
             val notification = notifications.build()
             val serviceType = foregroundServiceType(collecting = true, sdkInt = Build.VERSION.SDK_INT)
             ServiceCompat.startForeground(this, 1, notification, serviceType)
-            candidates
             tracking.start()
-            tracking.proximitySource?.let { pickup.start(tracking.sessionId, it, setup) }
+            startNotePickup()
         } catch (cancelled: CancellationException) {
             tracking.stop()
             finishWhenStorageIsIdle()
@@ -76,14 +75,19 @@ class RoadNoteService : Service() {
         }
     }
 
-    private fun stopReceiving() {
+    private fun startNotePickup() {
+        val source = tracking.proximitySource ?: return
+        pickup.start(session = tracking.sessionId, source = source, setup = setup)
+    }
+
+    private fun stopNotePickup() {
         if (pickupDelegate.isInitialized()) pickup.stop()
     }
 
     // 리뷰용: 근접 등록을 먼저 정리하고 위치 SDK를 해제한다. 이미 수락한 DB 쓰기는 여기서 취소하지 않는다.
     private fun stopTracking() {
         try {
-            stopReceiving()
+            stopNotePickup()
         } finally {
             try { tracking.stop() }
             finally { finishWhenStorageIsIdle() }
@@ -146,20 +150,25 @@ class RoadNoteService : Service() {
         },
         onFailure = {
             if (demoDelegate.isInitialized()) demo.onSourceFailure()
-            stopReceiving(); finishWhenStorageIsIdle()
+            stopNotePickup(); finishWhenStorageIsIdle()
         },
         clock = SystemClock::elapsedRealtime,
         acceptLocation = { demo.accept(it) },
     )
     private val spatial = H3SpatialIndex()
     private val noteStore by lazy {
-        RoomRoadNoteStore(this, spatial, scenario = activeScenario) { error ->
+        RoomRoadNoteStore(context = this, spatial = spatial, scenario = activeScenario) { error ->
             if (BuildConfig.DEBUG) Log.d("RoadNote", "H3_CREATE_ERROR ${error.javaClass.simpleName}")
         }
     }
     private val candidates by lazy {
-        NearbyNoteCandidates(scope, tracking.currentPosition, spatial, noteStore,
-            elapsedMillis = SystemClock::elapsedRealtime, utcMillis = System::currentTimeMillis,
+        NearbyNoteCandidates(
+            scope = scope,
+            positions = tracking.currentPosition,
+            spatial = spatial,
+            store = noteStore,
+            elapsedMillis = SystemClock::elapsedRealtime,
+            utcMillis = System::currentTimeMillis,
             onFailure = { operation, error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
             })
@@ -168,17 +177,28 @@ class RoadNoteService : Service() {
     private val recipient = MutableStateFlow(setup.actorId)
     // 리뷰용: 수신·확인 쓰기 수락 시 역할 전환 여부와 서비스 유지 가능성을 확인한다. DB 구현은 RoomReceiptStore다.
     private val receipts: NoteReceiptProcessor by lazy {
-        NoteReceiptProcessor(scope, RoomReceiptStore(this, onError = { error ->
-            if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
-        }), recipient, ::finishWhenStorageIsIdle,
+        NoteReceiptProcessor(
+            scope = scope,
+            store = RoomReceiptStore(this, onError = { error ->
+                if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
+            }),
+            recipient = recipient,
+            onFinished = ::finishWhenStorageIsIdle,
             onWriteAccepted = {
                 check(!demo.blocksNewWrites) { "시연 전환 중입니다" }
                 holdStorageForeground()
             })
     }
     private val pickupDelegate = lazy {
-        ProximityPickup(scope, tracking.currentPosition, candidates.state, candidates::currentCandidates, receipts,
-            tracking::ownsSource, SystemClock::elapsedRealtime, System::currentTimeMillis,
+        ProximityPickup(
+            scope = scope,
+            positions = tracking.currentPosition,
+            candidateSignals = candidates.state,
+            currentCandidates = candidates::currentCandidates,
+            receipts = receipts,
+            ownsSource = tracking::ownsSource,
+            elapsedMillis = SystemClock::elapsedRealtime,
+            utcMillis = System::currentTimeMillis,
             onError = { operation, error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
             }, scenarioId = { activeScenario.value })
@@ -201,7 +221,7 @@ class RoadNoteService : Service() {
     }
     // 리뷰용: 디버그 시연은 이 계약을 통해 기존 수집·역할·쓰기 수명을 조작한다. 별도 위치 수집기를 만들지 않는다.
     private val demoDelegate: Lazy<DemoRuntime> = lazy {
-        DemoRuntime(this, scope, object : DemoServiceContract {
+        DemoRuntime(context = this, scope = scope, host = object : DemoServiceContract {
             override val busy get() = submissions.isSubmitting || receipts.hasPendingWrites
             override fun startTracking() = this@RoadNoteService.startTracking()
             override fun stopTracking() = this@RoadNoteService.stopTracking()
@@ -214,7 +234,7 @@ class RoadNoteService : Service() {
             override fun currentFix() = tracking.currentPosition.value?.fix
             override fun holdStorage() = holdStorageForeground()
             override fun writesFinished() = finishWhenStorageIsIdle()
-        }, scenarioStore, activeScenario, restrictions.state)
+        }, store = scenarioStore, active = activeScenario, restrictions = restrictions.state)
     }
     private val demo: DemoRuntime by demoDelegate
 
@@ -245,7 +265,7 @@ class RoadNoteService : Service() {
             if (!demo.blocksNewWrites) receipts.confirmVisibleReceipt(key, screenResumed, restrictions.state.value, visitedContent)
         }
 
-        override fun submitTestNote(content: String, category: NoteCategory) {
+        override fun submitRoadNote(content: String, category: NoteCategory) {
             if (BuildConfig.DEBUG && demo.canSubmit && !demo.blocksNewWrites) submissions.submit(content, category)
         }
     }
@@ -259,7 +279,7 @@ class RoadNoteService : Service() {
             catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "DEMO_CLEANUP ${error.javaClass.simpleName}") }
             try { restrictions.close() }
             catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "UX_CLEANUP ${error.javaClass.simpleName}") }
-            stopReceiving()
+            stopNotePickup()
         } finally {
             try { tracking.stop() }
             finally {

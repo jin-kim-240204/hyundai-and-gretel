@@ -62,7 +62,7 @@ class SubmissionServiceTest {
                     }
                 }
                 withTimeout(5_000) { locked.await() }
-                withContext(Dispatchers.Main) { binder.submitTestNote("구덩이", NoteCategory.WARNING) }
+                withContext(Dispatchers.Main) { binder.submitRoadNote("구덩이", NoteCategory.WARNING) }
                 assertEquals(SubmissionState.Submitting, binder.submissionState.value)
                 context.startService(Intent(context, RoadNoteService::class.java).setAction(RoadNoteService.ACTION_STOP))
                 withTimeout(5_000) { while (binder.status.value != TrackingStatus.STOPPED) delay(50) }

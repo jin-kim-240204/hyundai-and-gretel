@@ -66,6 +66,29 @@ class ProximityPickupTest {
         fun signal() { signals.value = if (signals.value == CandidateState.Loading) CandidateState.WaitingForLocation else CandidateState.Loading }
     }
 
+    @Test fun observationsBelongToExplicitStartStopAndLateEnterCannotWriteAfterStop() = runTest {
+        val h = Harness(backgroundScope)
+        runCurrent()
+        assertEquals(0, h.positions.subscriptionCount.value)
+        assertEquals(0, h.signals.subscriptionCount.value)
+        h.start(); runCurrent()
+        assertEquals(1, h.positions.subscriptionCount.value)
+        assertEquals(1, h.signals.subscriptionCount.value)
+        val pending = h.source.requests.single()
+        h.pickup.stop(); runCurrent()
+        assertEquals(0, h.positions.subscriptionCount.value)
+        assertEquals(0, h.signals.subscriptionCount.value)
+        pending.registered("late"); pending.enter("late"); h.signal(); runCurrent()
+        assertEquals(listOf("late"), h.source.removed)
+        assertTrue(h.store.inputs.isEmpty())
+        assertEquals(PickupState.Waiting, h.pickup.state.value)
+        h.start(); runCurrent()
+        assertEquals(1, h.positions.subscriptionCount.value)
+        assertEquals(2, h.source.requests.size)
+        h.source.requests.last().registered("new"); runCurrent()
+        assertEquals(1, h.store.inputs.size)
+    }
+
     @Test fun pendingLimitDistanceOrderingAndNoDuplicateRegistration() = runTest {
         val h = Harness(backgroundScope)
         h.positions.value = TrackedPosition(1, LocationFix(37.5, 127.0265, 0))
@@ -121,6 +144,8 @@ class ProximityPickupTest {
             if (registeredFirst) { old.registered("known"); runCurrent() }
             old.error(IOException("registration")); runCurrent()
             assertEquals(PickupState.Failed(PickupFailure.PROXIMITY), h.pickup.state.value)
+            assertEquals(0, h.positions.subscriptionCount.value)
+            assertEquals(0, h.signals.subscriptionCount.value)
             repeat(3) { h.signal(); runCurrent() }
             h.start(); runCurrent() // 중복 시작 호출로 실패한 세션을 재시도하지 않는다.
             assertEquals(1, h.source.requests.size)
@@ -140,6 +165,7 @@ class ProximityPickupTest {
         h.start(); runCurrent()
         h.source.requests.single().registered("one"); runCurrent()
         assertEquals(PickupState.Failed(PickupFailure.STORAGE), h.pickup.state.value)
+        assertEquals(0, h.positions.subscriptionCount.value)
         repeat(3) { h.signal(); runCurrent() }
         h.positions.value = null; runCurrent()
         h.positions.value = TrackedPosition(1, LocationFix(37.5, 127.03, 0)); runCurrent()
@@ -221,6 +247,7 @@ class ProximityPickupTest {
         h.source.throwAdd = true
         h.start(); runCurrent()
         assertEquals(PickupState.Failed(PickupFailure.PROXIMITY), h.pickup.state.value)
+        assertEquals(0, h.positions.subscriptionCount.value)
         h.pickup.stop(); h.source.throwAdd = false
         h.positions.value = TrackedPosition(2, LocationFix(37.5, 127.0265, 0))
         h.notes = listOf(note(1), note(2)); h.start(2); runCurrent()

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.*
 enum class PickupFailure { PROXIMITY, STORAGE }
 sealed interface PickupState {
     data object Waiting : PickupState
-    data class Watching(val selected: Int, val pending: Int, val registered: Int, val overflow: Int) : PickupState
+    data class Watching(val selected: Int, val pending: Int, val onRegistrationCompleted: Int, val overflow: Int) : PickupState
     data class Failed(val reason: PickupFailure) : PickupState
 }
 
@@ -16,7 +16,7 @@ sealed interface PickupState {
 class ProximityPickup(
     private val scope: CoroutineScope,
     private val positions: StateFlow<TrackedPosition?>,
-    candidateSignals: StateFlow<CandidateState>,
+    private val candidateSignals: StateFlow<CandidateState>,
     private val currentCandidates: () -> List<NearbyCandidate>?,
     private val receipts: NoteReceiptProcessor,
     private val ownsSource: (ProximitySource) -> Boolean,
@@ -26,108 +26,132 @@ class ProximityPickup(
     private val scenarioId: () -> String? = { null },
 ) {
     // 리뷰용: 한 수신 세션이 소유하는 등록 요청과 수락한 쪽지 목록이다. 다음 세션과 공유하지 않는다.
-    private class Run(val session: Long, val source: ProximitySource, val setup: SyntheticSession) {
+    private class PickupSession(val session: Long, val source: ProximitySource, val setup: SyntheticSession) {
         var failed = false
         var overflow = 0
-        val requests = mutableListOf<Request>()
+        val requests = mutableListOf<ProximityRegistration>()
         val accepted = mutableSetOf<String>()
     }
     // 리뷰용: SDK 등록 요청 하나의 소유자·유효 여부·나중에 도착할 등록 ID를 함께 관리한다.
-    private class Request(val owner: Run, val noteId: String) {
+    private class ProximityRegistration(val owner: PickupSession, val noteId: String) {
         var valid = true
         var alertId: String? = null
     }
-    private var run: Run? = null
+    private var activeSession: PickupSession? = null
     private val mutableState = MutableStateFlow<PickupState>(PickupState.Waiting)
     val state = mutableState.asStateFlow()
 
-    // 리뷰용: 위치·후보·수신함 변경을 합쳐 접근 감시를 갱신한다. 화면이 열려 있는지와는 별개다.
-    init {
-        scope.launch {
-            combine(positions, candidateSignals, receipts.inbox) { _, _, _ -> Unit }.collect { refresh() }
-        }
-    }
+    private var inputObservation: Job? = null
 
     fun start(session: Long, source: ProximitySource, setup: SyntheticSession) {
-        if (run?.let { it.session == session && it.source === source } == true) return
+        if (activeSession?.let { it.session == session && it.source === source } == true) return
         stop()
-        run = Run(session, source, setup)
-        refresh()
+        val owner = PickupSession(session, source, setup)
+        activeSession = owner
+        refreshNearbyNotes()
+        if (isCurrentSession(owner)) observePickupInputs()
     }
 
     fun stop() {
-        val previous = run
-        run = null
-        previous?.requests?.toList()?.forEach { invalidate(it) }
+        inputObservation?.cancel()
+        inputObservation = null
+        val previous = activeSession
+        activeSession = null
+        previous?.requests?.toList()?.forEach { unregisterRequest(it) }
         mutableState.value = PickupState.Waiting
     }
 
-    private fun current(owner: Run): Boolean = run === owner && !owner.failed && ownsSource(owner.source)
+    /** 수신 감시는 start부터 stop까지만 위치·후보·수신 이력 변경을 관찰한다. */
+    private fun observePickupInputs() {
+        inputObservation = scope.launch {
+            combine(positions, candidateSignals, receipts.inbox) { _, _, _ -> Unit }
+                .collect { refreshNearbyNotes() }
+        }
+    }
+
+    private fun isCurrentSession(owner: PickupSession): Boolean = activeSession === owner && !owner.failed && ownsSource(owner.source)
 
     // 리뷰용: 현재 세션에서 남이 작성한 미수신·전방 쪽지만 고른다. 가까운 최대 16개만 SDK에 등록한다.
-    private fun refresh() {
-        val owner = run ?: return
-        if (!current(owner)) return
+    private fun refreshNearbyNotes() {
+        val owner = activeSession ?: return
+        if (!isCurrentSession(owner)) return
         val position = positions.value
         val candidates = currentCandidates()
         val route = position?.let { SyntheticRoute.project(it.fix.latitude, it.fix.longitude, owner.setup) }
         if (position?.session != owner.session || candidates == null || route == null) {
-            owner.requests.toList().forEach { invalidate(it) }
+            owner.requests.toList().forEach { unregisterRequest(it) }
             if (!owner.failed) mutableState.value = PickupState.Waiting
             return
         }
+        val eligible = unreceivedNotesAhead(owner, candidates, route)
+        val selected = eligible.take(MAX_REGISTRATIONS)
+        owner.overflow = (eligible.size - selected.size).coerceAtLeast(0)
+        synchronizeRegistrations(owner, selected)
+        receiveNotesAlreadyInside(owner)
+        publish(owner)
+    }
+
+    private fun unreceivedNotesAhead(owner: PickupSession, candidates: List<NearbyCandidate>, route: RouteContext): List<NearbyCandidate> {
         val received = receipts.inbox.value.items.filter { it.recipientId == owner.setup.actorId }.map { it.note.noteId }.toSet()
-        val eligible = candidates.filter { candidate ->
+        return candidates.filter { candidate ->
             val note = candidate.note
             val noteRoute = note.route
             noteRoute != null && SyntheticRoute.matches(noteRoute, note.latitude, note.longitude) &&
                 note.authorId != owner.setup.actorId && note.noteId !in received && note.noteId !in owner.accepted &&
                 (SyntheticRoute.ahead(noteRoute, route)?.let { it >= 0 } == true)
         }.sortedWith(compareBy<NearbyCandidate> { it.distanceMeters }.thenBy { it.note.noteId })
-        val selected = eligible.take(MAX_REGISTRATIONS)
-        owner.overflow = (eligible.size - selected.size).coerceAtLeast(0)
+    }
+
+    private fun synchronizeRegistrations(owner: PickupSession, selected: List<NearbyCandidate>) {
         val ids = selected.map { it.note.noteId }.toSet()
-        owner.requests.toList().filter { it.valid && it.noteId !in ids }.forEach { invalidate(it) }
+        owner.requests.toList().filter { it.valid && it.noteId !in ids }.forEach { unregisterRequest(it) }
         for (candidate in selected) {
-            if (!current(owner)) break
+            if (!isCurrentSession(owner)) break
             if (owner.requests.any { it.valid && it.noteId == candidate.note.noteId }) continue
             if (owner.requests.size >= MAX_REGISTRATIONS) break // 무효화됐어도 등록 ID를 기다리는 요청은 등록 한 자리를 계속 차지한다.
-            val request = Request(owner, candidate.note.noteId)
+            val request = ProximityRegistration(owner, candidate.note.noteId)
             owner.requests += request
             try {
                 owner.source.addProximity(candidate.note.latitude, candidate.note.longitude,
-                    onRegistered = { id -> scope.launch { registered(request, id) } },
-                    onEnter = { id -> scope.launch { if (request.alertId == id) evaluate(request) } },
-                    onError = { error -> scope.launch { registrationError(request, error) } })
+                    onRegistered = { id -> scope.launch { onRegistrationCompleted(request, id) } },
+                    onEnter = { id -> scope.launch { onEnteredRadius(request, id) } },
+                    onError = { error -> scope.launch { onRegistrationFailed(request, error) } })
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
                 fail(owner, PickupFailure.PROXIMITY, error)
             }
         }
-        owner.requests.toList().forEach { evaluate(it) }
-        publish(owner)
+    }
+
+    // ENTER가 누락되거나 등록 시 이미 반경 안인 경우도 같은 수신 판정으로 보완한다.
+    private fun receiveNotesAlreadyInside(owner: PickupSession) {
+        owner.requests.toList().forEach { tryReceiveNote(it) }
+    }
+
+    private fun onEnteredRadius(request: ProximityRegistration, alertId: String) {
+        if (request.alertId == alertId) tryReceiveNote(request)
     }
 
     // 리뷰용: 등록 완료가 늦게 와도 현재 유효한 요청인지 재확인한다. 이미 중지한 요청의 ID는 즉시 정리한다.
-    private fun registered(request: Request, id: String) {
+    private fun onRegistrationCompleted(request: ProximityRegistration, id: String) {
         val owner = request.owner
         if (request.alertId != null) return // 중복 등록 콜백이 무효화된 요청을 되살리지 못하게 한다.
         request.alertId = id
-        if (!request.valid || !current(owner)) invalidate(request)
+        if (!request.valid || !isCurrentSession(owner)) unregisterRequest(request)
         else {
-            evaluate(request) // 등록할 때 이미 반경 안이면 ENTER 이벤트 없이도 수신 조건을 확인한다.
+            tryReceiveNote(request) // 등록할 때 이미 반경 안이면 ENTER 이벤트 없이도 수신 조건을 확인한다.
             publish(owner)
         }
-        if (current(owner)) refresh()
+        if (isCurrentSession(owner)) refreshNearbyNotes()
     }
 
-    private fun registrationError(request: Request, error: Exception) {
+    private fun onRegistrationFailed(request: ProximityRegistration, error: Exception) {
         if (error is CancellationException) throw error
         val owner = request.owner
-        if (!request.valid || !current(owner)) {
+        if (!request.valid || !isCurrentSession(owner)) {
             if (request.alertId == null) owner.requests.remove(request)
-            if (current(owner)) refresh()
+            if (isCurrentSession(owner)) refreshNearbyNotes()
             return
         }
         if (request.alertId == null) owner.requests.remove(request) // SDK가 등록 전 실패를 정리하므로 아직 ID가 없는 요청을 목록에서 제거한다.
@@ -135,28 +159,28 @@ class ProximityPickup(
     }
 
     // 리뷰용: ENTER 이벤트와 이미 반경 안인 경우가 함께 사용하는 판정이다. 위치 2초 최신성·150미터·경로·방향·만료·중복을 다시 확인한다.
-    private fun evaluate(request: Request) {
+    private fun tryReceiveNote(request: ProximityRegistration) {
         val owner = request.owner
-        if (!request.valid || request.alertId == null || !current(owner)) return
+        if (!request.valid || request.alertId == null || !isCurrentSession(owner)) return
         val position = positions.value ?: return
         if (position.session != owner.session || elapsedMillis() - position.fix.receivedElapsedMillis !in 0L..RECEIPT_FRESHNESS) return
         val note = currentCandidates()?.firstOrNull { it.note.noteId == request.noteId }?.note ?: return
         if (receipts.inbox.value.items.any { it.recipientId == owner.setup.actorId && it.note.noteId == note.noteId }) return
         if (note.noteId in owner.accepted || eligibleDistance(note, owner.setup, position.fix, utcMillis()) == null) return
         owner.accepted += note.noteId
-        invalidate(request)
-        if (!current(owner)) return
+        unregisterRequest(request)
+        if (!isCurrentSession(owner)) return
         // 리뷰용: 수신 자격을 통과한 입력을 고정해 수신 기록 저장을 요청한다. 성공·중복·실패 처리는 저장 결과로 결정한다.
         receipts.receive(ReceiptRequest(note.noteId, owner.setup, position.fix, scenarioId())) { result ->
-            if (current(owner)) {
+            if (isCurrentSession(owner)) {
                 if (result == ReceiveResult.STORAGE_FAILURE) fail(owner, PickupFailure.STORAGE, IllegalStateException("Receipt storage failed"))
-                else refresh()
+                else refreshNearbyNotes()
             }
         }
     }
 
     // 리뷰용: 요청을 먼저 무효화한다. ID가 아직 없으면 기록을 남겨, 뒤늦게 ID가 도착했을 때 해제할 수 있게 한다.
-    private fun invalidate(request: Request) {
+    private fun unregisterRequest(request: ProximityRegistration) {
         request.valid = false
         val id = request.alertId ?: return
         val owner = request.owner
@@ -170,22 +194,24 @@ class ProximityPickup(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
-            if (run === owner && !owner.failed) fail(owner, PickupFailure.PROXIMITY, error)
+            if (activeSession === owner && !owner.failed) fail(owner, PickupFailure.PROXIMITY, error)
             else onError("PROXIMITY_REMOVE", error)
         }
     }
 
     // 리뷰용: 근접 감시 또는 수신 저장 실패는 이 수신 세션을 실패로 고정한다. 위치 수집과 기존에 수락한 쓰기를 중지하지는 않는다.
-    private fun fail(owner: Run, reason: PickupFailure, error: Exception) {
-        if (run !== owner || owner.failed) return
+    private fun fail(owner: PickupSession, reason: PickupFailure, error: Exception) {
+        if (activeSession !== owner || owner.failed) return
         owner.failed = true
+        inputObservation?.cancel()
+        inputObservation = null
         mutableState.value = PickupState.Failed(reason)
         onError(reason.name, error)
-        owner.requests.toList().forEach { invalidate(it) }
+        owner.requests.toList().forEach { unregisterRequest(it) }
     }
 
-    private fun publish(owner: Run) {
-        if (!current(owner)) return
+    private fun publish(owner: PickupSession) {
+        if (!isCurrentSession(owner)) return
         val active = owner.requests.filter { it.valid }
         mutableState.value = PickupState.Watching(active.size, owner.requests.count { it.alertId == null },
             active.count { it.alertId != null }, owner.overflow)

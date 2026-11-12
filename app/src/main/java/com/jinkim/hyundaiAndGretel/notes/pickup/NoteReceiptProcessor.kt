@@ -30,8 +30,10 @@ class NoteReceiptProcessor(
     private val refresh = MutableStateFlow(0L)
     fun refreshObservation() { refresh.value++ }
 
-    // 리뷰용: 현재 수신자의 전체 이력을 관찰한다. 역할이 바뀌면 관찰 소유자도 교체하여 이전 화면의 결과와 분리한다.
-    init {
+    // 수신함 조회는 위치 수집이 멈춰도 유지한다. 조회 자체는 수신 기록을 생성하거나 확인 처리하지 않는다.
+    init { observeRecipientInbox() }
+
+    private fun observeRecipientInbox() {
         scope.launch {
             combine(recipient, refresh) { actor, _ -> actor }.collectLatest { actor ->
                 observationOwner = Any()

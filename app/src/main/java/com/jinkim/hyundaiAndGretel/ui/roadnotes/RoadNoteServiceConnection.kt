@@ -39,9 +39,9 @@ class RoadNoteServiceConnection(scope: CoroutineScope) {
     }
 
     // 리뷰용: 명령은 화면에 마지막으로 보인 복사본이 아니라 현재 연결된 서비스의 최신 상태를 확인해 전달한다.
-    fun submitTestNote(content: String, category: NoteCategory) {
+    fun submitRoadNote(content: String, category: NoteCategory) {
         val session = current.value ?: return
         val latest = RoadNotesUiState(session.status.value, session.submissionState.value)
-        if (latest.canSubmit) session.submitTestNote(content, category)
+        if (latest.canSubmit) session.submitRoadNote(content, category)
     }
 }

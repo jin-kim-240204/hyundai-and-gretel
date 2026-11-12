@@ -1,0 +1,35 @@
+{
+  "task": "나영 리뷰 기반 화면·수신 흐름 정리",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "DES-06"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "JVM100/Python4/debug·release·계측APK compile/lint/harness·schema/DO/FGS/release 정적 PASS. docs/work/nayeong-review-refactor.md"
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "관찰 start/stop/실패·늦은콜백·수락쓰기·ACK host 회귀 PASS. 실제 SDK/서비스 수명은 이번 변경 후 미실행"
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "표시 예산·컴포넌트 분리·양variant compile PASS. 새 권한화면/Activity 수명/주행 UI는 미실행"
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "NOT_TESTED",
+      "evidence": "SDK 어댑터 사용자 원문 바이트 동일. 실제 등록해제/기기 동작은 미검증"
+    },
+    {
+      "id": "DOC-9faba42791f0#기능별규제",
+      "status": "NOT_TESTED",
+      "evidence": "CarUx/명시ACK/DO/등록16상한과 표시예산 host 정적 PASS. 새 화면에서 실제 규제신호 미검증"
+    }
+  ]
+}

@@ -28,7 +28,11 @@ class RoadNotesViewModel(private val app: Application) : AndroidViewModel(app), 
     // 리뷰용: 뷰모델은 서비스 연결 상태와 화면 표시 이력을 조합한다. 직접 위치 SDK를 생성하거나 SQL을 실행하지 않는다.
     private val connection = RoadNoteServiceConnection(viewModelScope)
     private val visited = MutableStateFlow<Set<String>>(emptySet())
-    val uiState = combine(connection.state, visited) { state, seen -> state.copy(visitedContent = seen) }
+    private val mutableStartCommandFailed = MutableStateFlow(false)
+    val startCommandFailed = mutableStartCommandFailed.asStateFlow()
+    val uiState = combine(connection.state, visited, mutableStartCommandFailed) { state, seen, failed ->
+        state.copy(visitedContent = seen, startCommandFailed = failed)
+    }
         .stateIn(viewModelScope, SharingStarted.Eagerly, RoadNotesUiState())
     private val mutableDemoRuntime = MutableStateFlow<DemoRuntime?>(null)
     val demoRuntime = mutableDemoRuntime.asStateFlow()
@@ -37,8 +41,9 @@ class RoadNotesViewModel(private val app: Application) : AndroidViewModel(app), 
     fun bufferSummary(): String = currentBinder?.bufferSummary() ?: "버퍼 연결 대기"
     val status = uiState.map { it.trackingStatus }
         .stateIn(viewModelScope, SharingStarted.Eagerly, TrackingStatus.STOPPED)
-    private val mutableStartCommandFailed = MutableStateFlow(false)
-    val startCommandFailed = mutableStartCommandFailed.asStateFlow()
+    val canStartTracking get() = demoRuntime.value?.let { demo ->
+        !demo.enabled || (uiState.value.restrictions.canSetup && !demo.transitioning)
+    } ?: true
     private val bound = app.bindService(Intent(app, RoadNoteService::class.java), this, Context.BIND_AUTO_CREATE)
 
     // 리뷰용: 바인더를 받으면 화면 상태 관찰과 디버그 연결을 현재 서비스로 바꾼다.
@@ -57,8 +62,8 @@ class RoadNotesViewModel(private val app: Application) : AndroidViewModel(app), 
         connection.confirmReceipt(key, screenResumed, visited.value.toSet())
     }
 
-    fun submitTestNote(content: String, category: NoteCategory) {
-        connection.submitTestNote(content, category)
+    fun submitRoadNote(content: String, category: NoteCategory) {
+        connection.submitRoadNote(content, category)
     }
 
     // 리뷰용: 화면의 시작 요청을 서비스 명령으로 바꾼다. 디버그 시연 설정 제한을 통과해야 새 입력을 시작할 수 있다.

@@ -13,9 +13,9 @@ data class RoadNotesUiState(
     val pickup: PickupState = PickupState.Waiting,
     val restrictions: UiRestrictions = UiRestrictions(),
     val visitedContent: Set<String> = emptySet(),
+    val startCommandFailed: Boolean = false,
 ) {
     val canSubmit get() = submission != null && trackingStatus.isCollecting && submission != SubmissionState.Submitting
     val canStart get() = !trackingStatus.isCollecting && trackingStatus != TrackingStatus.UNSUPPORTED &&
         submission != SubmissionState.Submitting
 }
-
