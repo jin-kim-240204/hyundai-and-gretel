@@ -1,12 +1,12 @@
 # 07. 최종 통합 검증과 시연 준비
 
-상태: **명세 작성·독립 스펙 리뷰 요청 / 07 구현 전**. 코드 기준 `e8ef1421f6561fa39fde83414c76ad14bd3ee66f`, 공통 정본 부모 `2ca00c0ee411faa731390601619c38747be71279`. [00 전체 계획](00-overview.md)과 [공통 정본](../../plans/implementation-plan.md)을 적용한다. 정책을 새로 정하는 문서가 아니다.
+상태: **명세 작성·독립 스펙 리뷰 요청 / 07 구현 전**. 코드 기준 `e8ef1421f6561fa39fde83414c76ad14bd3ee66f`, 공통 정본 부모 `0f0a7daa1189bcdba62cd27a58033a8659b43737`. [00 전체 계획](00-overview.md)과 [공통 정본](../../plans/implementation-plan.md)을 적용한다. 사용자가 추가한 주행 화면 보완/DO 계획은 §3.1에서06의 이전 범위를 대체하며 독립 스펙 리뷰 대상이다. 나머지 계약은 유지한다.
 
 06 수정은 독립 재검토에서 원 반례1건·관련 JVM25건 직접 PASS, P2 스레드4545675100/4545675109만 해결된 것을 사용자 전달 및 원격 답글로 확인했다. 이는 **구현 및 허용 검사 완료·runtime 대기**다. 작성자의 JVM93/빌드 보고와 독립 리뷰어의 직접 검사 범위는 구분한다. 실제 SDK·UI·Room·JNI·FGS·CarUx·시연은 NOT_TESTED로 유지한다.
 
 ## 1. 이번 단계의 결과와 경계
 
-목표는 기존01~06을 연결해 `제보 → 원본 저장 → 현재 후보 → SDK 접근 → 수신 저장 → 제품 카드 → 명시 확인 → 현재 시연 reset`을 검증하고, 같은 빌드로 재현할 수 있는 시연 안내와 증거 목록을 남기는 것이다. 새 기능보다 누락된 통합 경계와 검증 근거를 보강한다.
+목표는 기존01~06을 연결해 `제보 → 원본 저장 → 현재 후보 → SDK 접근 → 수신 저장 → 제품 카드 → 명시 확인 → 현재 시연 reset`을 검증하고, 같은 빌드로 재현할 수 있는 시연 안내와 증거 목록을 남기는 것이다. 주행 중 화면이 사라지는 문제의 최소 보완과 누락된 통합 경계/검증 근거를 함께 다룬다.
 
 - 이번 요청은 명세·상태·작업 기록만 작성/커밋/푸시한다. 독립 스펙 리뷰와 구현 승인 전에는 테스트·시연 스크립트·앱 코드를 구현하지 않는다. 아래 명령·재현 절차는 실행 결과가 아니다.
 - 승인 후에도 현재 허용 범위는 host JVM/Fake·빌드·lint·harness·스키마/리소스/APK 정적 검사다. 계측은 작성·컴파일만 허용한다. 앱/설치/Studio(build_project 포함)/adb/기기/에뮬레이터/시뮬레이터/계측은 실행하지 않는다. 향후 runtime 실행에는 별도 사용자 허용이 필요하며 스펙 승인 자체가 실행 허용은 아니다.
@@ -43,12 +43,32 @@
 | 웹콘솔 | 속도/기어 입력만 담당. 웹콘솔 숫자가 움직인 사실을 GPS 수신 성공으로 취급하지 않음 |
 | release | 패널/fixture/role/reset/mock/loopback HTTP/특례 설정 제외. 기존 진짜 SDK 수집 및 recipient 전체 JOIN/legacy 명시 ACK 유지. release로 debug 시연 기능을 제공한다고 약속하지 않음 |
 
-NO_SETUP·규제 미연결/오류에서는 역할/모드/출발점/reset/입력 시작을 UI와 Main 수락 경계에서 막는다. 중지/취소/닫기는 유지한다. 속도0/P만으로 설정 허가를 추정하지 않는다. 이미 Ready인 수집을 NO_SETUP만으로 초기화하거나 제한 해제만으로 자동 재개하지 않는다. 본문·문자·누적 항목/깊이·NO_VIDEO는06 매핑 그대로 적용한다. ACK는 VM 방문 정본 snapshot과 서비스 최신 규제로 판정하며 거절은 DB0·예산 불변이다. 현재 DO 선언은 없고 새 선언/OS 주행 제한 우회도 없다. 실제 플랫폼이 주행 중 표시를 막으면 성공 연출 대신 제약을 기록한다. Figma 미확인 상태에서 디자인 시스템 준수를 주장하지 않는다.
+NO_SETUP·규제 미연결/오류에서는 역할/모드/출발점/reset/입력 시작을 UI와 Main 수락 경계에서 막는다. 중지/취소/닫기는 유지한다. 속도0/P만으로 설정 허가를 추정하지 않는다. 이미 Ready인 수집을 NO_SETUP만으로 초기화하거나 제한 해제만으로 자동 재개하지 않는다. 본문·문자·누적 항목/깊이·NO_VIDEO는06 매핑 그대로 적용한다. ACK는 VM 방문 정본 snapshot과 서비스 최신 규제로 판정하며 거절은 DB0·예산 불변이다. 현재 코드의 DO 미선언을07에서 보완할 계획이며 §3.1의 Activity 선언과 기능별 제한을 함께 적용한다. OS 주행 제한을 우회하지 않는다. 실제 플랫폼이 주행 중 표시를 막으면 성공 연출 대신 제약을 기록한다. Figma 미확인 상태에서 디자인 시스템 준수를 주장하지 않는다.
+
+### 3.1 사용자 추가 범위: 주행 중 제품 화면 유지와 DO
+
+주행 중 사용 가능해야 하며 달리면 제품 화면이 사라지는 문제를07 해결 범위에 포함한다.06의 ‘새 DO 선언 없음’은 당시 사실/범위로 남기되07 이후의 제약으로 적용하지 않는다. 현재 코드에는 선언이 아직 없고, 이 명세가 승인되기 전에 Manifest/Activity를 수정하지 않는다.
+
+**공식 근거와 프로젝트 선택을 구분한다.** [Pleos 지역별 정책](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/driving-restiction-policy)의 ‘주행 상황에 따른 앱 사용 여부’에서 DO 미선언 Drive 사용 불가를 확인했다. [개발 가이드](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)의 CarUx 연동은 DO 이후에도 ActiveRestrictions 반영을 요구한다. [AAOS Activity 선언](https://source.android.google.cn/docs/automotive/driver_distraction/guidelines?hl=en)은 주행에 사용할 activity 자식 metadata 위치를 설명한다. 이를 근거로 기존 MainActivity에만 다음을 계획한다(앱 파일 변경 아님):
+
+```xml
+<!-- 기존 MainActivity의 activity 요소 안, application/service 아래가 아님 -->
+<meta-data android:name="distractionOptimized" android:value="true" />
+```
+
+현재 namespace의 MainActivity는 debug/release 공통 진입점이다. applicationId와 혼동해 다른 Activity 이름을 만들지 않고, merged Manifest의 정규화된 `com.jinkim.hyundaiAndGretel.MainActivity`에 단일 Boolean true로 남는지 확인한다. debug overlay에만 선언하지 않으며 다른 Activity/서비스까지 무차별 DO 표시하지 않는다. source Manifest·debug/release merged Manifest·패키징 Manifest가 일치해야 한다. 이 선언을 새 권한 추가나 심사 승인으로 해석하지 않는다.
+
+2026-11-12 `git fetch origin` 후 `b61ffd71fadc4b0d88625de85f664cdaf4e53565`(GyeongminKimGyeongminKim)의 위 metadata 추가와 `819df06fbd7508ecdc4b75691f5143d3db0999da`의 전체 UI 복원/DO 유지, 두 커밋이 origin/gm/feat-speech-to-text에만 포함되고 main/현 기능 브랜치에는 없음을 확인했다. 브랜치 전체 merge/cherry-pick이나 이전 Gleo/축소 화면/규제 모니터 복사는 하지 않는다. 필요한 선언과 현재 CarUx 계약만 최소 검토한다.
+
+기존 제품 카드/수집·수신·명시 확인 화면을 주행 전용 축소 화면으로 교체하지 않는다. debug 패널은 별도이고 DO가 있어도 NO_SETUP/미연결 설정 차단, 본문/문자·깊이·항목·NO_VIDEO 제한 및 중지/취소/닫기를 유지한다. 제한으로 본문이 보류되는 것과 Activity 자체가 주행만으로 사라지는 것을 구분한다. 화면 꺼짐 방지 플래그/FGS 유지/DO/CarUx는 각각 다른 책임이다. 강제 재실행·시스템 화면 덮기·restrictions 위조 없이 원인을 해결한다. 주행 사용 목표를 단순 ‘OS 제약이니 완료’로 끝내지 않으며, 대상 환경/추가 정책으로 해결되지 않으면 차단 원인과 NOT_TESTED를 남긴다.
+
+공통 정본은 부모0f0a7da에 문서만 별도 커밋·푸시 후 기능 브랜치에 병합했다.00/06/07도 같은 사용자 변경을 반영한다. 독립 스펙 리뷰 이후에만 선언/회귀를 구현하고, 실제 Drive 재현은 별도 실행 허용 후 R07에서 검증한다. 현재 DO 효과/주행 유지/안전·심사 적합성은 NOT_TESTED다.
 
 ## 4. 시스템 흐름과 보존 계약
 
 ```mermaid
 flowchart TD
+    Display[MainActivity DO 선언 계획 · CarUx 기능 제한] --> Setup
     Setup[실제 CarUx 설정 허용 · 쓰기0 · 명시 A 시작] --> Gate[선택 입력 → 실제 SDK probe → 목표 gate]
     Gate --> Buffer[세션 메모리 45초 · 실제 수신 표본]
     Buffer --> Submit[A 테스트 제보 · Main anchor와 문맥 고정]
@@ -106,7 +126,7 @@ flowchart TD
    ```
 
    `connectedAndroidTest`/`install*`/`run*`/IDE 실행은 포함하지 않는다. Gradle 테스트 source set/필터·환경·XML의 tests/failures/errors/skipped를 기록한다. 전체93은 이전 제출의 기준 수이지 새 테스트 개수를 고정하는 AC가 아니다. host H3 native를 썼으면 Android JNI와 구분한다.
-5. schema1~4 및 migration 경로/nullable legacy/PK/FK/인덱스/recipient JOIN을 정적 대조한다. APK/merged Manifest/DEX/리소스에서 debug 경계·권한·FGS 타입·DO 부재, release의 패널/역할/reset/테스트 제보/mock/HTTP/특례 설정 부재, 기존 SDK·전체 큐 보존과 ABI ELF 패키징을 확인한다. 빈 release 연결점의 클래스명 존재만으로 debug 기능 포함이라고 판정하지 않는다. release unsigned 빌드 성공은 서명된 제출 APK/설치·기동 성공이 아니다.
+5. schema1~4 및 migration 경로/nullable legacy/PK/FK/인덱스/recipient JOIN을 정적 대조한다. APK/merged Manifest/DEX/리소스에서 debug 경계·권한·FGS 타입·§3.1의 MainActivity DO 단일 true 선언(옳은 Activity 부모와 debug/release/최종 APK 일치), release의 패널/역할/reset/테스트 제보/mock/HTTP/특례 설정 부재, 기존 SDK·전체 큐 보존과 ABI ELF 패키징을 확인한다. 빈 release 연결점의 클래스명 존재만으로 debug 기능 포함이라고 판정하지 않는다. release unsigned 빌드 성공은 서명된 제출 APK/설치·기동 성공이 아니다.
 6. 지정 SHA·원문/빌드 설정·명령·결과 XML·APK SHA256·정적 결과를 `docs/work/step07-integration-verification.md/.json`에 기록할 계획이다. runtime 열은 계속 NOT_TESTED. 검증 후 tracked diff 없음 및 원래 작업 트리의 dirty 해시/목록 불변을 확인한다. 원래 worktree/사용자 파일은 삭제하지 않으며 새 검증 worktree 정리는 해당 검사 종료 후 안전성을 확인한 범위에서만 한다.
 
 ## 6. 허용된 host 통합 보강 계획
@@ -122,6 +142,7 @@ flowchart TD
 | I05 | 역할·모드·시작/reset과 제출/수신/ACK/reset 수락 쓰기 경합 | Main 수락 잠금·설정0/일반 stop 가능·수락 쓰기 유지. reset 성공 후 같은 B 관찰 결과도 새 소유권. Fake scenario scope 보존과 실제 Room rollback 증거 구분 |
 | I06 | raw 규제 업데이트 후 UI Flow 미진행, 최신 visited snapshot·본문/깊이/항목 예산 변경 | 명시 ACK 거절 DB0·큐 유지·거절 방문 증가0, 수락 뒤 규제 변경은 원래 ACK 완료. NO_SETUP/미연결 설정0·중지/닫기 유지·노출 자동 ACK0 |
 | I07 | legacy/다른 scenario PENDING이 새 시연 항목보다 앞, 활성 없음/reset 이후 | recipient 전체 한 건 순서·명시 확인·원본 보존, 후보/신규 수신/시연 카운트만 현재 소속 제한. 실제 DAO JOIN/SQLite concurrency는 아래 R 항목 |
+| I08 | 정적/XML: MainActivity metadata 및 debug/release merged·패키징 Manifest, 기존 UI 분기/규제 명령 회귀 | 정확한 Activity 자식·이름/true/중복/variant 유지. application/service 아래·false·debug에만 있음·누락의 반례 fixture는 검사 실패. release는 DO를 유지하면서 debug 도구/권한은 제외. 원래 DO 부재 검사만 삭제해 무검사로 두지 않고 위치/값 긍정 검사로 대체 |
 
 기존 회귀로 이미 입증되는 중복 테스트를 늘리지 않는다. 누락된 연결만 한 작은 테스트씩 추가하며, 실패 시 원래 production 반례 RED→최소 수정→GREEN을 남긴다. 실제 Room migration/동시성·rollback 계측은 기존 ScenarioMigrationTest/RoomReceiptStoreTest 등 보강·컴파일까지만 허용한다.
 
@@ -164,13 +185,13 @@ flowchart TD
 | R04 | 실제 Room v1/2/3→4 보존, 동시 수신/ACK, reset 중 실패 | 원본/legacy/PENDING/단일 JOIN·복합키/FK/rollback·다른 소속 불변. Fake로 대체 PASS 금지. NOT_TESTED |
 | R05 | mock 권한 거절/회수·HTTP 미완료/부분 응답/2초 공백·SDK null/onError·늦은 등록 ID | 오류/실패 세션·IO 완료 전 SDK 중지·정리·늦은 주입0·명시 재시작. 실제 장애의 종류별 구분. NOT_TESTED |
 | R06 | CarUx 미연결/NO_SETUP/문자·깊이·항목·NO_VIDEO, raw 변경과 확인 경합 | 기능별 차단/중지·닫기 유지/숨긴 본문 ACK0/수락 쓰기 유지·OS 표시 제한. NOT_TESTED |
-| R07 | JNI 로드/ABI·debug/release 실제 UI·가시성/알림/분할·재생성 | Android 로드·표시·터치/대비/지연·화면 유지/원복 증거. Figma/실차/모든 폼팩터 준수 보장 아님. NOT_TESTED |
+| R07 | 고정 APK의 P→D/속도 증가→정차, 주행 중 재진입·재생성/홈 복귀·멀티윈도우; JNI/ABI 및 debug/release 제품 UI | DO metadata 실제 효과·전체 제품 화면이 주행만으로 사라지거나 축소되지 않음·기능별 제한과 중지 유지·KEEP_SCREEN_ON 원복을 구분 관찰. OS 제약/실패는 원인 기록·최소 수정 후 재검증, 선언만으로 PASS 금지. Figma/실차/모든 폼팩터 준수 보장 아님. NOT_TESTED |
 
 고의 오류/DB 지연은 기존 테스트 fixture/계측 경계를 사용하고 시연용 production 백도어를 추가하지 않는다. 실패 원인을 구분할 관측 수단이 없으면 성공으로 추정하지 않는다. 실제 개인정보/제보 원문/위치 로그는 합성 시연 데이터에 제한하며 외부 보고에는 비식별 상태/카운트/테스트 ID만 남긴다.
 
 ## 8. 제출 문서·PR 정리와 종료 기준
 
-07 승인 후 수정 후보는 기존 통합 테스트의 누락 경계, 기존 계측의 관찰/컴파일, 현 브랜치에 아직 없는 재현 안내 `docs/LOCATION-DEMO.md` 작성(과거 참고 브랜치 내용을 그대로 복사하지 않고 현 PR 상태와 대조), README 실행/검증 범위 요약, 00/각 단계 상태 헤더와 검증 인덱스, step07 작업 기록이다. 새 사용자 기능/의존성/스키마·앱 ID 변경·Gleo 스키마 수정·불필요한 로그/전체 폴더 이동은 기본 범위가 아니다. 공통 정책이 바뀌지 않으면 부모 문서를 기능 브랜치에서 직접 수정하지 않는다.
+07 승인 후 수정 후보는 기존 통합 테스트의 누락 경계, 기존 계측의 관찰/컴파일, 현 브랜치에 아직 없는 재현 안내 `docs/LOCATION-DEMO.md` 작성(과거 참고 브랜치 내용을 그대로 복사하지 않고 현 PR 상태와 대조), README 실행/검증 범위 요약, 00/각 단계 상태 헤더와 검증 인덱스, step07 작업 기록이다. 주행 화면 보완의 최소 MainActivity metadata와 규제 계약 회귀를 제외한 새 사용자 기능/의존성/스키마·앱 ID 변경·Gleo 스키마 수정·불필요한 로그/전체 폴더 이동은 기본 범위가 아니다. 공통 정책이 바뀌지 않으면 부모 문서를 기능 브랜치에서 직접 수정하지 않는다.
 
 PR4의 base는 spec-road-note-system, head는 ny/spec-driven-road-notes를 유지한다. 정확한 SHA와 허용 검사/미검증을 AI 구현자·리뷰어별 원격 기록에 연결한다. 기존 실제 SDK 스레드는 미해결을 보존하고 unrelated 스레드를 일괄 resolve하지 않는다. 현재 OPEN/DRAFT이며 이 명세로 ready/merge/배포·서명 APK 제출을 승인하거나 실행하지 않는다. 현재 PR 본문에는 최초의 ‘문서만 담고 구현은 시작하지 않는다’ 설명이 남아 있다.07 승인 후 본문을01~06 구현과 허용 검사/07 상태·runtime 대기로 갱신하고 과거 문서 전용 설명을 현재 사실처럼 두지 않는다. 실행 완료로 읽힐 다른 설명도 현 SHA 근거로 정리하되 리뷰·작업 이력을 지우지 않는다. 이번 요청에서는 리뷰 요청 댓글만 게시하고 PR 본문/ready 상태는 바꾸지 않는다.
 
@@ -178,9 +199,9 @@ PR4의 base는 spec-road-note-system, head는 ny/spec-driven-road-notes를 유�
 |---|---|---|
 | F01 | 독립 스펙 리뷰 및 구현 승인 | 이번 명세 리뷰 대기 |
 | F02 | clean 지정 HEAD·dirty 미유입/원본 보존·증거 SHA/환경 식별 | 계획만 작성, 미실행 |
-| F03 | I01~07에서 필요한 통합 회귀 및 기존 전체 JVM·빌드/lint/harness/schema/release 정적 통과 | 신규07 검사 미실행; 기존06 근거는 이력으로 보존 |
-| F04 | 제품/패널/명시 ACK·보존/실패/수명 계약 변화 없음, independent 코드 리뷰 | 구현 전, 정책 변경 없음 |
+| F03 | I01~08에서 필요한 통합 회귀 및 기존 전체 JVM·빌드/lint/harness/schema/release 정적 통과 | 신규07 검사 미실행; 기존06 근거는 이력으로 보존 |
+| F04 | 주행 화면 보완·MainActivity DO 및 기존 CarUx/안전 명령 회귀, 명시 ACK·보존/실패/수명 유지, 독립 코드 리뷰 | 구현 전, 사용자 DO 범위 추가를 이번 명세 리뷰 대상으로 제출 |
 | F05 | R01~07의 향후 재현 대본·입력 모드·오류/중지·외부 한계 문서화 | 이번 리뷰 대상; runtime은 전부 NOT_TESTED |
 | F06 | 남은 스레드/미검증/PR 문서 상태가 증거와 일치 | 허용 검사 제출과 실제 시연 완료를 별도 보고; 미검증 숨김 금지 |
 
-순서: **명세 리뷰 핑퐁 → 승인 → clean HEAD 기준선 검증 → 누락 host 통합/회귀의 작은 묶음 → 독립 코드 리뷰 → 문서/PR 상태 정리**. runtime 금지가 유지되면 허용 검사와 시연 준비까지 제출하고 실제 시연 성공/전체 기능 검증 완료를 선언하지 않는다. 별도 실행 허용 후에만 고정 APK의 R 항목을 실행하고 결과별로 PASS/FAIL/NOT_TESTED를 갱신한다.
+순서: **명세 리뷰 핑퐁 → 승인 → clean HEAD 기준선 검증 → 최소 DO 선언과 주행 UI 규제 회귀/누락 host 통합의 작은 묶음 → 독립 코드 리뷰 → 문서/PR 상태 정리**. runtime 금지가 유지되면 허용 검사와 시연 준비까지 제출하고 실제 시연 성공/전체 기능 검증 완료를 선언하지 않는다. 별도 실행 허용 후에만 고정 APK의 R 항목을 실행하고 결과별로 PASS/FAIL/NOT_TESTED를 갱신한다.

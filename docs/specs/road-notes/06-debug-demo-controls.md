@@ -41,7 +41,7 @@ flowchart TD
 
 진입은 debug 빌드에만 작은 ‘시연 도구’ 버튼을 두는 안이다. 와이어프레임의 제목 길게 누르기는 필수가 아니며 숨은 제스처보다 명시 진입을 제안한다. 제품 레이아웃 전면 개편은 하지 않는다. 실제 구동에는 기존 Material 테마/버튼을 재사용할 계획이며 Figma 변수·정식 아이콘·크기/간격/대비를 확인했다고 주장하지 않는다. 기존 Figma 접근 불가 상태를 그대로 기록한다. 디자인 시스템 준수/주행 적합/실물 가독성 판정은 미검증이다.
 
-현재 Manifest에는 DO 선언이 없으며 이번06에서 새 선언하지 않는다. 기본 제품/패널 구조를 유지하되 실제 `CarUxRestrictions` 신호에 따른 기능별 제한을 적용한다. 같은 UI/정차/속도0/P를 허가로 간주하지 않으며 시스템의 앱 표시 제약을 우회하지 않는다. 규제 미연결/조회 오류는 **시연 설정 불가**·이유 표시이며 전체 앱이나 recipient 수신함 조회를 일괄 잠그는 정책은 아니다.05의 전체 이력·명시 ACK와 수락 쓰기를 보존한다.
+06 구현 시 Manifest에 DO 선언이 없었던 사실은 유지한다. 이후 사용자07 추가 요구로 ‘새 DO 선언 없음’ 미래 제약은 대체하며 MainActivity DO 계획은 [07 §3.1](07-integration-and-demo.md#31-사용자-추가-범위-주행-중-제품-화면-유지와-do)을 따른다. 앱 코드는 아직 바꾸지 않았다. 기본 제품/패널 구조를 유지하되 실제 `CarUxRestrictions` 신호에 따른 기능별 제한을 적용한다. 같은 UI/정차/속도0/P를 허가로 간주하지 않으며 시스템의 앱 표시 제약을 우회하지 않는다. 규제 미연결/조회 오류는 **시연 설정 불가**·이유 표시이며 전체 앱이나 recipient 수신함 조회를 일괄 잠그는 정책은 아니다.05의 전체 이력·명시 ACK와 수락 쓰기를 보존한다.
 
 ### 2.1 요구사항·기능별 규제 매핑
 
@@ -182,7 +182,7 @@ release에는패널/진입버튼·역할/reset테스트명령·mockprovider·loc
 | D03 | Fake/JVM: 옛캐시/목표캐시/다른인스턴스/지연HTTP/timeout차단,25m/5m/15초 probe→목표후만buffer/currentPosition발행·요청목표/수락SDK오차구분 |
 | D04 | Fake/JVM: 실제속도적분/기어검증·속도0·오류gap누적이동없음,권한실패시가짜수신0 |
 | D05 | Room계측작성/컴파일: v3PENDING→v4·활성없음/생성/reset후recipient전체조회/명시ACK·현재시연reset원자성/FK·다른소속보존/롤백.실제DB실행은NOT_TESTED |
-| D06 | 빌드/정적: release에패널/mock/localhost/특례설정없음,debug에만입력구현,기존SDK권한/FGS유형·debug/release모두recipient전체큐/명시ACK유지 |
+| D06 | 빌드/정적: release에패널/mock/localhost/특례설정없음,debug에만입력구현,기존SDK권한/FGS유형·debug/release모두recipient전체큐/명시ACK유지,07의 MainActivity DO는두variant공통검사(미구현) |
 | D07 | 실제 SDK/권한/provider 수명/콘솔/외부 ADB 주행/캐시 gate는 NOT_TESTED. 추후 실행 허용 뒤 재현한다 |
 | D08 | UX01~09 Fake: NO_SETUP/미연결 설정0·stop/닫기유지·전환중제한활성화취소/수락쓰기완료·상한/자동ACK0. 실제 CarUx/UI/주행/FGS/E2E는NOT_TESTED |
 
@@ -190,7 +190,7 @@ release에는패널/진입버튼·역할/reset테스트명령·mockprovider·loc
 
 ## 12. 수용한 정책과 부모 동기화
 
-리뷰이 답글4545281093/1247/1461과 사용자 지시에 따라 recipient 전체 이력 큐/명시 ACK 보존, A610m·B600m, 두 실제 SDK 입력/no REPLAY, 현재 시나리오만 원자 reset, 두 점25m/5m/15초·D 한정, CarUx 기능별 제한/NO_SETUP·미연결 설정 불가·중지/닫기 유지·현재 DO 없음/새 선언 없음을 반영했다.
+리뷰이 답글4545281093/1247/1461과 사용자 지시에 따라 recipient 전체 이력 큐/명시 ACK 보존, A610m·B600m, 두 실제 SDK 입력/no REPLAY, 현재 시나리오만 원자 reset, 두 점25m/5m/15초·D 한정, CarUx 기능별 제한/NO_SETUP·미연결 설정 불가·중지/닫기 유지·당시 DO 없음/새 선언 없음 범위를 반영했다. 이 DO 범위만07 사용자 추가 요구와 부모0f0a7da의 문서 계획으로 대체하며 아래 UX 제한/안전 명령/DB·ACK 계약은 유지한다.
 
 부모 spec-road-note-system `2ca00c0`에 정본·분리 Mermaid·작업 기록을 별도 docs 커밋·푸시한 뒤 기능 브랜치에 병합했다. 이번 추가 변경은06/00/05의 조회 호환·요구사항 매핑과 작업 기록뿐이다. UX01~09의 구체 기능 분류/검증 항목도 독립 재검토 대상으로 제출한다. 코드·의존성·미추적 와이어프레임·기존 polling은 바꾸지 않는다. 독립 재검토 전 구현하지 않는다.
 

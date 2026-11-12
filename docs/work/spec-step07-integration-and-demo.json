@@ -30,6 +30,11 @@
       "id": "DOC-9faba42791f0#기능별규제",
       "status": "NOT_TESTED",
       "evidence": "07 §3/7: 기존06 UX01~09 매핑 유지, OS 우회/DO 추가 없음. 실제 규제/화면 NOT_TESTED"
+    },
+    {
+      "id": "DOC-6386c5462132#DO미선언Drive",
+      "status": "NOT_TESTED",
+      "evidence": "공식 원문 재확인 및 gm 커밋/현 metadata 부재 대조는 PASS. 사용자07 주행 화면 보완 명세와 부모0f0a7da 반영. 실제 DO/Drive/CarUx/UI 효과는 실행 금지로 미검증. docs/work/spec-step07-driving-display.md"
     }
   ]
 }

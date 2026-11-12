@@ -22,3 +22,6 @@
 - NOT_TESTED: 새 clean HEAD 빌드와 host 통합·모든 runtime R01~07. 검증 worktree/실행 스크립트를 생성·실행하지 않았다. 명세 내부 shell/adb 초안은 텍스트이며 실제 실행0회다.
 
 다음 행동: docs 커밋/push 후 고정 명세 SHA로 PR4에 AI 스펙 작성자 리뷰 요청을 게시하고 대기한다. 독립 스펙 리뷰 전07 구현은 금지다.
+
+
+07 사용자 추가 범위로 주행 중 제품 화면 사용/사라짐 문제 해결과 MainActivity DO 계획을 명세에 포함했다. 기존 ‘정책 변경 없음/DO 추가 없음’ 문장은 이전 요청 당시 기록이며 이 DO 범위는 부모0f0a7da 동기화와 [추가 작업 기록](spec-step07-driving-display.md)으로 대체한다. 코드/기기 실행 전 독립 스펙 리뷰 원칙 및 명시 ACK/Gleo 비범위는 유지한다.
