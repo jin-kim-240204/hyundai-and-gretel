@@ -132,7 +132,10 @@ class DemoRuntime(
                 mutable.value = state.value.copy(phase = DemoPhase.PROBE, target = target, probe = probe, current = null, targetNoteId = note?.noteId)
                 host.startTracking()
                 ensureActive(); checkOwner(token)
-                if (selected.mode == DemoMode.WEB_CONSOLE) input.inject(probe)
+                if (selected.mode == DemoMode.WEB_CONSOLE) {
+                    input.inject(probe)
+                    startMotion(token, target, validatedAt)
+                }
                 withTimeout(15_000) { probeSeen!!.await() }
                 ensureActive(); checkOwner(token)
                 nextGate.armTarget()
@@ -141,7 +144,6 @@ class DemoRuntime(
                 withTimeout(15_000) { startSeen!!.await() }
                 ensureActive(); checkOwner(token, setup = false)
                 mutable.value = state.value.copy(phase = DemoPhase.READY)
-                if (selected.mode == DemoMode.WEB_CONSOLE) startMotion(token, target, validatedAt)
             } catch (timeout: TimeoutCancellationException) { fail(token, IllegalStateException("SDK 출발 위치 확인 시간 초과", timeout)) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) { fail(token, error) }
@@ -190,11 +192,18 @@ class DemoRuntime(
                     ensureActive(); checkOwner(token, setup = false)
                     val now = clock()
                     check(now - lastSuccess <= 2_000) { "콘솔 입력이 지연됐습니다" }
-                    progress += consoleDelta(speed, gear, now - previous)
-                    DemoGeometry.fix(progress, now)
+                    val delta = consoleDelta(speed, gear, now - previous)
+                    // Keep each gate point stationary until the real SDK confirms it.
+                    val position = when (state.value.phase) {
+                        DemoPhase.PROBE -> checkNotNull(state.value.probe)
+                        DemoPhase.START -> initial
+                        DemoPhase.READY -> { progress += delta; progress }
+                        else -> return@launch
+                    }
+                    DemoGeometry.fix(position, now)
                     lastSuccess = now; previous = now
                     deadline.cancel(); deadline = null
-                    input.inject(progress)
+                    input.inject(position)
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) { fail(token, error, fromMotion = true) }
@@ -251,6 +260,7 @@ class DemoRuntime(
     private suspend fun fail(token: Any, error: Exception, fromMotion: Boolean = false) {
         if (owner !== token) return
         gate = null
+        if (fromMotion || currentCoroutineContext().job === inputDeadline) work?.cancel()
         mutable.value = state.value.copy(phase = DemoPhase.ERROR, message = error.message ?: "시연 입력 실패")
         try { host.stopTracking() }
         finally {

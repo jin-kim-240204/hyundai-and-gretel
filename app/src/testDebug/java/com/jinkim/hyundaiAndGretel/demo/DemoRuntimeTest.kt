@@ -226,6 +226,7 @@ class DemoRuntimeTest {
     }
     @Test fun sdkGateDoesNotInventANewerConsoleValidationTime() = runTest {
         val h = Harness(this)
+        val blocked = CompletableDeferred<Unit>(); h.input.motionGate = blocked
         h.runtime.requestStart(); runCurrent() // prepare validated the console at t=0.
         h.runtime.accept(h.fix(h.runtime.state.value.probe!!)); runCurrent()
         advanceTimeBy(1_500); runCurrent()
@@ -234,6 +235,43 @@ class DemoRuntimeTest {
         advanceTimeBy(500); runCurrent()
         assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
         advanceTimeBy(1); runCurrent()
+        assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
+        blocked.complete(Unit); runCurrent()
+    }
+    @Test fun gatePointsRepeatWithFreshConsoleReadsUntilRealSdkConfirmsThenDrivingContinues() = runTest {
+        val h = Harness(this)
+        h.runtime.requestStart(); runCurrent()
+        val probe = h.runtime.state.value.probe!!
+        advanceTimeBy(3_000); runCurrent()
+        assertEquals(DemoPhase.PROBE, h.runtime.state.value.phase)
+        assertTrue(h.input.injected.size >= 4)
+        assertTrue(h.input.injected.all { it == probe })
+        assertNull(h.runtime.state.value.current)
+        h.runtime.accept(h.fix(probe)); runCurrent()
+        advanceTimeBy(3_000); runCurrent()
+        assertEquals(DemoPhase.START, h.runtime.state.value.phase)
+        assertEquals(610.0, h.input.injected.last(), 0.0)
+        assertTrue(h.runtime.accept(h.fix(610.0))); runCurrent()
+        advanceTimeBy(1_000); runCurrent()
+        assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
+        assertEquals(620.0, h.input.injected.last(), 1e-6)
+        h.runtime.stop(); runCurrent()
+        val count = h.input.injected.size
+        advanceTimeBy(5_000); runCurrent()
+        assertEquals(count, h.input.injected.size)
+        assertEquals(DemoPhase.STOPPED, h.runtime.state.value.phase)
+    }
+    @Test fun blockedConsoleDuringProbeStopsSdkAtDeadlineWithoutLateInjection() = runTest {
+        val h = Harness(this)
+        val blocked = CompletableDeferred<Unit>(); h.input.motionGate = blocked
+        h.runtime.requestStart(); runCurrent()
+        val before = h.input.injected.toList()
+        advanceTimeBy(2_001); runCurrent()
+        assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
+        assertTrue(h.host.stops >= 2)
+        blocked.complete(Unit); runCurrent()
+        advanceTimeBy(16_000); runCurrent()
+        assertEquals(before, h.input.injected)
         assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
     }
     @Test fun geometryKeepsFirstAnchorMarginAndRejectsInvalidTargetsAndInput() {

@@ -62,7 +62,7 @@ fun RoadNotesScreen(
                 Button(onClick = onStart, enabled = state.canStart && startAllowed,
                     modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.location_start), policy) }
                 Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) {
-                    PolicyText(stringResource(R.string.location_stopped), policy)
+                    PolicyText(stringResource(R.string.location_stop), policy)
                 }
                 if (state.pickup is PickupState.Failed) PolicyText(stringResource(R.string.pickup_failed), policy)
                 if (state.inbox.error) PolicyText(stringResource(R.string.receipt_failed), policy)

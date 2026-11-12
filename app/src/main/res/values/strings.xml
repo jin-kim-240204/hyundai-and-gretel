@@ -8,7 +8,8 @@
     <string name="sdk_no_value">조회가 완료됐으나 현재 값이 없습니다.</string>
     <string name="sdk_read_success">도어 위치 조회 완료: %1$d</string>
     <string name="sdk_failed">SDK 확인 실패: %1$s</string>
-    <string name="location_stopped">위치 수집 중지</string>
+    <string name="location_stopped">위치를 수집하지 않고 있습니다</string>
+    <string name="location_stop">위치 수집 중지</string>
     <string name="location_starting">위치 수집 준비 중</string>
     <string name="location_waiting">위치 수신 대기 중</string>
     <string name="location_receiving">위치 수집 중</string>
