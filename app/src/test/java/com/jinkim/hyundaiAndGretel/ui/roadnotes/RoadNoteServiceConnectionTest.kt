@@ -1,0 +1,178 @@
+package com.jinkim.hyundaiAndGretel.ui.roadnotes
+
+import com.jinkim.hyundaiAndGretel.location.TrackingStatus
+import com.jinkim.hyundaiAndGretel.notes.*
+import com.jinkim.hyundaiAndGretel.notes.pickup.*
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
+import com.jinkim.hyundaiAndGretel.service.RoadNoteServiceContract
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.*
+import org.junit.Assert.*
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class RoadNoteServiceConnectionTest {
+    private class Session(status: TrackingStatus, submission: SubmissionState) : RoadNoteServiceContract {
+        override var canStartTracking = true
+        override val uiRestrictions = MutableStateFlow(com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions())
+        override val status = MutableStateFlow(status)
+        override val submissionState = MutableStateFlow(submission)
+        override val inboxState = MutableStateFlow(InboxState())
+        override val pickupState = MutableStateFlow<PickupState>(PickupState.Waiting)
+        val acknowledgements = mutableListOf<Set<String>>()
+        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean, visitedContent: Set<String>) {
+            acknowledgements += visitedContent
+        }
+        val calls = mutableListOf<Pair<String, NoteCategory>>()
+        override fun submitRoadNote(content: String, category: NoteCategory) {
+            calls += content to category
+            submissionState.value = SubmissionState.Submitting
+        }
+    }
+
+    @Test fun startEligibilityUsesCurrentContractBeforeStateCollection() = runTest {
+        val a = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val b = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val connection = RoadNoteServiceConnection(backgroundScope)
+        connection.connect(a)
+        a.canStartTracking = false
+        assertFalse(connection.canStartTracking)
+        connection.connect(b)
+        assertTrue(connection.canStartTracking)
+        b.canStartTracking = false
+        assertFalse(connection.canStartTracking)
+        connection.connect(null)
+        assertTrue(connection.canStartTracking)
+    }
+
+    @Test fun disconnectAndReplacementRejectQueuedOldStateAndOldClickTarget() = runTest {
+        val a = Session(TrackingStatus.RECEIVING, SubmissionState.Saved(note()))
+        val b = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val connection = RoadNoteServiceConnection(backgroundScope)
+        val observed = mutableListOf<RoadNotesUiState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { connection.state.collect { observed += it } }
+        connection.connect(a)
+        runCurrent()
+        assertEquals(RoadNotesUiState(a.status.value, a.submissionState.value), connection.state.value)
+        backgroundScope.launch { yield(); a.status.value = TrackingStatus.FAILED }
+        connection.connect(null)
+        connection.submitRoadNote("차단", NoteCategory.WARNING)
+        runCurrent()
+        assertEquals(RoadNotesUiState(), connection.state.value)
+        connection.connect(b)
+
+        connection.submitRoadNote("차단", NoteCategory.WARNING)
+        runCurrent()
+        a.submissionState.value = SubmissionState.Failed(SubmissionFailure.STORAGE)
+        runCurrent()
+        assertEquals(RoadNotesUiState(TrackingStatus.STOPPED, SubmissionState.Idle), connection.state.value)
+        assertTrue(observed.all { it in setOf(RoadNotesUiState(),
+            RoadNotesUiState(TrackingStatus.RECEIVING, SubmissionState.Saved(note())),
+            RoadNotesUiState(TrackingStatus.STOPPED, SubmissionState.Idle)) })
+        assertTrue(a.calls.isEmpty())
+        assertTrue(b.calls.isEmpty())
+        b.status.value = TrackingStatus.RECEIVING
+        connection.submitRoadNote("도로에 구덩이가 있어요", NoteCategory.WARNING)
+        connection.submitRoadNote("연타", NoteCategory.INFORMATION)
+        runCurrent()
+        assertTrue(a.calls.isEmpty())
+        assertEquals(listOf("도로에 구덩이가 있어요" to NoteCategory.WARNING), b.calls)
+    }
+
+    @Test fun immediateReplacementWithOrWithoutNullUsesOnlyNewSession() = runTest {
+        for (disconnectFirst in listOf(false, true)) {
+            val a = Session(TrackingStatus.RECEIVING, SubmissionState.Saved(note()))
+            val b = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+            val connection = RoadNoteServiceConnection(backgroundScope)
+            val observed = mutableListOf<RoadNotesUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                connection.state.collect { observed += it }
+            }
+            connection.connect(a)
+            runCurrent()
+            val displayedA = RoadNotesUiState(a.status.value, a.submissionState.value)
+            assertEquals(displayedA, connection.state.value)
+            observed.clear()
+            backgroundScope.launch {
+                yield()
+                a.status.value = TrackingStatus.FAILED
+                a.submissionState.value = SubmissionState.Failed(SubmissionFailure.STORAGE)
+            }
+            if (disconnectFirst) connection.connect(null)
+            connection.connect(b)
+
+            assertEquals(displayedA, connection.state.value)
+            connection.submitRoadNote("차단", NoteCategory.WARNING)
+            assertTrue(a.calls.isEmpty())
+            assertTrue(b.calls.isEmpty())
+            runCurrent()
+            val stoppedB = RoadNotesUiState(TrackingStatus.STOPPED, SubmissionState.Idle)
+            assertEquals(stoppedB, connection.state.value)
+            assertTrue(observed.all { it == stoppedB || it == RoadNotesUiState() })
+
+            a.status.value = TrackingStatus.RECEIVING
+            a.submissionState.value = SubmissionState.Idle
+            runCurrent()
+            assertEquals(stoppedB, connection.state.value)
+            b.status.value = TrackingStatus.RECEIVING
+            connection.submitRoadNote("도로에 구덩이가 있어요", NoteCategory.WARNING)
+            runCurrent()
+            assertTrue(a.calls.isEmpty())
+            assertEquals(listOf("도로에 구덩이가 있어요" to NoteCategory.WARNING), b.calls)
+            assertEquals(RoadNotesUiState(TrackingStatus.RECEIVING, SubmissionState.Submitting), connection.state.value)
+        }
+    }
+
+    @Test fun reconnectObservesCurrentResultWithoutResubmittingAndNewServiceStartsIdle() = runTest {
+        val session = Session(TrackingStatus.RECEIVING, SubmissionState.Submitting)
+        val connection = RoadNoteServiceConnection(backgroundScope)
+        connection.connect(session)
+        runCurrent()
+        assertEquals(SubmissionState.Submitting, connection.state.value.submission)
+        connection.connect(null)
+        runCurrent()
+        session.submissionState.value = SubmissionState.Saved(note())
+        connection.connect(session)
+        runCurrent()
+        assertEquals(SubmissionState.Saved(note()), connection.state.value.submission)
+        assertTrue(session.calls.isEmpty())
+        connection.connect(Session(TrackingStatus.STOPPED, SubmissionState.Idle))
+        runCurrent()
+        assertEquals(SubmissionState.Idle, connection.state.value.submission)
+    }
+
+    @Test fun buttonMatrixDisablesBothWhileSavingAndOnlyAllowsManualRestartAfterwards() {
+        val live = setOf(TrackingStatus.STARTING, TrackingStatus.WAITING, TrackingStatus.RECEIVING, TrackingStatus.UNAVAILABLE)
+        val startable = setOf(TrackingStatus.STOPPED, TrackingStatus.FAILED)
+        val submissions = listOf(null, SubmissionState.Idle, SubmissionState.Submitting,
+            SubmissionState.Saved(note()), SubmissionState.Failed(SubmissionFailure.STORAGE))
+        for (status in TrackingStatus.entries) for (submission in submissions) {
+            val state = RoadNotesUiState(status, submission)
+            assertEquals(status.name, status in live && submission != null && submission != SubmissionState.Submitting, state.canSubmit)
+            assertEquals(status.name, status in startable && submission != SubmissionState.Submitting, state.canStart)
+        }
+        for (status in listOf(TrackingStatus.STOPPED, TrackingStatus.FAILED)) {
+            assertFalse(RoadNotesUiState(status, SubmissionState.Submitting).canStart)
+            assertTrue(RoadNotesUiState(status, SubmissionState.Saved(note())).canStart)
+            assertTrue(RoadNotesUiState(status, SubmissionState.Failed(SubmissionFailure.STORAGE)).canStart)
+        }
+    }
+
+    @Test fun queuedAckUsesCurrentSessionAndProvidedVisitedSnapshotWithoutWaitingForUi() = runTest {
+        val a = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val b = Session(TrackingStatus.STOPPED, SubmissionState.Idle)
+        val connection = RoadNoteServiceConnection(backgroundScope)
+        connection.connect(a); runCurrent()
+        val visited = mutableSetOf("debug:settings")
+        val snapshot = visited.toSet()
+        connection.connect(b)
+        visited += "another:shown"
+        connection.confirmReceipt(ReceiptKey(note().noteId, "B"), true, snapshot)
+        assertTrue(a.acknowledgements.isEmpty())
+        assertEquals(listOf(setOf("debug:settings")), b.acknowledgements)
+    }
+    private fun note() = RoadNote("00000000-0000-0000-0000-000000000001", "A", "비공개 내용",
+        NoteCategory.WARNING, 37.5, 127.0, 0, 1_000, 601_000)
+}
