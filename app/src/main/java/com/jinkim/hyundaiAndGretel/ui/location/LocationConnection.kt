@@ -5,6 +5,7 @@ import com.jinkim.hyundaiAndGretel.location.LocationSession
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.SubmissionState
 import com.jinkim.hyundaiAndGretel.notes.pickup.*
+import com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,8 @@ data class LocationUiState(
     val submission: SubmissionState? = null,
     val inbox: InboxState = InboxState(),
     val pickup: PickupState = PickupState.Waiting,
+    val restrictions: UiRestrictions = UiRestrictions(),
+    val visitedContent: Set<String> = emptySet(),
 ) {
     val canSubmit get() = submission != null && trackingStatus.isCollecting && submission != SubmissionState.Submitting
     val canStart get() = !trackingStatus.isCollecting && trackingStatus != TrackingStatus.UNSUPPORTED &&
@@ -36,7 +39,7 @@ class LocationConnection(scope: CoroutineScope) {
         if (session == null) flowOf(LocationUiState())
         else combine(session.status, session.submissionState, session.inboxState, session.pickupState) { status, submission, inbox, pickup ->
             LocationUiState(status, submission, inbox, pickup)
-        }
+        }.combine(session.uiRestrictions) { state, policy -> state.copy(restrictions = policy) }
     }.buffer(0).stateIn(scope, SharingStarted.Eagerly, LocationUiState())
 
     fun connect(session: LocationSession?) {

@@ -21,6 +21,10 @@ import com.jinkim.hyundaiAndGretel.notes.spatial.NearbyCandidates
 import com.jinkim.hyundaiAndGretel.notes.pickup.*
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomReceiptStore
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import com.jinkim.hyundaiAndGretel.demo.*
+import com.jinkim.hyundaiAndGretel.notes.storage.RoomScenarioStore
+import com.jinkim.hyundaiAndGretel.ui.ux.CarRestrictionsSource
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.RoadNoteRepository
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
@@ -32,18 +36,25 @@ import kotlinx.coroutines.cancel
 
 class LocationTrackingService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val activeScenario = MutableStateFlow<String?>(null)
+    private val scenarioStore by lazy { RoomScenarioStore(this) }
+    private val restrictions = CarRestrictionsSource(scope)
     private val tracking = LocationTracking(
         scope = scope,
         createSource = { PleosLocationSource(this) },
         log = { message ->
             if (BuildConfig.DEBUG) Log.d("RoadLocation", message)
         },
-        onFailure = { stopReceiving(); finishWhenStorageIsIdle() },
+        onFailure = {
+            if (demoDelegate.isInitialized()) demo.onSourceFailure()
+            stopReceiving(); finishWhenStorageIsIdle()
+        },
         clock = SystemClock::elapsedRealtime,
+        acceptLocation = { demo.accept(it) },
     )
     private val spatial = H3SpatialIndex()
     private val noteStore by lazy {
-        RoomRoadNoteStore(this, spatial) { error ->
+        RoomRoadNoteStore(this, spatial, scenario = activeScenario) { error ->
             if (BuildConfig.DEBUG) Log.d("RoadNote", "H3_CREATE_ERROR ${error.javaClass.simpleName}")
         }
     }
@@ -54,20 +65,23 @@ class LocationTrackingService : Service() {
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
             })
     }
-    private val setup = SyntheticSession() // 06 will supply explicit synthetic role/route configuration.
+    private var setup = SyntheticSession()
     private val recipient = MutableStateFlow(setup.actorId)
-    private val receipts by lazy {
+    private val receipts: ReceiptRepository by lazy {
         ReceiptRepository(scope, RoomReceiptStore(this, onError = { error ->
             if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
         }), recipient, ::finishWhenStorageIsIdle,
-            onWriteAccepted = ::holdStorageForeground)
+            onWriteAccepted = {
+                check(!demo.blocksNewWrites) { "시연 전환 중입니다" }
+                holdStorageForeground()
+            })
     }
     private val pickupDelegate = lazy {
         ProximityPickup(scope, tracking.currentPosition, candidates.state, candidates::currentCandidates, receipts,
             tracking::ownsSource, SystemClock::elapsedRealtime, System::currentTimeMillis,
             onError = { operation, error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
-            })
+            }, scenarioId = { activeScenario.value })
     }
     private val pickup by pickupDelegate
 
@@ -79,11 +93,40 @@ class LocationTrackingService : Service() {
             utcMillis = System::currentTimeMillis,
             onFinished = ::finishWhenStorageIsIdle,
             setup = { setup },
+            scenarioId = { activeScenario.value },
             onUnexpectedError = { error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "STORE_UNEXPECTED_ERROR ${error.javaClass.simpleName}")
             },
         )
     }
+    private val demoDelegate: Lazy<DemoRuntime> = lazy {
+        DemoRuntime(this, scope, object : DemoHost {
+            override val busy get() = submissions.isSubmitting || receipts.hasPendingWrites
+            override fun startTracking() = this@LocationTrackingService.startTracking()
+            override fun stopTracking() = this@LocationTrackingService.stopTracking()
+            override fun changeActor(actor: String) {
+                setup = SyntheticSession(actor)
+                recipient.value = actor
+                receipts.refreshObservation()
+                submissions.clearResult()
+            }
+            override fun currentFix() = tracking.currentPosition.value?.fix
+            override fun holdStorage() = holdStorageForeground()
+            override fun writesFinished() = finishWhenStorageIsIdle()
+        }, scenarioStore, activeScenario, restrictions.state)
+    }
+    private val demo: DemoRuntime by demoDelegate
+
+    override fun onCreate() {
+        super.onCreate()
+        restrictions.start(this)
+        scope.launch {
+            try { scenarioStore.observeActive().collect { activeScenario.value = it } }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "SCENARIO_READ ${error.javaClass.simpleName}") }
+        }
+    }
+
     private val isTracking get() = tracking.status.value.isCollecting
     private val binder = LocalBinder()
 
@@ -92,10 +135,19 @@ class LocationTrackingService : Service() {
         override val submissionState get() = submissions.state
         override val inboxState get() = receipts.inbox
         override val pickupState get() = pickup.state
-        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) = receipts.confirm(key, screenResumed)
+        override val uiRestrictions get() = restrictions.state
+        val demoRuntime get() = demo
+        fun bufferSummary() = tracking.bufferSummary()
+        override fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) {
+            val policy = restrictions.state.value
+            val pending = receipts.inbox.value.pending ?: return
+            if (!demo.blocksNewWrites && policy.canShowBody && policy.fits(pending.note.content)) {
+                receipts.confirm(key, screenResumed)
+            }
+        }
 
         override fun submitTestNote(content: String, category: NoteCategory) {
-            if (BuildConfig.DEBUG) submissions.submit(content, category)
+            if (BuildConfig.DEBUG && demo.canSubmit && !demo.blocksNewWrites) submissions.submit(content, category)
         }
     }
 
@@ -103,13 +155,27 @@ class LocationTrackingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startTracking()
-            ACTION_STOP -> stopTracking()
+            ACTION_START -> requestStart()
+            ACTION_STOP -> { demo.stop(); stopTracking() }
             ACTION_STORAGE_HOLD -> finishWhenStorageIsIdle()
             // Preserve the existing stop behavior for null or unknown commands.
-            else -> stopTracking()
+            else -> { demo.stop(); stopTracking() }
         }
         return START_NOT_STICKY
+    }
+
+    private fun requestStart() {
+        if (!demo.enabled) { startTracking(); return }
+        try {
+            if (restrictions.state.value.canSetup && !submissions.isSubmitting && !receipts.hasPendingWrites &&
+                !demo.transitioning && activeScenario.value != null) {
+                ServiceCompat.startForeground(this, 1, buildTrackingNotification(),
+                    foregroundServiceType(collecting = true, sdkInt = Build.VERSION.SDK_INT))
+            }
+            demo.requestStart()
+            finishWhenStorageIsIdle()
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (error: Exception) { tracking.fail(error, "DEMO_FOREGROUND") }
     }
 
     private fun startTracking() {
@@ -144,7 +210,7 @@ class LocationTrackingService : Service() {
     }
 
     private fun finishWhenStorageIsIdle() {
-        if (submissions.isSubmitting || receipts.hasPendingWrites) {
+        if (submissions.isSubmitting || receipts.hasPendingWrites || (demoDelegate.isInitialized() && demo.hasPendingWrites)) {
             if (isTracking) {
                 getSystemService(NotificationManager::class.java).notify(1, buildTrackingNotification())
             } else {
@@ -155,7 +221,7 @@ class LocationTrackingService : Service() {
                     if (BuildConfig.DEBUG) Log.d("RoadNote", "STORAGE_FOREGROUND ${error.javaClass.simpleName}")
                 }
             }
-        } else if (shouldStopTrackingService(tracking.status.value, submissions.state.value, receipts.hasPendingWrites)) {
+        } else if (!(demoDelegate.isInitialized() && demo.transitioning) && shouldStopTrackingService(tracking.status.value, submissions.state.value, receipts.hasPendingWrites)) {
             stopForegroundAndRequestServiceStop()
         }
     }
@@ -167,7 +233,7 @@ class LocationTrackingService : Service() {
         try {
             startService(Intent(this, LocationTrackingService::class.java).setAction(ACTION_STORAGE_HOLD))
         } catch (error: RuntimeException) {
-            if (!submissions.isSubmitting && !receipts.hasPendingWrites) {
+            if (!submissions.isSubmitting && !receipts.hasPendingWrites && !(demoDelegate.isInitialized() && demo.hasPendingWrites)) {
                 ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             }
             throw error
@@ -202,6 +268,10 @@ class LocationTrackingService : Service() {
 
     override fun onDestroy() {
         try {
+            try { if (demoDelegate.isInitialized()) demo.close() }
+            catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "DEMO_CLEANUP ${error.javaClass.simpleName}") }
+            try { restrictions.close() }
+            catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "UX_CLEANUP ${error.javaClass.simpleName}") }
             stopReceiving()
         } finally {
             try { tracking.stop() }

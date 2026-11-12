@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "com.jinkim.hyundaiAndGretel"
     compileSdk = 35
+    useLibrary("android.car", false)
     defaultConfig {
         applicationId = "com.jinnayeong.wakeup"
         minSdk = 28

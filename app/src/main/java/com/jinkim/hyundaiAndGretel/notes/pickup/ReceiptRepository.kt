@@ -27,10 +27,12 @@ class ReceiptRepository(
     val hasPendingWrites get() = writes > 0
     private var confirming: ReceiptKey? = null
     private var observationOwner: Any? = null
+    private val refresh = MutableStateFlow(0L)
+    fun refreshObservation() { refresh.value++ }
 
     init {
         scope.launch {
-            recipient.collectLatest { actor ->
+            combine(recipient, refresh) { actor, _ -> actor }.collectLatest { actor ->
                 observationOwner = Any()
                 mutableInbox.value = InboxState()
                 val ownerContext = coroutineContext

@@ -13,6 +13,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class LocationConnectionTest {
     private class Session(status: TrackingStatus, submission: SubmissionState) : LocationSession {
+        override val uiRestrictions = MutableStateFlow(com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions())
         override val status = MutableStateFlow(status)
         override val submissionState = MutableStateFlow(submission)
         override val inboxState = MutableStateFlow(InboxState())

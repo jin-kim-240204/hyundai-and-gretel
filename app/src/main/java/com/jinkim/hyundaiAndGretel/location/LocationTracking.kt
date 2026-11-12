@@ -22,6 +22,7 @@ class LocationTracking(
     private val log: (String) -> Unit,
     private val onFailure: () -> Unit,
     private val clock: () -> Long,
+    private val acceptLocation: (LocationFix?) -> Boolean = { true },
 ) {
     private val mutableStatus = MutableStateFlow(TrackingStatus.STOPPED)
     val status = mutableStatus.asStateFlow()
@@ -80,6 +81,7 @@ class LocationTracking(
 
     private fun handleLocation(session: Long, fix: LocationFix?, receivedElapsedMillis: Long) {
         if (generation != session) return
+        if (!acceptLocation(fix)) return
         when (buffer.offer(fix = fix, receivedElapsedMillis = receivedElapsedMillis, nowElapsedMillis = clock())) {
             LocationBuffer.Update.IGNORED -> Unit
             LocationBuffer.Update.INVALIDATED -> {
@@ -127,6 +129,8 @@ class LocationTracking(
     }
 
     /** Called on the tracking context; reading the clock and selecting never suspends. */
+    fun bufferSummary(): String = "표본 ${buffer.size} · 수신 ${buffer.oldestElapsedMillis ?: "-"}..${buffer.latestElapsedMillis ?: "-"}ms"
+
     fun selectAnchor(): AnchorSelection = buffer.select(clock())
 
     private fun update(value: TrackingStatus) {
