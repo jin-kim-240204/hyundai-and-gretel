@@ -1,6 +1,6 @@
 # 07. 최종 통합 검증과 시연 준비
 
-상태: **명세3b844d1 독립 리뷰5868721026 및 리뷰이 수용·사용자 구현 승인 / 07 구현 작성·clean HEAD 검증 대기**. 코드 기준 `e8ef1421f6561fa39fde83414c76ad14bd3ee66f`, 공통 정본 부모 `0f0a7daa1189bcdba62cd27a58033a8659b43737`. [00 전체 계획](00-overview.md)과 [공통 정본](../../plans/implementation-plan.md)을 적용한다. 사용자가 추가한 주행 화면 보완/DO 계획은 §3.1에서06의 이전 범위를 대체하며 독립 스펙 리뷰를 통과했다. 나머지 계약은 유지한다.
+상태: **명세3b844d1 독립 리뷰5868721026 및 리뷰이 수용·사용자 구현 승인 / 07 구현·허용 검사 제출 / 독립 코드 리뷰 대기**. 초기 명세 코드 기준 `e8ef1421f6561fa39fde83414c76ad14bd3ee66f`,07 코드 검사 기준 `ff92aa27b59f103d033eedfb785cc4cb34b9ff3f`, 공통 정본 부모 `0f0a7daa1189bcdba62cd27a58033a8659b43737`. [00 전체 계획](00-overview.md)과 [공통 정본](../../plans/implementation-plan.md)을 적용한다. 사용자가 추가한 주행 화면 보완/DO 계획은 §3.1에서06의 이전 범위를 대체하며 독립 스펙 리뷰를 통과했다. 나머지 계약은 유지한다.
 
 06 수정은 독립 재검토에서 원 반례1건·관련 JVM25건 직접 PASS, P2 스레드4545675100/4545675109만 해결된 것을 사용자 전달 및 원격 답글로 확인했다. 이는 **구현 및 허용 검사 완료·runtime 대기**다. 작성자의 JVM93/빌드 보고와 독립 리뷰어의 직접 검사 범위는 구분한다. 실제 SDK·UI·Room·JNI·FGS·CarUx·시연은 NOT_TESTED로 유지한다.
 
@@ -49,14 +49,14 @@ NO_SETUP·규제 미연결/오류에서는 역할/모드/출발점/reset/입력 
 
 주행 중 사용 가능해야 하며 달리면 제품 화면이 사라지는 문제를07 해결 범위에 포함한다.06의 ‘새 DO 선언 없음’은 당시 사실/범위로 남기되07 이후의 제약으로 적용하지 않는다. 승인 전 코드에는 선언이 없었으며, 명세 승인 후07에서 기존 MainActivity 자식 DO만 추가했다. 실제 Drive 효과는 미검증이다.
 
-**공식 근거와 프로젝트 선택을 구분한다.** [Pleos 지역별 정책](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/driving-restiction-policy)의 ‘주행 상황에 따른 앱 사용 여부’에서 DO 미선언 Drive 사용 불가를 확인했다. [개발 가이드](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)의 CarUx 연동은 DO 이후에도 ActiveRestrictions 반영을 요구한다. [AAOS Activity 선언](https://source.android.google.cn/docs/automotive/driver_distraction/guidelines?hl=en)은 주행에 사용할 activity 자식 metadata 위치를 설명한다. 이를 근거로 기존 MainActivity에만 다음을 계획한다(앱 파일 변경 아님):
+**공식 근거와 프로젝트 선택을 구분한다.** [Pleos 지역별 정책](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/driving-restiction-policy)의 ‘주행 상황에 따른 앱 사용 여부’에서 DO 미선언 Drive 사용 불가를 확인했다. [개발 가이드](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)의 CarUx 연동은 DO 이후에도 ActiveRestrictions 반영을 요구한다. [AAOS Activity 선언](https://source.android.google.cn/docs/automotive/driver_distraction/guidelines?hl=en)은 주행에 사용할 activity 자식 metadata 위치를 설명한다. 이를 근거로 기존 MainActivity에만 다음을 적용했다:
 
 ```xml
 <!-- 기존 MainActivity의 activity 요소 안, application/service 아래가 아님 -->
 <meta-data android:name="distractionOptimized" android:value="true" />
 ```
 
-현재 namespace의 MainActivity는 debug/release 공통 진입점이다. applicationId와 혼동해 다른 Activity 이름을 만들지 않고, merged Manifest의 정규화된 `com.jinkim.hyundaiAndGretel.MainActivity`에 단일 Boolean true로 남는지 확인한다. debug overlay에만 선언하지 않으며 다른 Activity/서비스까지 무차별 DO 표시하지 않는다. source Manifest·debug/release merged Manifest·패키징 Manifest가 일치해야 한다. 이 선언을 새 권한 추가나 심사 승인으로 해석하지 않는다.
+현재 namespace의 MainActivity는 debug/release 공통 진입점이다.07에서 아래 최소 선언을 적용했으며 실제 Drive 효과와 구분한다. applicationId와 혼동해 다른 Activity 이름을 만들지 않고, merged Manifest의 정규화된 `com.jinkim.hyundaiAndGretel.MainActivity`에 단일 Boolean true로 남는지 확인한다. debug overlay에만 선언하지 않으며 다른 Activity/서비스까지 무차별 DO 표시하지 않는다. source Manifest·debug/release merged Manifest·패키징 Manifest가 일치해야 한다. 이 선언을 새 권한 추가나 심사 승인으로 해석하지 않는다.
 
 2026-11-12 `git fetch origin` 후 `b61ffd71fadc4b0d88625de85f664cdaf4e53565`(GyeongminKimGyeongminKim)의 위 metadata 추가와 `819df06fbd7508ecdc4b75691f5143d3db0999da`의 전체 UI 복원/DO 유지, 두 커밋이 origin/gm/feat-speech-to-text에만 포함되고 main/현 기능 브랜치에는 없음을 확인했다. 브랜치 전체 merge/cherry-pick이나 이전 Gleo/축소 화면/규제 모니터 복사는 하지 않는다. 필요한 선언과 현재 CarUx 계약만 최소 검토한다.
 
@@ -191,16 +191,16 @@ flowchart TD
 
 ## 8. 제출 문서·PR 정리와 종료 기준
 
-07 승인 후 수정 후보는 기존 통합 테스트의 누락 경계, 기존 계측의 관찰/컴파일, 현 브랜치에 아직 없는 재현 안내 `docs/LOCATION-DEMO.md` 작성(과거 참고 브랜치 내용을 그대로 복사하지 않고 현 PR 상태와 대조), README 실행/검증 범위 요약, 00/각 단계 상태 헤더와 검증 인덱스, step07 작업 기록이다. 주행 화면 보완의 최소 MainActivity metadata와 규제 계약 회귀를 제외한 새 사용자 기능/의존성/스키마·앱 ID 변경·Gleo 스키마 수정·불필요한 로그/전체 폴더 이동은 기본 범위가 아니다. 공통 정책이 바뀌지 않으면 부모 문서를 기능 브랜치에서 직접 수정하지 않는다.
+07에서 수정한 범위는 기존 통합 테스트의 누락 경계, 기존 계측의 관찰/컴파일, 현 브랜치에 아직 없는 재현 안내 `docs/LOCATION-DEMO.md` 작성(과거 참고 브랜치 내용을 그대로 복사하지 않고 현 PR 상태와 대조), README 실행/검증 범위 요약, 00/각 단계 상태 헤더와 검증 인덱스, step07 작업 기록이다. 주행 화면 보완의 최소 MainActivity metadata와 규제 계약 회귀를 제외한 새 사용자 기능/의존성/스키마·앱 ID 변경·Gleo 스키마 수정·불필요한 로그/전체 폴더 이동은 기본 범위가 아니다. 공통 정책이 바뀌지 않으면 부모 문서를 기능 브랜치에서 직접 수정하지 않는다.
 
-PR4의 base는 spec-road-note-system, head는 ny/spec-driven-road-notes를 유지한다. 정확한 SHA와 허용 검사/미검증을 AI 구현자·리뷰어별 원격 기록에 연결한다. 기존 실제 SDK 스레드는 미해결을 보존하고 unrelated 스레드를 일괄 resolve하지 않는다. 현재 OPEN/DRAFT이며 이 명세로 ready/merge/배포·서명 APK 제출을 승인하거나 실행하지 않는다. 현재 PR 본문에는 최초의 ‘문서만 담고 구현은 시작하지 않는다’ 설명이 남아 있다.07 승인 후 본문을01~06 구현과 허용 검사/07 상태·runtime 대기로 갱신하고 과거 문서 전용 설명을 현재 사실처럼 두지 않는다. 실행 완료로 읽힐 다른 설명도 현 SHA 근거로 정리하되 리뷰·작업 이력을 지우지 않는다. 07 구현 결과 제출 시 PR 본문을 갱신하고 독립 코드 리뷰를 요청한다. ready/merge는 변경하지 않는다.
+PR4의 base는 spec-road-note-system, head는 ny/spec-driven-road-notes를 유지한다. 정확한 SHA와 허용 검사/미검증을 AI 구현자·리뷰어별 원격 기록에 연결한다. 기존 실제 SDK 스레드는 미해결을 보존하고 unrelated 스레드를 일괄 resolve하지 않는다. 현재 OPEN/DRAFT이며 이 명세로 ready/merge/배포·서명 APK 제출을 승인하거나 실행하지 않는다. 현재 PR 본문에는 최초의 ‘문서만 담고 구현은 시작하지 않는다’ 설명이 남아 있다.07 승인 후 본문을01~06 구현과 허용 검사/07 상태·runtime 대기로 갱신하고 과거 문서 전용 설명을 현재 사실처럼 두지 않는다. 실행 완료로 읽힐 다른 설명도 현 SHA 근거로 정리하되 리뷰·작업 이력을 지우지 않는다. 07 구현 결과 제출 시 PR 본문을 현 구현/허용 검사/runtime 대기로 갱신하고 독립 코드 리뷰를 요청한다. ready/merge는 변경하지 않는다.
 
 | ID | 07 수용 조건 | 현재 상태 |
 |---|---|---|
 | F01 | 독립 스펙 리뷰 및 구현 승인 | PASS: 리뷰5868721026·수용 답글4546027806/4546028016·사용자 승인 |
-| F02 | clean 지정 HEAD·dirty 미유입/원본 보존·증거 SHA/환경 식별 | clean HEAD 검증 대기 |
-| F03 | I01~08에서 필요한 통합 회귀 및 기존 전체 JVM·빌드/lint/harness/schema/release 정적 통과 | 구현 작성·clean HEAD 검사 대기; 기존06 근거는 이력으로 보존 |
-| F04 | 주행 화면 보완·MainActivity DO 및 기존 CarUx/안전 명령 회귀, 명시 ACK·보존/실패/수명 유지, 독립 코드 리뷰 | 최소 DO/통합 회귀 작성, 독립 코드 리뷰 대기 |
+| F02 | clean 지정 HEAD·dirty 미유입/원본 보존·증거 SHA/환경 식별 | PASS: 코드커밋ff92aa2의 별도 clean HEAD 검사, 최종 문서 HEAD도 재검사 후 PR에 고정 |
+| F03 | I01~08에서 필요한 통합 회귀 및 기존 전체 JVM·빌드/lint/harness/schema/release 정적 통과 | PASS: JVM95/Python4·빌드/lint/harness/schema/release 정적. 기존06 근거와 이번 clean 결과는 별도 |
+| F04 | 주행 화면 보완·MainActivity DO 및 기존 CarUx/안전 명령 회귀, 명시 ACK·보존/실패/수명 유지, 독립 코드 리뷰 | 최소 DO/통합 회귀·허용 검사 제출, 독립 코드 리뷰 대기 |
 | F05 | R01~07의 향후 재현 대본·입력 모드·오류/중지·외부 한계 문서화 | 시연 안내 작성, runtime은 전부 NOT_TESTED |
 | F06 | 남은 스레드/미검증/PR 문서 상태가 증거와 일치 | 허용 검사 제출과 실제 시연 완료를 별도 보고; 미검증 숨김 금지 |
 

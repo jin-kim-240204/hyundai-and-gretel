@@ -1,6 +1,6 @@
 # 04. H3 인덱스와 주변 쪽지 후보 갱신
 
-상태: **04 수정 `21783e9` 독립 재검토 PASS·P2 resolve(사용자 전달) / 실제 기기 검증 NOT_TESTED**. [05 접근·수신 스펙](05-proximity-and-receipts.md) 리뷰로 인계한다. 자신의 관찰 context 검사와 세 catch 방어·원 반례 통과를 포함하며 raw snapshot 소비 금지 계약은 유지한다.
+상태: **04 수정 `21783e9` 독립 재검토 PASS·P2 resolve(사용자 전달) / 실제 기기 검증 NOT_TESTED**. [05 접근·수신 스펙](05-proximity-and-receipts.md) 리뷰로 인계한다. 자신의 관찰 context 검사와 세 catch 방어·원 반례 통과를 포함하며 raw snapshot 소비 금지 계약은 유지한다. 현재 통합 결과는 [07 기록](../../work/step07-integration-verification.md)을 따르며 기존 runtime 미검증은 유지한다.
 정본: [시스템 설계](../../plans/implementation-plan.md), [전체 단계](00-overview.md), [03 저장](03-save-road-note.md), [조사 교훈](lessons-learned.md).
 
 ## 1. 만들 결과와 단계 경계

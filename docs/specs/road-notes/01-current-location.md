@@ -1,6 +1,6 @@
 # 01. 화면과 독립된 SDK 위치 수집과 로그 확인
 
-상태: **스펙 승인 / 1단계 구현 작성 / 코드 리뷰 대기**.
+상태: **기존 위치 수집 구현을07 clean HEAD 회귀에 포함 / 실제 SDK·권한·Android 수명은 현 HEAD NOT_TESTED**. 과거 실행 이력과 최신 결과는 [07 기록](../../work/step07-integration-verification.md)에서 구분한다.
 상위 계획: [전체 작업계획](00-overview.md). 근거: [조사 기록](lessons-learned.md).
 2026-11-10 리뷰의 사용자 최종 답변을 반영했다. 문서 합의와 실제 동작 검증은 구분한다.
 

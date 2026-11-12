@@ -41,7 +41,7 @@ flowchart TD
 
 진입은 debug 빌드에만 작은 ‘시연 도구’ 버튼을 두는 안이다. 와이어프레임의 제목 길게 누르기는 필수가 아니며 숨은 제스처보다 명시 진입을 제안한다. 제품 레이아웃 전면 개편은 하지 않는다. 실제 구동에는 기존 Material 테마/버튼을 재사용할 계획이며 Figma 변수·정식 아이콘·크기/간격/대비를 확인했다고 주장하지 않는다. 기존 Figma 접근 불가 상태를 그대로 기록한다. 디자인 시스템 준수/주행 적합/실물 가독성 판정은 미검증이다.
 
-06 구현 시 Manifest에 DO 선언이 없었던 사실은 유지한다. 이후 사용자07 추가 요구로 ‘새 DO 선언 없음’ 미래 제약은 대체하며 MainActivity DO 계획은 [07 §3.1](07-integration-and-demo.md#31-사용자-추가-범위-주행-중-제품-화면-유지와-do)을 따른다. 앱 코드는 아직 바꾸지 않았다. 기본 제품/패널 구조를 유지하되 실제 `CarUxRestrictions` 신호에 따른 기능별 제한을 적용한다. 같은 UI/정차/속도0/P를 허가로 간주하지 않으며 시스템의 앱 표시 제약을 우회하지 않는다. 규제 미연결/조회 오류는 **시연 설정 불가**·이유 표시이며 전체 앱이나 recipient 수신함 조회를 일괄 잠그는 정책은 아니다.05의 전체 이력·명시 ACK와 수락 쓰기를 보존한다.
+06 구현 시 Manifest에 DO 선언이 없었던 사실은 유지한다. 이후 사용자07 추가 요구로 ‘새 DO 선언 없음’ 미래 제약은 대체하며 MainActivity DO 계획은 [07 §3.1](07-integration-and-demo.md#31-사용자-추가-범위-주행-중-제품-화면-유지와-do)을 따른다. 승인된07에서 MainActivity DO만 추가했으며 실제 주행 효과는 NOT_TESTED다. 기본 제품/패널 구조를 유지하되 실제 `CarUxRestrictions` 신호에 따른 기능별 제한을 적용한다. 같은 UI/정차/속도0/P를 허가로 간주하지 않으며 시스템의 앱 표시 제약을 우회하지 않는다. 규제 미연결/조회 오류는 **시연 설정 불가**·이유 표시이며 전체 앱이나 recipient 수신함 조회를 일괄 잠그는 정책은 아니다.05의 전체 이력·명시 ACK와 수락 쓰기를 보존한다.
 
 ### 2.1 요구사항·기능별 규제 매핑
 
@@ -182,7 +182,7 @@ release에는패널/진입버튼·역할/reset테스트명령·mockprovider·loc
 | D03 | Fake/JVM: 옛캐시/목표캐시/다른인스턴스/지연HTTP/timeout차단,25m/5m/15초 probe→목표후만buffer/currentPosition발행·요청목표/수락SDK오차구분 |
 | D04 | Fake/JVM: 실제속도적분/기어검증·속도0·오류gap누적이동없음,권한실패시가짜수신0 |
 | D05 | Room계측작성/컴파일: v3PENDING→v4·활성없음/생성/reset후recipient전체조회/명시ACK·현재시연reset원자성/FK·다른소속보존/롤백.실제DB실행은NOT_TESTED |
-| D06 | 빌드/정적: release에패널/mock/localhost/특례설정없음,debug에만입력구현,기존SDK권한/FGS유형·debug/release모두recipient전체큐/명시ACK유지,07의 MainActivity DO는두variant공통검사(미구현) |
+| D06 | 빌드/정적: release에패널/mock/localhost/특례설정없음,debug에만입력구현,기존SDK권한/FGS유형·debug/release모두recipient전체큐/명시ACK유지,07의 MainActivity DO는두variant/패키징정적검사,실제DriveNOT_TESTED |
 | D07 | 실제 SDK/권한/provider 수명/콘솔/외부 ADB 주행/캐시 gate는 NOT_TESTED. 추후 실행 허용 뒤 재현한다 |
 | D08 | UX01~09 Fake: NO_SETUP/미연결 설정0·stop/닫기유지·전환중제한활성화취소/수락쓰기완료·상한/자동ACK0. 실제 CarUx/UI/주행/FGS/E2E는NOT_TESTED |
 
@@ -201,4 +201,4 @@ release에는패널/진입버튼·역할/reset테스트명령·mockprovider·loc
 
 ## 구현 제출 상태
 
-명세6f33659/부모2ca00c0의 독립 재검토5867895005 통과를 사용자에게 전달받아 승인 범위만 구현했다. 코드 제출과 runtime 검증 완료는 다르다. [구현 기록](../../work/step06-demo-implementation.md)에 의미별 커밋·JVM/Fake·빌드·정적 근거와 미검증을 연결한다.06 수정 e8ef142의 독립 코드 재검토를 통과했고 runtime 대기 상태다.07은 명세만 작성하며 기기 실행은 하지 않았다. 재현 절차는 §11이며 오늘 실행한 결과가 아니다.
+명세6f33659/부모2ca00c0의 독립 재검토5867895005 통과를 사용자에게 전달받아 승인 범위만 구현했다. 코드 제출과 runtime 검증 완료는 다르다. [구현 기록](../../work/step06-demo-implementation.md)에 의미별 커밋·JVM/Fake·빌드·정적 근거와 미검증을 연결한다.06 수정 e8ef142의 독립 코드 재검토를 통과했고 runtime 대기 상태다.07은 승인 구현·clean 허용 검사 제출 단계이며 기기 실행은 하지 않았다. 최신 결과는 [07 기록](../../work/step07-integration-verification.md)을 따른다. 재현 절차는 §11이며 오늘 실행한 결과가 아니다.

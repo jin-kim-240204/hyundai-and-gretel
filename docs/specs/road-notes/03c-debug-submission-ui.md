@@ -1,6 +1,6 @@
 # 03-c. debug 제보 진입과 저장 결과 연결
 
-상태: **4a0f332 독립 재검토 승인 / 구현·허용검사 후 독립 코드 리뷰 대기**. 기준 SHA `8b9504e6cf3cbf96d27a7e3a5b698ff8aec51798`.
+상태: **기존03-c 구현을07 통합/허용 검사에 포함 / 실제 UI·Binder·Room·서비스는 NOT_TESTED**. 명세 승인4a0f332 및 최초 코드 기준8b9504e6cf3cbf96d27a7e3a5b698ff8aec51798는 이력이다. 현재 결과는 [07 기록](../../work/step07-integration-verification.md)을 따른다.
 상위 계약: [03 저장](03-save-road-note.md), [전체 단계](00-overview.md), [시스템 정본](../../plans/implementation-plan.md).
 이번 운영은 스펙→독립 리뷰→리뷰이 판단→반영·재검토 후 구현 순서다. 사용자 대신 독립 검토로 진행하되 4a0f332의 독립 재검토 통과 후03-c만 구현했으며, 현재는 독립 코드 리뷰 전이다. 기기 검증/전체 AC 완료를 뜻하지 않는다.
 

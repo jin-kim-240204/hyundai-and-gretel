@@ -1,0 +1,54 @@
+{
+  "task": "07 통합 구현 및 clean HEAD 허용 검사",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "DES-06"
+  ],
+  "verified_code_commit": "ff92aa27b59f103d033eedfb785cc4cb34b9ff3f",
+  "jvm": {
+    "tests": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "artifacts": {
+    "apk_sha256": {
+      "debug": "7c31b601980091efebc314c54ca6dd8598a63afccd5492e54044994f73a91991",
+      "release": "0519343915ce7c653fc78586411a9f0d1c63d85eb0eb01a8afa7527166b5851a"
+    },
+    "runtime": "NOT_TESTED"
+  },
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "ff92aa27b59f103d033eedfb785cc4cb34b9ff3f detached clean: JVM95/Python4,debug/release/AndroidTest compile,lint/harness,source/merged/APK DO/schema/release/ELF static PASS. docs/work/step07-integration-verification.md"
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "Fake SDK/실패·수락 쓰기·종료 판단 및 정적 APK 검사 PASS. 실제 SDK/Room/Android JNI/FGS/4541836293 수명 미검증"
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "기존 CarUx 회귀/NO_SETUP SDK 상수 및 host 통합 PASS. 실제 DO/Drive 화면 유지·CarUx/UI/시연은 실행 금지"
+    },
+    {
+      "id": "DOC-6386c5462132#DO선언정적",
+      "status": "PASS",
+      "evidence": "MainActivity 자식 단일 true source/debug/release merged/패키징 Manifest 검사 및 누락/false/중복/부모/debug전용 반례 PASS. 실제 Drive 효과 아님"
+    },
+    {
+      "id": "DOC-9faba42791f0#DO선언후기능제한",
+      "status": "NOT_TESTED",
+      "evidence": "현재 제한·명시 ACK·안전 명령 보존, 새 통합 NO_SETUP 차단+Ready 수신/ACK 회귀 PASS. 실제 신호/화면 미검증"
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "NOT_TESTED",
+      "evidence": "실제 Tracking/Repository/Fake SDK의 늦은 callback/오류/수락 쓰기·종료 판단 PASS, 실제 등록해제/마지막 unbind·서비스 런타임 미검증"
+    }
+  ]
+}

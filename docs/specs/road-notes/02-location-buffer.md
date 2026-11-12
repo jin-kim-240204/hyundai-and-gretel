@@ -1,6 +1,6 @@
 # 02. 추적 세션의 메모리 위치 버퍼와 과거 표본 선택
 
-상태: **리뷰 답글 반영 / 구현 승인 / 구현 진행**.
+상태: **기존 버퍼 구현을07 clean HEAD 회귀에 포함 / 실제 화면 밖 SDK·버퍼 갱신은 현 HEAD NOT_TESTED**. [07 기록](../../work/step07-integration-verification.md)을 기준으로 코드 리뷰하며 전체 AC 완료를 선언하지 않는다.
 선행: 01단계 구현 리뷰 반영 `fd3140a`. [전체 계획](00-overview.md) · [공통 설계 정본](../../plans/implementation-plan.md) · [조사 기록](lessons-learned.md).
 
 ## 1. 이번 결과
