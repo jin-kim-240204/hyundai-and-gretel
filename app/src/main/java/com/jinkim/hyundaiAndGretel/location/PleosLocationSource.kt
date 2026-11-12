@@ -2,6 +2,10 @@ package com.jinkim.hyundaiAndGretel.location
 
 import ai.pleos.playground.location.fused.FusedLocation
 import ai.pleos.playground.location.fused.listener.FusedLocationListener
+import ai.pleos.playground.location.fused.listener.ProximityAlertListener
+import ai.pleos.playground.location.fused.model.ProximityAlertEvent
+import ai.pleos.playground.location.fused.model.ProximityAlertRequest
+import ai.pleos.playground.location.fused.model.ProximityTransition
 import ai.pleos.playground.location.fused.model.LocationData
 import android.content.Context
 import android.os.SystemClock
@@ -24,6 +28,28 @@ class PleosLocationSource(context: Context) : LocationSource {
         }
         sdk.registerFusedLocationCallback(checkNotNull(listener))
         return true
+    }
+
+    override fun addProximity(
+        latitude: Double, longitude: Double,
+        onRegistered: (String) -> Unit, onEnter: (String) -> Unit, onError: (Exception) -> Unit,
+    ) {
+        check(initialized)
+        sdk.addProximityAlert(
+            ProximityAlertRequest(latitude, longitude, 150f, setOf(ProximityTransition.ENTER)),
+            object : ProximityAlertListener {
+                override fun onRegistered(alertId: String) = onRegistered.invoke(alertId)
+                override fun onTransition(event: ProximityAlertEvent) {
+                    if (event.transition == ProximityTransition.ENTER) onEnter(event.alertId)
+                }
+                override fun onError(exception: Exception) = onError.invoke(exception)
+            },
+        )
+    }
+
+    override fun removeProximity(alertId: String) {
+        check(initialized)
+        sdk.removeProximityAlert(alertId)
     }
 
     override fun stop() {

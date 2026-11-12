@@ -19,6 +19,7 @@ class ReceiptRepository(
     private val store: ReceiptStore,
     private val recipient: StateFlow<String>,
     private val onFinished: () -> Unit,
+    private val onWriteAccepted: () -> Unit = {},
 ) {
     private val mutableInbox = MutableStateFlow(InboxState())
     val inbox = mutableInbox.asStateFlow()
@@ -47,6 +48,9 @@ class ReceiptRepository(
     }
 
     fun receive(request: ReceiptRequest, onResult: (ReceiveResult) -> Unit) {
+        try { onWriteAccepted() }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { onResult(ReceiveResult.STORAGE_FAILURE); return }
         writes++
         scope.launch {
             try {
@@ -65,13 +69,15 @@ class ReceiptRepository(
         val pending = inbox.value.pending ?: return
         if (!screenResumed || confirming != null || recipient.value != key.recipientId ||
             pending.recipientId != key.recipientId || pending.note.noteId != key.noteId) return
+        try { onWriteAccepted() }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableInbox.value = mutableInbox.value.copy(error = true); return }
         confirming = key
         mutableInbox.value = mutableInbox.value.copy(confirming = key, error = false)
         writes++
         scope.launch {
             try {
                 store.confirm(key.noteId, key.recipientId)
-
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {

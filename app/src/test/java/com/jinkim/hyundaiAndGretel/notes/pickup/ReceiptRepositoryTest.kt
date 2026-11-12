@@ -96,6 +96,35 @@ class ReceiptRepositoryTest {
         assertFalse(repo.hasPendingWrites)
     }
 
+    @Test fun acceptedAckIsFrozenAcrossActorSwitchAndItsFailureDoesNotChangeNewInbox() = runTest {
+        val store = Store().apply { gate = CompletableDeferred(); fail = true }
+        val actor = MutableStateFlow("B")
+        val repo = ReceiptRepository(backgroundScope, store, actor, {})
+        store.rows.value = listOf(InboxItem(note, "B", 10, 0.0, null))
+        runCurrent()
+        repo.confirm(ReceiptKey(note.noteId, "B"), true)
+        runCurrent()
+        actor.value = "C"
+        runCurrent()
+        assertTrue(repo.hasPendingWrites)
+        store.gate.complete(Unit)
+        runCurrent()
+        assertEquals(InboxState(), repo.inbox.value)
+        assertFalse(repo.hasPendingWrites)
+        assertEquals(1, store.confirmCalls)
+    }
+
+    @Test fun distanceAndReverseProgressUseMetersAroundThe150mBoundary() {
+        val scale = 6_371_000.0 * kotlin.math.cos(Math.toRadians(37.5))
+        fun at(meters: Double) = 127.03 - Math.toDegrees(meters / scale)
+        val setup = SyntheticSession("B")
+        assertNotNull(eligibleDistance(note, setup, LocationFix(37.5, at(149.99), 0), 1))
+        assertNull(eligibleDistance(note, setup, LocationFix(37.5, at(150.01), 0), 1))
+        val reverse = note.copy(route = note.route!!.copy(direction = -1))
+        assertNotNull(eligibleDistance(reverse, setup.copy(direction = -1), LocationFix(37.5, at(-149.99), 0), 1))
+        assertNull(eligibleDistance(reverse, setup.copy(direction = -1), LocationFix(37.5, at(1.0), 0), 1))
+    }
+
     @Test fun eligibilityPreservesExpirySelfDirectionAndLegacyBoundaries() {
         val p = LocationFix(37.5, 127.03, 0)
         assertEquals(0.0, eligibleDistance(note, SyntheticSession("B"), p, 1)!!, 0.0)

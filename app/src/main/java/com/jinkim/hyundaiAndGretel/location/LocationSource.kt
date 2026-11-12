@@ -9,7 +9,7 @@ data class LocationFix(
 /** Session identity prevents a reused coordinate from reviving an old query. */
 data class TrackedPosition(val session: Long, val fix: LocationFix)
 
-interface LocationSource {
+interface LocationSource : ProximitySource {
     /**
      * Returns false only when the SDK is unsupported. Initialization/registration failures throw.
      * True means the calls returned, not that a first location or SDK connection is ready.

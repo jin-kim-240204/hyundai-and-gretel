@@ -29,6 +29,9 @@ class LocationTracking(
     val currentPosition = mutablePosition.asStateFlow()
     private var source: LocationSource? = null
     private var generation = 0L
+    val sessionId get() = generation
+    val proximitySource: ProximitySource? get() = source
+    fun ownsSource(owner: ProximitySource): Boolean = source === owner
     private val buffer = LocationBuffer()
 
     fun start() {
