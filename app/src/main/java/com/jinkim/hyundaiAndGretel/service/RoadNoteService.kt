@@ -18,6 +18,10 @@ import com.jinkim.hyundaiAndGretel.notes.spatial.H3SpatialIndex
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomReceiptStore
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomScenarioStore
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
 import com.jinkim.hyundaiAndGretel.notes.submit.RoadNoteSubmission
 import com.jinkim.hyundaiAndGretel.ui.ux.CarRestrictionsSource
 import com.jinkim.hyundaiAndGretel.ui.ux.confirmVisibleReceipt
@@ -258,7 +262,14 @@ class RoadNoteService : Service() {
         }
 
         override fun submitRoadNote(content: String, category: NoteCategory) {
-            if (BuildConfig.DEBUG && demo.canSubmit && !demo.blocksNewWrites) submissions.submit(content, category)
+            submitRoadNoteWithResult(content, category, SystemClock.elapsedRealtime())
+        }
+
+        fun submitRoadNoteWithResult(content: String, category: NoteCategory, receivedElapsedMillis: Long): Deferred<SubmissionState> {
+            if (submissions.isSubmitting) return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.BUSY))
+            if (!isTracking || (demo.enabled && (!demo.canSubmit || demo.blocksNewWrites)))
+                return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.LOCATION_UNAVAILABLE))
+            return submissions.submit(content, category, tracking.selectAnchorAt(receivedElapsedMillis))
         }
     }
 

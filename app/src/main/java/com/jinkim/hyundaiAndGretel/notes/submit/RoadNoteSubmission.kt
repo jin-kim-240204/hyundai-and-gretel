@@ -8,6 +8,8 @@ import com.jinkim.hyundaiAndGretel.notes.RoadNoteStore
 import com.jinkim.hyundaiAndGretel.notes.pickup.SyntheticRoute
 import com.jinkim.hyundaiAndGretel.notes.pickup.SyntheticSession
 import java.util.UUID
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +23,7 @@ sealed interface SubmissionState {
     data class Failed(val reason: SubmissionFailure) : SubmissionState
 }
 
-enum class SubmissionFailure { LOCATION_UNAVAILABLE, INVALID_TIME, INVALID_INPUT, DUPLICATE, STORAGE, CANCELLED }
+enum class SubmissionFailure { LOCATION_UNAVAILABLE, INVALID_TIME, INVALID_INPUT, DUPLICATE, STORAGE, CANCELLED, BUSY }
 
 class RoadNoteSubmission(
     private val scope: CoroutineScope,
@@ -40,17 +42,17 @@ class RoadNoteSubmission(
 
     fun clearResult() { if (!isSubmitting) mutableState.value = SubmissionState.Idle }
 
-    fun submit(content: String, category: NoteCategory) {
-        if (isSubmitting) return
-        val selection = captureAnchor() as? AnchorSelection.Selected
+    fun submit(content: String, category: NoteCategory, anchorSelection: AnchorSelection? = null): Deferred<SubmissionState> {
+        if (isSubmitting) return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.BUSY))
+        val selection = (anchorSelection ?: captureAnchor()) as? AnchorSelection.Selected
         if (selection == null) {
             mutableState.value = SubmissionState.Failed(SubmissionFailure.LOCATION_UNAVAILABLE)
-            return
+            return CompletableDeferred(state.value)
         }
         val createdAt = utcMillis()
         if (createdAt > Long.MAX_VALUE - RoadNote.TTL_MILLIS) {
             mutableState.value = SubmissionState.Failed(SubmissionFailure.INVALID_TIME)
-            return
+            return CompletableDeferred(state.value)
         }
         val anchor = selection.anchor
         val context = setup()
@@ -65,7 +67,8 @@ class RoadNoteSubmission(
         )
         mutableState.value = SubmissionState.Submitting
 
-        scope.launch {
+        val completion = CompletableDeferred<SubmissionState>()
+        val job = scope.launch {
             try {
                 mutableState.value = when (val result = store.create(note)) {
                     is CreateNoteResult.Created -> SubmissionState.Saved(result.note)
@@ -81,8 +84,13 @@ class RoadNoteSubmission(
                 onUnexpectedError(error)
 
             } finally {
+                completion.complete(state.value)
                 onFinished()
             }
         }
+        job.invokeOnCompletion { error ->
+            if (error != null) completion.complete(SubmissionState.Failed(SubmissionFailure.CANCELLED))
+        }
+        return completion
     }
 }

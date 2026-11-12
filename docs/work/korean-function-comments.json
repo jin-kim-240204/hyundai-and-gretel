@@ -1,0 +1,21 @@
+{
+  "task": "함수별 한국어 주석 추가 — 설명과 코드 보존 검증",
+  "selected_rules": ["ENV-02", "INT-01"],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "주석 제외 main Kotlin 23개 파일의 코드를 작업 직전과 비교해 동일성 확인. 실행문/구조/Manifest/설정 변경 없음. 하네스·assembleDebug/lintDebug·Studio 빌드 통과."
+    },
+    {
+      "id": "INT-01",
+      "status": "PASS",
+      "evidence": "이번 설명 범위에서 입력 검증·Callback 직렬화·수신/전송 로직을 변경하지 않음. 주석은 기존 계약을 설명하며 실제 Gleo E2E 검증 완료를 주장하지 않음."
+    },
+    {
+      "id": "DOC-c6fc94252d66#응답기한",
+      "status": "PASS",
+      "evidence": "Callback data는 JSON 배열 문자열임을 설명하고, 내부 5초 withTimeout은 블로킹 I/O 즉시 중단 보장이 아님을 주석에 명시. 전송 호출과 실제 수신/음성 안내 완료를 구분. 기존 기능 검증 상태는 유지."
+    }
+  ]
+}

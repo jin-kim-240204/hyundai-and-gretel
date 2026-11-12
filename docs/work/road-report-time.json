@@ -1,0 +1,48 @@
+{
+  "task": "road-report-time",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "스키마·파서·debug/release 공통 정책 구현. 실제 Gleo가 현재 시각-경과시간을 정확히 생성하는 음성 E2E 미검증."
+    },
+    {
+      "id": "DOC-24357cf5e59a#함수파라미터",
+      "status": "PASS",
+      "evidence": "schema.json service/단일 함수/flat string enum 유지. GleoActionTest와 전체 단위 테스트 42개 failures=0, Android test fixture compile PASS."
+    },
+    {
+      "id": "DOC-24357cf5e59a#설명",
+      "status": "PASS",
+      "evidence": "schema.json 및 gleo-interface-design.md 영어 설명을 발견 시각/10분 기준으로 동기화. 발화 예시 없이 1~2문장."
+    },
+    {
+      "id": "DOC-24357cf5e59a#선택필드",
+      "status": "PASS",
+      "evidence": "공통 required는 content/locationMode 유지. CURRENT_ROAD 시각 조건부 필수, NAMED_PLACE 지명 조건부 필수와 빈 선택값 정규화 테스트 PASS."
+    },
+    {
+      "id": "DOC-24357cf5e59a#프로젝트시각정책",
+      "status": "PASS",
+      "evidence": "10초/599초/600초/601초/1일 경계 및 시각 저장/오래된 제보 asking 단위 테스트 PASS. Studio build PASS. git diff --check PASS."
+    },
+    {
+      "id": "DOC-24357cf5e59a#실제함수입력",
+      "status": "NOT_TESTED",
+      "evidence": "새 APK 설치와 실제 Gleo 시각 계산/Callback 음성 동작은 수행하지 않음."
+    },
+    {
+      "id": "DOC-24357cf5e59a#차량이력범위",
+      "status": "N/A",
+      "evidence": "이번 범위는 스펙/입력 검증. 차량 위치·방향 이력 조회 및 배포 미구현."
+    },
+    {
+      "id": "DOC-24357cf5e59a#빌드",
+      "status": "PASS",
+      "evidence": "최종 verify_harness.py --build: 하네스/assembleDebug/lintDebug PASS."
+    }
+  ]
+}

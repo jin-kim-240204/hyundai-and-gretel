@@ -25,6 +25,26 @@ class RoadNoteSubmissionTest {
         override suspend fun findById(noteId: String): RoadNote? = null
     }
 
+    @Test fun requestCompletionWaitsForCommitAndCancelledWaiterDoesNotCancelAcceptedWrite() = runTest {
+        val release = CompletableDeferred<Unit>()
+        val store = Store { release.await(); CreateNoteResult.Created(it) }
+        var finished = 0
+        val repo = RoadNoteSubmission(backgroundScope, store, { anchor() }, { 1_000 }, { finished++ })
+        val first = repo.submit("구덩이", NoteCategory.WARNING)
+        runCurrent()
+        assertFalse(first.isCompleted)
+        val other = repo.submit("두번째", NoteCategory.INFORMATION)
+        assertEquals(SubmissionState.Failed(SubmissionFailure.BUSY), other.await())
+        assertEquals(SubmissionState.Submitting, repo.state.value)
+        val waiter = backgroundScope.launch { first.await() }
+        runCurrent(); waiter.cancel(); runCurrent()
+        assertFalse(first.isCancelled)
+        assertEquals(1, store.inputs.size)
+        release.complete(Unit); runCurrent()
+        assertTrue(first.await() is SubmissionState.Saved)
+        assertEquals(1, finished)
+    }
+
     @Test fun freezesAnchorTimeAndOneRequestBeforeAsyncWrite() = runTest {
         val release = CompletableDeferred<Unit>()
         val store = Store { release.await(); CreateNoteResult.Created(it) }

@@ -1,0 +1,23 @@
+{
+  "task": "gleo-single-call",
+  "selected_rules": [
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "INT-01",
+      "status": "NOT_TESTED",
+      "evidence": "앱 단발 처리 구현 및 자동 검사 PASS. 실제 Gleo 응답/대화 종료 미검증."
+    },
+    {
+      "id": "DOC-24357cf5e59a#입력",
+      "status": "PASS",
+      "evidence": "스키마 3개 필드 단정 및 GleoActionTest 필수값/enum/독립 호출 테스트 PASS. 전체 단위 테스트/빌드/린트/IDE 빌드 PASS."
+    },
+    {
+      "id": "DOC-c6fc94252d66#단발응답",
+      "status": "NOT_TESTED",
+      "evidence": "GleoStatus success/fail만 유지, 추가 질문/문맥/초안 식별자 콜백 제거. Receiver 콜백 전송 경로 1개 및 timeout fail 처리 코드 확인. 계측 검증은 컴파일만 PASS, 실제 timeout/콜백/음성 E2E 미실행."
+    }
+  ]
+}

@@ -4,13 +4,9 @@ flowchart TD
     Gate -->|성공| Tracking[화면 독립 추적 · FGS 요건 확인]
     Away[홈·다른 앱·재생성] -. 수집 유지 .-> Tracking
     Tracking --> Session[가상 사용자 A · 세션 시작]
-    SDK[Pleos FusedLocation 위치 콜백]
-    Source[위치 검증 · 경로 문맥 생성]
-    Console[웹콘솔 속도·기어 → debug mock GPS] --> SDK
-    External[명시 외부 ADB · 앱 provider 없음] --> SDK
-    SDK --> CacheGate[준비점25m → 목표5m · 단계15초 실제콜백 gate]
-    CacheGate --> Source
-    Session --> SDK
+    SDK[Pleos FusedLocation 위치 콜백] --> Source[위치 검증 · 경로 문맥 생성]
+    Replay[합성 경로 재생 · SDK 미통과 표시] -. 테스트 대체 입력 .-> Source
+    Session --> Source
     Source --> Buffer[추적 세션 메모리45초 버퍼 · 화면 밖 갱신]
     Buffer --> Ready{신선한 실제 표본 확보}
     Ready --> UI[준비 상태 표시]
@@ -18,14 +14,14 @@ flowchart TD
     Gleo --> Receiver[CREATE_ROAD_NOTE 수신 · 시각·A/B·세션 고정]
     Receiver --> Validate{필수 입력·세션 검증}
     Validate -->|실패| Fail[fail 콜백 1회 · 종료]
-    Validate -->|통과| Anchor[Main 선택 시점30초 전 근사 표본 선택]
-    Anchor --> Quality{기존 표본 선택 조건 유효}
+    Validate -->|통과| Anchor[버퍼 스냅샷에서 수신 30초 전 위치 선택]
+    Anchor --> Quality{이력·정확도·방향·도로 문맥 유효}
     Quality -->|실패| Fail
     Quality -->|통과| Tx[Room 트랜잭션 · 쪽지 ACTIVE 저장]
     Tx -->|저장 실패| Fail
     Tx -->|커밋 성공| Success[success 콜백 1회 · 쪽지 저장 안내]
     Tx --> DB[(Room · 쪽지 공유 공간)]
-    Success --> Switch[같은 화면에서 B 전환 · CarUx 설정 허용 시]
+    Success --> Switch[같은 화면에서 B 전환 · 주행 중에도 가능]
     Switch --> B[B 현재 위치 확보 · 주행·정차 무관]
     B --> Matcher[유효 쪽지 조회 · 거리·동일 경로·방향·전방 판정]
     DB -->|쪽지 변경 시 재평가| Matcher
@@ -34,4 +30,4 @@ flowchart TD
     Policy[속도·기어로 수신 차단 안 함] -. 판정 정책 .-> Match
     Match -->|예| Receipt[Room · B 수신 이력 원자적 등록]
     Receipt --> Display[미표시 수신 쪽지 화면 표시]
-    Display --> Mark[명시 확인 ACK 기록 · 동일 B 중복 방지]
+    Display --> Mark[표시 완료 기록 · 동일 B 중복 방지]

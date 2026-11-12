@@ -1,5 +1,7 @@
 package com.jinkim.hyundaiAndGretel.notes.pickup
 
+import com.jinkim.hyundaiAndGretel.gleo.*
+import kotlinx.coroutines.async
 import com.jinkim.hyundaiAndGretel.location.*
 import com.jinkim.hyundaiAndGretel.notes.*
 import com.jinkim.hyundaiAndGretel.notes.spatial.*
@@ -40,9 +42,15 @@ class RoadNotePickupFlowTest {
         val submissions = RoadNoteSubmission(backgroundScope, notes, {
             AnchorSelection.Selected(LocationAnchor(LocationFix(37.5, 127.03, 0), 30_000))
         }, { 1_000 }, {})
-        submissions.submit("구덩이", NoteCategory.WARNING)
+        val processor = GleoActionProcessor { content, category, _ -> submissions.submit(content, category).await() }
+        val response = async {
+            processor.process(validateGleoParameters(mapOf("content" to "구덩이", "category" to "WARNING",
+                "locationMode" to "CURRENT_ROAD")), 0)
+        }
         runCurrent()
+        assertEquals(GleoStatus.SUCCESS, response.await().status)
         val note = (submissions.state.value as SubmissionState.Saved).note
+        assertEquals(note.noteId, response.await().noteId)
         assertEquals(30_000L, note.anchorOffsetMillis)
         assertNotNull(note.route)
         val positions = MutableStateFlow<TrackedPosition?>(TrackedPosition(1, LocationFix(37.5, 127.024, 0)))

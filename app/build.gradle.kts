@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -8,20 +9,26 @@ android {
     compileSdk = 35
     useLibrary("android.car", false)
     defaultConfig {
-        applicationId = "com.jinnayeong.wakeup"
+        applicationId = "com.jinkim.hyundaiAndGretel"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        manifestPlaceholders["gleoReceiverExported"] = "false"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildTypes {
+        getByName("debug") { manifestPlaceholders["gleoReceiverExported"] = "true" }
+    }
     buildFeatures { compose = true; buildConfig = true }
 }
 dependencies {
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
     implementation(libs.uber.h3)
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)

@@ -1,10 +1,6 @@
 # 즉시 도로 제보 프로토타입 E2E 테크스펙
 
-수정: 2026-11-10. PR #4 후속 합의의 추적 수명은 아래 보강 및 [단계별 최신 계획](https://github.com/jin-kim-240204/hyundai-and-gretel/blob/625a1fb/docs/specs/road-notes/00-overview.md)을 따른다. 화면 이탈 중지 정책은 폐기했으며01단계는 로그 진단으로 바꿨다. 그 밖의 과거 수치·구현 현황은 단계별 스펙과 대조한다.
-
-초기 작성: 2026-11-09. 이 문서는 **제보 → 해당 위치에 쪽지 저장 → 뒤따르는 사용자의 접근 수신**을 구현하기 위한 현행 계획이다. 이전 Sprint 문서의 지명·후속 질문·목격 시각 역산 계획보다 이 문서를 우선한다. 아래 목표 구성은 아직 구현 완료가 아니다.
-
-최신 개발 DB 결정: 미출시이며 보존할 개발 데이터가 없다는 사용자 지시에 따라 현재 전체 구조를 새 Room **버전1**로 고정한다. 원본/수신/시연 상태 테이블·현재 필드/제약은 유지하고 이전 개발용1~4 export/이관 지원은 제거한다. 기존 설치 DB는 앱 데이터 전체 초기화 후 새로 생성해야 하며 시연 reset/행 삭제로 대체하지 않는다. 자동 destructive fallback은 추가하지 않는다. 이 문서의 아래 단계별 migration 설명은 당시 구현 이력이고 현재 지원 계약이 아니다. 새v1 이후 보존할 데이터가 생기면 그 기준부터 명시 migration을 설계한다.
+수정: 2026-11-09. 이 문서는 **제보 → 해당 위치에 쪽지 저장 → 뒤따르는 사용자의 접근 수신**을 구현하기 위한 현행 계획이다. 이전 Sprint 문서의 지명·후속 질문·목격 시각 역산 계획보다 이 문서를 우선한다. 아래 목표 구성은 아직 구현 완료가 아니다.
 
 ## 0. 문서 소유권과 브랜치 운영
 
@@ -33,7 +29,7 @@
 | 쪽지 공유 | 앱 내부 Room DB. 서버 없음 |
 | 시연 | 노트북 1대, Pleos 에뮬레이터 1대, 앱 1개. 주행 중에도 동일 화면에서 동작. 정차 중에도 가상 사용자 A/B 전환·제보·수신 가능 |
 | 줍기 | B의 현재 위치 업데이트 때 접근 판정 → B의 수신 이력 저장 → 화면에 한 번 표시 |
-| 화면 | 07에서 주행 중 제품 화면 사용을 위해 MainActivity의 activity metadata로 DO 선언을 계획. CarUx 기능별 제한 유지, 화면 꺼짐 방지는 별도 |
+| 화면 | 기존 DO 선언과 동일 UI 유지. 주행 감지로 다른 화면으로 전환/축소하지 않음. 화면 꺼짐 방지는 별도 계획 |
 | 제외 | 지명 검색·과거 제보·위치 핀·멀티턴·실차 간 네트워크·카메라·조명·자체 내비·선제 음성 안내 |
 
 A/B는 실제 차량 2대가 아니라 한 앱의 가상 운전자다. Room은 로컬 공유 공간 역할이며 외부 사용자에게 배포하는 서버가 아니다. 두 노트북·두 앱 인스턴스는 각자 별도 DB이므로 이번 구성으로 서로 공유되지 않는다.
@@ -48,7 +44,7 @@ A/B는 실제 차량 2대가 아니라 한 앱의 가상 운전자다. Room은 �
 | 위치 | FusedLocation 의존성/권한/초기화/수집 미구현 | 지원 확인·동의·권한·콜백·버퍼·정리 구현 |
 | 저장 | Keystore/AES-GCM 바이너리 DraftStore, 기존 초안 보존 | 합성 시연 전용 Room에 쪽지와 사용자별 수신 이력 저장 |
 | 수신 | 접근 판정 없음 | 위치 업데이트마다 후보 쪽지 필터링 및 수신 처리 |
-| 주행 표시 | 현재 위치 기능 브랜치의 DO 미선언은07 보완 대상 | 올바른 MainActivity DO metadata + 기존 CarUx 제한 유지. 선언만으로 실주행 적합 판정하지 않음 |
+| 주행 표시 | Manifest distractionOptimized=true, 규제 상태 연동 없음 | 기존 동일 화면 유지. 주행 상태에 따른 별도 화면 분기/축소 UI 재도입 없음 |
 
 기존 초안 파일은 Room 쪽지로 자동 전환하지 않는다. 좌표 없는 과거 초안을 이미 심어진 쪽지로 만들지 않으며, 별도 레거시 화면/보관으로 구분한다. Room 기본 저장이 기존 AES-GCM과 같은 암호화 보장을 준다고 가정하지 않는다. 이번 제출 DB는 합성 좌표·시험 문구 전용이며 실위치 영속 저장은 별도 보안 결정 전 열지 않는다.
 
@@ -61,13 +57,9 @@ flowchart TD
     Gate -->|성공| Tracking[화면 독립 추적 · FGS 요건 확인]
     Away[홈·다른 앱·재생성] -. 수집 유지 .-> Tracking
     Tracking --> Session[가상 사용자 A · 세션 시작]
-    SDK[Pleos FusedLocation 위치 콜백]
-    Source[위치 검증 · 경로 문맥 생성]
-    Console[웹콘솔 속도·기어 → debug mock GPS] --> SDK
-    External[명시 외부 ADB · 앱 provider 없음] --> SDK
-    SDK --> CacheGate[준비점25m → 목표5m · 단계15초 실제콜백 gate]
-    CacheGate --> Source
-    Session --> SDK
+    SDK[Pleos FusedLocation 위치 콜백] --> Source[위치 검증 · 경로 문맥 생성]
+    Replay[합성 경로 재생 · SDK 미통과 표시] -. 테스트 대체 입력 .-> Source
+    Session --> Source
     Source --> Buffer[추적 세션 메모리45초 버퍼 · 화면 밖 갱신]
     Buffer --> Ready{신선한 실제 표본 확보}
     Ready --> UI[준비 상태 표시]
@@ -76,13 +68,13 @@ flowchart TD
     Receiver --> Validate{필수 입력·세션 검증}
     Validate -->|실패| Fail[fail 콜백 1회 · 종료]
     Validate -->|통과| Anchor[Main 선택 시점30초 전 근사 표본 선택]
-    Anchor --> Quality{기존 표본 선택 조건 유효}
+    Anchor --> Quality{이력·정확도·방향·도로 문맥 유효}
     Quality -->|실패| Fail
     Quality -->|통과| Tx[Room 트랜잭션 · 쪽지 ACTIVE 저장]
     Tx -->|저장 실패| Fail
     Tx -->|커밋 성공| Success[success 콜백 1회 · 쪽지 저장 안내]
     Tx --> DB[(Room · 쪽지 공유 공간)]
-    Success --> Switch[같은 화면에서 B 전환 · CarUx 설정 허용 시]
+    Success --> Switch[같은 화면에서 B 전환 · 주행 중에도 가능]
     Switch --> B[B 현재 위치 확보 · 주행·정차 무관]
     B --> Matcher[유효 쪽지 조회 · 거리·동일 경로·방향·전방 판정]
     DB -->|쪽지 변경 시 재평가| Matcher
@@ -91,12 +83,12 @@ flowchart TD
     Policy[속도·기어로 수신 차단 안 함] -. 판정 정책 .-> Match
     Match -->|예| Receipt[Room · B 수신 이력 원자적 등록]
     Receipt --> Display[미표시 수신 쪽지 화면 표시]
-    Display --> Mark[명시 확인 ACK 기록 · 동일 B 중복 방지]
+    Display --> Mark[표시 완료 기록 · 동일 B 중복 방지]
 ```
 
 [Mermaid 원본](diagrams/prototype-e2e-flow.mmd)
 
-한 에뮬레이터에서 A와 B를 순차 실행하며 주행 중 동작을 메인 시연으로 검증한다. 정차도 지원하며 주행 유지는 기능의 필수 조건이 아니다. A/B 전환은 가상 사용자/경로의 교체이며 차량 정차나 주행 감지에 따른 화면 전환이 아니다. 역할 전환 후에도 Room 쪽지는 남고 위치 버퍼는 섞이지 않는다. 홈 이동·다른 앱 전환·Activity 재생성 중에도 이미 시작한 추적 세션과 위치 수집을 유지한다. 최근45초 버퍼를 화면 밖에서도 계속 갱신하고, 이후 후보 조회·접근 판정·수신 저장도 추적 수명에 연결한다. 화면 복귀는 같은 추적 상태에 재연결한다. 화면 비가시 중에는 확인 ACK를 기록하지 않으며 수신된 항목은 복귀 후 표시한다. composition·노출·화면 복귀만으로 자동 ACK하지 않는다. 강제 종료·프로세스 사망·차량 재시작 자동 복구와 debug 이동 재생 수명은 별도 검토한다.
+한 에뮬레이터에서 A와 B를 순차 실행하며 주행 중 동작을 메인 시연으로 검증한다. 정차도 지원하며 주행 유지는 기능의 필수 조건이 아니다. A/B 전환은 가상 사용자/경로의 교체이며 차량 정차나 주행 감지에 따른 화면 전환이 아니다. 역할 전환 후에도 Room 쪽지는 남고 위치 버퍼는 섞이지 않는다. 앱이 백그라운드/종료되면 이번 프로토타입의 이동 재생·위치 수집·줍기 루프는 멈추며, 복귀 후 새 버퍼를 준비한다.
 
 ## 4. 구성 요소와 인터페이스
 
@@ -155,20 +147,19 @@ Room 구성은 Database + Entity + DAO로 구현한다. 하나의 DB 인스턴�
 
 | 저장소 / 데이터 | 필수 정보 | 생성·갱신·삭제 |
 |---|---|---|
-| 메모리 LocationBuffer | 최근45초 샘플, 세션·준비 상태 | 위치 콜백 추가, 오래된 샘플 제거. 역할 전환/중단/재시작 시 삭제 |
+| 메모리 LocationBuffer | 최근 30초 샘플, 세션·품질·준비 상태 | 위치 콜백 추가, 오래된 샘플 제거. 역할 전환/중단/재시작 시 삭제 |
 | 메모리 DemoSession | scenarioId, actorId A/B, sessionId, generation, sourceMode, 실행 상태 | 주행·정차 상태와 무관하게 같은 화면에서 가상 사용자 전환. 재시작 시 시연 재생만 정지 상태로 복귀 |
-| Room RoadNote | 03 원본9필드·H3·nullable routeId/direction/progressMeters·06 nullable scenarioId | 현재 전체 구조를 새v1로 생성. 이전 개발 DB는 초기화 전제. 현재 DB의 소속 없는 행/다른 시나리오 보존·TTL600초/자동 삭제 없음 |
-| Room NoteReceipt | noteId, recipientId, receivedAtUtcMillis, distanceMeters, displayedAtUtcMillis? | 복합 PK(noteId,recipientId), FK CASCADE. null=PENDING·명시 확인 ACK 후 DISPLAYED(확인 시각). recipient 전체 JOIN 큐, 시나리오 필터 없음 |
-| Room 활성 시나리오 | 단일 상태행(id=1, activeScenarioId) | 첫 명시 새 시연에서 생성. reset은 현재 시나리오 원본/이력만 삭제·새 ID 갱신을 한 트랜잭션으로 처리 |
-| 합성 경로 fixture | scenarioId/routeId/direction, 시간 오프셋별 위경도·progress. 경로 허용 띠는 측정 accuracy가 아님 | 저장소 내 시험용 정적 데이터. 실차 이력 아님. A/B 각각 동일 도로의 다른 출발 시점 재생 |
+| Room RoadNote | noteId(UUID), requestId(UNIQUE), scenarioId, authorActorId, content, category, receivedAtUtc, anchorLat/Lon, anchorAccuracy, anchorOffsetMillis, routeId, direction, progressMeters, source, isSynthetic, expiresAtUtc | 심기 트랜잭션에서 1회 생성. 배치 좌표는 이후 변경하지 않음. TTL 10분, 세션 초기화 시 삭제 |
+| Room NoteReceipt | scenarioId, noteId, recipientActorId, receivedAtUtc, distanceMeters, displayState(PENDING/DISPLAYED), displayedAtUtc? | 복합 PK(noteId, recipientActorId). 수신 대상이면 INSERT OR IGNORE, 실제 UI 표시 후 DISPLAYED. note 삭제 시 cascade |
+| 합성 경로 fixture | scenarioId/routeId/direction, 시간 오프셋별 위경도·progress·accuracy | 저장소 내 시험용 정적 데이터. 실차 이력 아님. A/B 각각 동일 도로의 다른 출발 시점 재생 |
 | 기존 DraftStore | 기존 동의·암호화 초안 | 기존 파일 보존. 새 공유 Room 저장과 중복 쓰기하지 않음 |
 | 시연 설정 | 화면 유지 선호, 합성 데이터 사용 동의 | 기존 설정 방식 재사용. 위치 권한 허용과 별도로 목적 고지. 초기값 문서화 |
 
-쪽지는 ACTIVE(현재 시각 < expiresAt) / EXPIRED(그 외)로 파생한다. 전역 PICKED 상태는 두지 않는다. B가 줍더라도 쪽지는 남아서 다른 사용자 C도 받을 수 있다. 만료 원본은 신규 후보/수신에서 제외하지만 자동 삭제하지 않는다. 명시 확인 reset만 현재 시나리오 원본과 FK 이력을 삭제한다. 다른 시나리오/null legacy와 제품 수신함의 보존 이력은 유지한다.
+쪽지는 ACTIVE(현재 시각 < expiresAt) / EXPIRED(그 외)로 파생한다. 전역 PICKED 상태는 두지 않는다. B가 줍더라도 쪽지는 남아서 다른 사용자 C도 받을 수 있다. 만료는 쿼리에서 즉시 제외하고, 실제 행 삭제는 세션 시작·새 심기·리셋 시 수행한다. 수신 이력은 쪽지와 함께 정리한다.
 
-데모 TTL은 10분이며 기존 초안의 7일 정책과 독립이다. 벽시계 문제는 명시 오류로 노출하고 자동으로 새 시연/삭제하지 않는다. 후보·등록·신규수신·대상·진행축·시연카운트만 활성 scenarioId로 제한한다. 제품 수신함은 null legacy/다른 시나리오를 포함한 recipient 전체 한 큐를 debug/release 모두 유지한다. UTC를 바꿔 시연 시간을 늘리지 않는다.
+데모 TTL은 10분이며 기존 초안의 7일 정책과 독립이다. 벽시계 변경이 감지되면 진행 중 시연을 정지하고 버퍼를 비운 뒤 새 시연 세션을 시작한다. 오래된 scenarioId는 활성 조회에서 제외하고 리셋에서 삭제한다. UTC를 바꿔 시연 시간을 늘리지 않는다.
 
-Room 신규 시연 저장은 신뢰된 합성 설정에 한정한다. 입력 모드는 메모리의 WEB_CONSOLE/EXTERNAL_ADB이고 양쪽 모두 실제 SDK 콜백을 통과한다. 별도 source/isSynthetic/requestId 필드를 다시 도입하지 않는다. 실제 위치 영속화·공유는 별도 보안 결정 전 열지 않으며 원시 궤적은 메모리다. 로그에 전체 좌표·발화·실차 식별자를 추가하지 않는다.
+Room 저장 대상은 합성 시연 데이터로 제한한다. source(SDK/REPLAY)와 isSynthetic을 별개로 기록하여 SDK로 주입한 합성 위치도 구분한다. isSynthetic은 신뢰된 시연 세션 설정에서 정하고 Gleo 입력에서 받지 않는다. SDK 라이브 모드의 원시 궤적은 메모리 버퍼만 사용한다. 실위치가 담긴 제보를 영속화하는 정식 모드는 암호화/동의/보존 정책과 외부 수신자 인증을 구현하기 전 활성화하지 않는다. 로그에는 전체 좌표·발화·실차 식별자를 기본 출력하지 않는다.
 
 ## 7. 제보 심기와 콜백 계약
 
@@ -268,16 +259,14 @@ Room 신규 시연 저장은 신뢰된 합성 설정에 한정한다. 입력 모
 
 **주행 중에도 동작해야 하며 정차 중 동작을 금지하지 않는다.** 수신 여부는 속도/기어가 아니라 유효한 현재 위치가 쪽지의 반경·경로·방향·전방 조건을 만족하는지로 결정한다. 반경 경계를 이동해서 통과해야만 하는 것이 아니라, B를 켰을 때 이미 반경 안에 있거나 정차 중 반경 안에 새 쪽지가 생겨도 동일하게 평가한다. 기존 유효 위치·방향 품질 정책은 유지하고, 정차라는 이유만으로 실패시키지 않는다.
 
-04의 Room Flow는 현재 cover에 속한 공간 원본/nullable legacy 행을 관찰한다. 시간만의 TTL 변화를 Flow 방출로 가정하지 않는다. raw snapshot/Ready는 마지막 관찰 자료이며 수신에 직접 사용하지 않는다.05는 같은 Main 문맥에서 중간 suspend 없이 현재 세션·현재 유효 위치/수신단조시각 신선도5초·현재 UTC·실거리400m를 재검사하는 좁은 소비 진입점으로만 후보를 받는다. Flow 결과 적용 직전에도 최신 UTC/위치로 재평가하며05의 등록/수신 직전 검사는 별도로 유지한다. 만료 전용 wake-up과10초 폴링은 추가하지 않고, 위치 stale 전환 기한은 세션이 소유한다.
-
 B의 새 유효 위치, 활성 쪽지의 추가/변경, B 세션 시작을 트리거로 최신 유효 위치와 쪽지 후보를 결합해 다음 순서로 평가한다. 위치가 바뀌지 않아도 새 쪽지를 받을 수 있도록 Room Flow도 평가를 깨운다. 이번 소규모 시연에서는 메모리/Room 후보 조회로 충분하며 백그라운드 주기 폴링·OS geofence·서버 공간 인덱스는 도입하지 않는다.
 
 1. 활성 scenarioId의 미만료 RoadNote 중 authorActorId != B이고 B 수신 이력이 없는 후보를 조회한다.
-2. 같은 routeId·같은 direction인지 확인한다. 후보와 B의 경로 진행값으로 `aheadMeters = (note.progressMeters - B.progressMeters) * directionSign`(+1 정방향/-1 역방향)를 계산한다.
-3. `0 <= aheadMeters <= 150m`, 위경도 거리도 150m 이하, B 샘플 신선도 2초 이내인 후보만 받는다. 이번 합성 전용 프로토타입은 신뢰된 내부 경로/방향 설정과 알려진 fixture 투영으로 자격을 확인한다. SDK1.1.3에는 미터 accuracy가 없으며 confidence나 경로 허용 띠20m를 GPS accuracy로 간주하지 않는다. 실제 도로 위치 품질은 미검증·범위 밖이다. 이미 지나간 음수 진행값은 제외한다.
-4. 여러 후보는 실제 거리 오름차순→noteId로 처리한다. 전방 거리는 자격 판정에 사용하며 역방향에도 부호를 적용한다. 한 번에 한 쪽지만 핵심 화면에 표시하고 나머지는 PENDING 수신함에서 순차 처리한다. 반복 팝업/음성은 이번 범위에 없다.
+2. 같은 routeId·같은 direction인지 확인한다. 후보와 B의 경로 진행값으로 `aheadMeters = note.progressMeters - B.progressMeters`를 계산한다.
+3. `0 <= aheadMeters <= 150m`, 위경도 거리도 150m 이하, B 샘플 신선도 2초 이내·accuracy 20m 이하인 후보만 받는다. 이미 지나간 음수 진행값은 제외한다.
+4. 여러 후보는 전방 거리 오름차순으로 처리한다. 한 번에 한 쪽지만 핵심 화면에 표시하고 나머지는 PENDING 수신함에서 순차 처리한다. 반복 팝업/음성은 이번 범위에 없다.
 5. 조건 충족 시 Room 트랜잭션에서 만료·scenarioId·사용자·중복 여부를 재검증하고 NoteReceipt를 INSERT OR IGNORE한다. 오직 INSERT 성공 때 새 수신 이벤트를 발생시킨다.
-6. Compose가 DB의 PENDING 맨 앞 한 건을 표시하고 사용자의 명시 ‘확인’ 동작으로만 ACK한다. Main에서 화면 RESUMED·현재 수신자·맨 앞 항목 키를 재검사한다. composition/노출/스크롤/화면 복귀는 ACK가 아니다. 수락한 ACK는 원래 키로 끝내고 연타를 차단하며 커밋 전 다음 항목으로 넘기지 않는다. 실패 시 같은 PENDING과 오류를 유지하고 다음 명시 클릭에서만 재시도한다. displayedAtUtc는 확인 ACK 시각(수신 시각 이상)이며 최초 노출이나 읽음 보장이 아니다. 종료 후 재표시는 가능하지만 복합키 이력 행은 중복 생성되지 않는다.
+6. Compose가 DB의 PENDING을 읽어 표시한다. 최초 실제 렌더 후 DISPLAYED로 기록한다. 프로세스가 표시 전에 종료되면 복귀 후 PENDING을 보여준다. 표시와 DB ACK 사이 종료 시 한 번 더 보일 수 있지만 이력 행은 중복 생성되지 않는다.
 
 실제로 구현할 계산 단위는 미터이며 degree 위경도 차이를 거리로 직접 사용하지 않는다. 경로 투영/거리 함수는 알려진 좌표 fixture로 검증한다.
 
@@ -285,33 +274,11 @@ B의 새 유효 위치, 활성 쪽지의 추가/변경, B 세션 시작을 트�
 
 ### 8.2 쪽지와 사용자 상태 전이
 
-```mermaid
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> Warming : 시연 A 시작
-    Warming --> Ready : 신선한 유효 표본 확보
-    Ready --> Ready : 홈 이동·다른 앱·재생성 시 추적 유지
-    Ready --> Planting : 유효 JSON 수신
-    Planting --> Ready : 저장 완료 및 success
-    Planting --> Ready : 처리 실패 및 fail
-    Warming --> Idle : 중단 또는 권한 철회
-    Ready --> Warming : 위치 연속성 단절
-    Ready --> Idle : 명시적 중단 또는 권한 철회
-    Ready --> Receiving : 같은 화면에서 B 전환
-    Receiving --> Receiving : 화면 밖 수집·45초 버퍼 갱신 유지
-    Receiving --> Pending : 위치 조건 충족 및 이력 INSERT 성공
-    Pending --> Displayed : 사용자 명시 확인 ACK 커밋
-    Displayed --> Receiving : 위치·쪽지 변경 시 재평가
-    Receiving --> Idle : 명시적 중단 또는 권한 철회
-    note right of Receiving
-        주행·정차 무관
-        위치 조건으로 수신 판정
-    end note
-```
+![세션 상태 전이](diagrams/prototype-e2e-states.svg)
 
-[Mermaid 원본](diagrams/prototype-e2e-states.mmd)
+[크게 보기](diagrams/prototype-e2e-states.svg) · [Mermaid 원본](diagrams/prototype-e2e-states.mmd)
 
-별도로 Room 쪽지는 생성 즉시 ACTIVE이고 TTL 이후 EXPIRED다. 수신함의 DISPLAYED는 B가 명시 확인 ACK를 커밋한 상태이며 최초 노출/읽음 보장이 아니고 원본 쪽지의 만료/삭제 상태와 혼합하지 않는다. B는 30초 버퍼가 찰 때까지 기다리지 않고 **현재의 유효한 위치**만 있으면 줍기를 시작한다.
+별도로 Room 쪽지는 생성 즉시 ACTIVE이고 TTL 이후 EXPIRED다. 수신함의 DISPLAYED는 B에게 보여줬다는 상태이며 원본 쪽지의 만료/삭제 상태와 혼합하지 않는다. B는 30초 버퍼가 찰 때까지 기다리지 않고 **현재의 유효한 위치**만 있으면 줍기를 시작한다.
 
 ## 9. FusedLocation 수명·권한·화면 유지
 
@@ -321,7 +288,7 @@ FusedLocation 지원 확인 → 목적 동의/권한 → 초기화 → listener 
 
 앱 범위 SDK 인스턴스 1개와 세션별 listener 등록을 관리한다. 중단 시 동일 listener 해제 후 release하며, 새 세션은 새 초기화 절차를 따른다. 화면 크기 변경은 추적 세션을 중복 시작시키지 않도록 Activity보다 긴 앱 범위 소유자가 관리한다. [SDK 초기화·해제](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/FusedLocation/initialization-and-release)
 
-사용자가 보이는 화면에서 시작한 수집은 화면과 독립된 추적 세션이 소유한다. 포그라운드 서비스를 우선 검토하되 Android14 서비스 유형·권한·알림 요건과 Pleos 화면 밖 위치 수신을 별도 확인한다. 홈/다른 앱 전환·재생성 중에도 수집과 최근45초 메모리 버퍼 갱신을 유지한다. onStop/onCleared만으로 추적을 정리하지 않는다. 명시적 중지와 역할전환은 이전 세션 콜백 차단·정리를 수행한다. 권한 결과 대기 중의 onStop/재생성은 아직 시작하지 않은 의도를 폐기한다. 강제 종료·차량 재시작 자동 복구는 이번 범위 밖이다.
+이번 버전은 사용자에게 보이는 시연 세션에서만 수집한다. 다른 앱으로 완전히 가리면 수집 중단·버퍼 비움, 돌아오면 재준비한다. Gleo의 짧은 오버레이와 멀티윈도우에서 Activity 가시성 콜백이 어떻게 변하는지는 에뮬레이터에서 확인한다. 제보 순간 위치 수집이 중단되는 환경이면 주행 제보 E2E를 통과로 표시하지 않는다. 백그라운드 FGS·상시 추적은 별도 설계 전 추가하지 않는다.
 
 ### 주행 중 동일 화면 유지와 화면 꺼짐 방지
 
@@ -329,14 +296,12 @@ FusedLocation 지원 확인 → 목적 동의/권한 → 초기화 → listener 
 
 | 구분 | 계획 |
 |---|---|
-| 주행 중 앱 표시 | 현 코드의 DO 미선언을07에서 보완할 계획. MainActivity activity metadata에 distractionOptimized=true 선언 후 동일 제품 화면과 CarUxRestrictions 기능별 제한을 유지. 구현·실제 주행은 미검증 |
-| 시연 화면 전환 정책 | 주행 상태 변경으로 화면을 교체하지 않음. 같은 화면에서 역할·버퍼·쪽지·수신 결과만 갱신. A/B 전환·초기화·모드/출발점/입력시작은 NO_SETUP에서 차단. 규제 미연결/조회 오류도 설정 불가. 속도0/P를 허가로 사용하지 않음 |
+| 주행 중 앱 표시 | 기존 Manifest `distractionOptimized=true` 유지. 현재 MainActivity처럼 동일 UI를 계속 표시하고 주행 감지에 따른 별도 상태 화면/축소 화면을 만들지 않음 |
+| 시연 화면 전환 정책 | 주행 상태 변경으로 화면을 교체하지 않음. 같은 화면에서 역할·버퍼·쪽지·수신 결과만 갱신. A/B 전환·초기화는 에뮬레이터 시연 조작이며 차량을 Parking으로 전환할 필요 없음 |
 | 화면 꺼짐 방지 | 활성 시연 및 앱이 보이는 동안 Activity Window의 FLAG_KEEP_SCREEN_ON 적용. 중단/비가시/해제 때 원복 |
 | 시스템 우선 | Driving view/시스템 오버레이/절전·전원 정책 우회 없음. wake lock·주기적 화면 깨우기 사용 안 함 |
 
-07 사용자 범위 추가로06의 ‘새 DO 선언 없음’은 이후 구현 범위를 제한하는 정책에서 제외한다. 주행 중 제품 화면이 사라지는 문제를 해결하기 위해 MainActivity의 activity metadata에 DO를 선언할 계획이며, 독립 스펙 리뷰 전 앱 코드는 바꾸지 않는다. DO는 Activity 사용 선언이고 화면 꺼짐 방지나 기능 제한 해제 권한이 아니다. 실제 CarUxRestrictionsManager의 현재 값/변경 콜백으로 requiresDistractionOptimization·ActiveRestrictions·플랫폼 상한을 반영한다. NO_SETUP에서는 역할·모드·출발점/reset/입력시작 명령을 UI와 Main 수락 직전에 차단한다(프로젝트의 시연 설정 분류). 규제 미연결/오류도 설정 불허·이유 표시이며 전체 앱/수신함을 잠그는 정책은 아니다. 중지·취소·패널 닫기는 유지하고, 제한 활성화 때 금지된 미수락 전환을 무효화·정리하되 수락 DB 쓰기는 끝낸다. 해제만으로 자동 재개하지 않는다. 일반 규제 엔진/전역 오버레이는 추가하지 않는다.
-
-[공식 Pleos 규제](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)와 [CarUxRestrictions](https://developer.android.com/reference/android/car/drivingstate/CarUxRestrictions)를 근거로 기능별로 적용한다. 문자/탐색 상한은 플랫폼 값을 쓰며 DB 원문/행을 삭제·수정하거나 미표시 항목을 자동 ACK하지 않는다.06의 요구사항 매핑 표가 각 기능의 적용·검증을 추적한다. 실제 신호/지역/DO 효과·주행 UI는 NOT_TESTED다.
+이번 결정은 기존 주행 UI 원복 기록(`docs/work/revert-driving-ui.md`)과 같은 에뮬레이터 관측·시연 정책이다. DO 선언만으로 실제 차량의 규제 준수가 완료되지는 않으며, 정식 배포의 지역/카테고리/ActiveRestrictions 대응은 후속 검증 과제로 분리한다. 이 문서 변경으로 화면 상태 감시나 축소 UI를 다시 구현하지 않는다. [Pleos 주행 규제](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)
 
 FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그라운드 프로세스·위치 수집 생존을 보장하지 않는다. [Android 화면 유지](https://developer.android.com/develop/background-work/background-tasks/awake/screen-on)
 
@@ -344,29 +309,34 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 
 ### 10.1 확정 시연 환경
 
-노트북 1대 + Android Studio/ADB + Pleos 에뮬레이터 1개 + 앱 1개를 사용한다. 에뮬레이터를 주행 상태(예: Drive, 36km/h)로 두고 앱의 같은 화면에서 ‘시연 초기화 / A 시작 / B 시작 / 재생 정지’를 조작한다. 메인 시연은 주행 중에 진행하지만, 가상 사용자 전환·제보·수신에 특정 기어나 양수 속도를 요구하지 않는다. 모든 쪽지는 같은 scenarioId의 Room DB에 저장한다. 시연 진단에는 WEB_CONSOLE/EXTERNAL_ADB와 실제 SDK 수신 확인을 구분한다. 속도/기어는 웹콘솔에서만 조작한다.
+노트북 1대 + Android Studio/ADB + Pleos 에뮬레이터 1개 + 앱 1개를 사용한다. 에뮬레이터를 주행 상태(예: Drive, 36km/h)로 두고 앱의 같은 화면에서 ‘시연 초기화 / A 시작 / B 시작 / 재생 정지’를 조작한다. 메인 시연은 주행 중에 진행하지만, 가상 사용자 전환·제보·수신에 특정 기어나 양수 속도를 요구하지 않는다. 모든 쪽지는 같은 scenarioId의 Room DB에 저장한다. 시연 로그/상태 화면에는 source가 SDK인지 REPLAY인지 표시한다.
 
 시연 데이터의 경로는 직선 R1 동쪽 방향으로 잡는다. 원점 P0의 시험용 위경도와 1m당 환산/경로 투영 정의를 fixture에 고정하고, 아래 x는 그 경로 위 progressMeters다. A/B 모두 초당 10m(36km/h)로 이동하는 1Hz 합성 경로를 사용한다. ‘현재 위치’와 ‘쪽지 위치’를 같은 축에 표시하는 단순 경로 도식이면 충분하며 외부 지도 SDK·타일 서버는 필수가 아니다.
 
 | 순서 | 조작/입력 | 앱 내부 예상 데이터 | 화면·로그 확인 |
 |---|---|---|---|
-| 1. 초기화 | 명시 확인 reset · CarUx 설정 허용 | 현재 시나리오만 삭제·새 ID, 수락 쓰기 중에는 차단 | 시연 카운트0, legacy/다른 시연 이력은 제품 큐에서 유지 |
-| 2. A 준비 | A 기본610m, 준비점→목표 SDK gate | 목표±5m 확인 시 첫 실제 표본605~615m | 첫 표본 즉시 제보 가능, probe는 버퍼에 넣지 않음 |
-| 3. 제보 | D·약36km/h, 약60초 후 기존 debug 고정 제보 | 현재 약1210m,30초 전 anchor 약910m | 실제 수신·offset·Room 커밋 확인. Gleo는 별도 PR 연동 이후 |
-| 4. B 출발 | 실제 저장 anchor에서600m 뒤 요청 | 예시 B약310m, 최초 표본 anchor605~615면 B5~15m | 목표와 실제 SDK 수락 위치를 구분. 범위 밖이면 명시 실패 |
-| 5. 접근 | B약310→760m, 웹콘솔 입력/실제 SDK | 약45초 뒤 쪽지까지150m, 방향/TTL/미수신 재검사 | 수신1행·원본 유지·제품 전체 큐 순서대로 명시 확인 |
-| 6. 반복/복귀 | 재접근/재생성/패널 닫기 | 이력1행 유지, 새 수신 연출/자동 ACK 없음 | 과거 pending이 앞이면 같은 큐에서 먼저 확인 |
+| 1. 초기화 | 같은 UI에서 새 시연 시작 · 메인 재현은 주행 상태 | 새 scenarioId, DB 기존 시연 삭제, A/B 수신 이력·버퍼 없음 | 쪽지 0 / B 수신 0 |
+| 2. A 준비 | A 경로를 x=0에서 시작 | t=30초 x=300, t=60초 x=600, 최근45초 버퍼 | 첫 신선한 표본부터 준비.30초 경과는 과거 배치 시연용 |
+| 3. 제보 | A가 계속 이동하는 중 Gleo에 ‘도로에 구덩이가 있어, 제보해줘’ | 로직 전용 재현은 t=60초에 테스트 JSON을 예약 주입. 실제 Gleo는 JSON 수신 순간 r을 기록 | 주행 상태와 같은 UI 유지, 경로 재생을 멈추지 않음 |
+| 4. 심기 | 유효 JSON 수신 | 현재 x≈600, 목표 30초 전 x≈300. RoadNote 1행 | 콜백 success, 쪽지 표식 x≈300, offset≈30초 |
+| 5. 역할 전환 | 같은 화면에서 A 가상 경로를 종료하고 B 시작 · 주행/정차 모두 가능 | A listener/버퍼 폐기. 쪽지는 유지. B는 x=0에서 시작 | 역할 B, 원본 쪽지 1 / B 수신 0 |
+| 6. 접근 | B x=0→140 진행 | 전방 거리 >150m | 수신 없음 |
+| 7. 줍기 | B x=150 도달(t≈15초) | 쪽지 x=300까지 150m, 동일 경로·방향. NoteReceipt(B) 1행 | ‘앞쪽 도로에 구덩이’ 쪽지 표시 |
+| 8. 중복 확인 | B x=160→300 계속 진행/같은 위치 재입력 | B 수신 행은 계속 1개, 원본 쪽지 유지 | 반복 수신 없음 |
+| 9. 재시작 확인 | 앱 종료·재실행 | DB 쪽지/수신 이력 복구, 위치 버퍼는 빈 상태 | 심기 재준비 필요, B가 이미 받은 쪽지는 새 수신 안 됨 |
 
-시간은 단조 수신시각으로 버퍼 선택, UTC로 TTL을 검사한다. 시스템 시각을 바꾸거나 제품에 DemoClock/직접 REPLAY 대체를 넣지 않는다. 수치는 고정10m/s·가정한 표본 주기의 설명 예시이며 실제 anchor/offset에서 B 목표를 계산한다. 610m는 작은 시작 여유일 뿐 이후 모든 anchor의 범위를 보장하지 않는다. 경로 확장/clamp/30초 의무 대기 없음.
+**시간 재현 규칙:** 위 3번의 정확한 t=60초는 로직 전용 REPLAY 모드에서 `DemoClock`의 해당 tick에 테스트 JSON을 예약 주입하여 재현한다. Receiver/버퍼/TTL/재생에는 같은 시험 시계를 주입하고 경로 재생을 계속한다. 시스템 UTC나 주행 상태는 조작하지 않는다. 실제 Gleo+SDK 시연도 **정지하지 않고 계속 주행**한다. JSON 수신 순간 t=r을 기록하고 기대 위치는 `x=10×(r−30)`으로 계산한다. Gleo 호출 지연으로 x=300에 정확히 심어지지 않는 것은 정상이며, 실제 수신 기준 30초 전을 검증한다. 이후 B 경로는 저장된 anchor를 기준으로 그보다 300m 뒤에서 출발시켜 15초 후 접근하게 한다.
 
-### 10.2 실제 SDK를 통과하는 두 입력
+### 10.2 SDK 경로와 재현 가능한 대체 경로
 
-| 모드 | 입력 | 입증 범위 |
+| 모드 | 입력/실행 | 입증하는 범위 |
 |---|---|---|
-| WEB_CONSOLE | 웹콘솔 speed/gear→debug mock GPS→실제 Pleos SDK 콜백→gate→버퍼 | mock 권한/주입 성공과 실제 SDK 수신 성공을 구분 |
-| EXTERNAL_ADB | 앱 provider/poll 정리 후 외부 경로 입력→같은 SDK/gate | 외부 입력 시작/중지는 발표자 책임, 앱이 제어했다고 하지 않음 |
+| SDK 통합 시연(우선) | 에뮬레이터 위치 제어로 합성 경로 주입 → 실제 Pleos FusedLocation 콜백 → 버퍼. A 제보는 실제 Gleo 음성 | SDK·Gleo·30초 위치·Room 심기·B 접근 수신의 E2E |
+| REPLAY 로직 시연(대체) | 앱 테스트 소스가 동일 fixture/시험 시계 샘플을 제공. Gleo 대신 고정 유효 JSON 주입도 가능 | 버퍼·배치·Room·접근 판정·UI의 결정적 재현. SDK/음성 통과 증거는 아님 |
 
-양쪽 모두 준비점25m 이격→목표5m 이내·각 단계15초 gate를 채택한다. gate 전 raw는 버퍼/현재위치/수신에 반영하지 않는다. SDK의 새 측정 인증이 아닌 통제된 시연의 캐시 배제 휴리스틱이다. D 정방향만 지원하고 R은 명시 오류,05 역방향 순수 회귀는 유지한다. mock 권한·연결·provider 정리 실패는 드러내고 외부/직접 fake 입력으로 조용히 대체하지 않는다. 실제 전달/게이트 실행은 NOT_TESTED, 순수 JVM Fake/주입 시계는 테스트에만 사용한다.
+에뮬레이터의 위치 주입이 Pleos FusedLocation으로 전달되는 API/도구 경로는 아직 확인되지 않았다. Android Emulator의 일반 위치 주입이 Pleos에 그대로 전달된다고 가정하지 않는다. 먼저 경로 두 점을 입력해 onChanged의 위치·시간·방향 변화를 관측하는 짧은 spike를 수행한다. 성공한 명령/설정과 로그를 시연 실행 안내에 고정한다.
+
+주입이 안 되면 REPLAY로 제출 시나리오를 재현하되 화면/영상에 ‘합성 경로·SDK 미통과’를 명시하고 SDK 검증을 NOT_TESTED로 남긴다. 재현용 JSON은 실제 Gleo 수신과 같은 처리 함수를 호출하는 debug 전용 통로로 제한한다. 도구 미확인 상태에서 실행 가능한 ADB 명령을 꾸며 적지 않는다.
 
 ### 10.3 시연 성공 기준과 실패 장면
 
@@ -375,7 +345,7 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 | 테스트 | 재현 | 기대 결과 |
 |---|---|---|
 | 짧은 이력 | A 시작10초 안에 신선한 표본으로 제보 | 가장 오래된 실제 표본 선택, 실제 offset 기록.30초 대기 없음 |
-| 위치 품질/단절 | null/error/수신 위치2초 초과·후보5초 초과/합성 경로 문맥 불명 입력 | 준비 해제 또는 fail, 현재 위치 대체 없음 |
+| 위치 품질/단절 | null/error/3초 공백/accuracy 50m 입력 | 준비 해제 또는 fail, 현재 위치 대체 없음 |
 | 자기 제보 | A로 쪽지 부근 이동 | A는 자기 쪽지를 새로 줍지 않음 |
 | 정차 수신 | B가 반경 안의 유효 위치에서 정차한 상태로 시작하거나 새 쪽지 생성 | 속도 0이어도 위치·경로·방향 조건이 맞으면 1회 수신 |
 | 반경 밖 정차 | B가 반경 밖에서 정차 | 정차 여부와 무관하게 수신 없음 |
@@ -386,19 +356,19 @@ FLAG_KEEP_SCREEN_ON은 보이는 Activity의 화면 유지 수단이며 백그�
 | 중복 콜백/위치 | 같은 B 위치를 연속 전달 | 수신 행/새 이벤트 1개 |
 | 저장 실패 | DAO 오류 주입 | success 없음, 실패 응답 1회 |
 | 역할 전환 경합 | 심기 처리 중 B 전환/리셋 시도 | 전환 차단 또는 이전 세션 실패, B 명의 오저장 없음 |
-| 주행 화면 유지 | 주행 상태 시작·유지·A/B 전환·제보·수신, 멀티윈도우·앱 이탈 | 주행 상태 변화로 별도 화면 전환/축소 없음. A/B 정보만 같은 UI에서 갱신. 비가시 중 수집 유지·복귀 시 같은 상태 연결. 화면 꺼짐 방지 플래그만 가시성에 따라 원복 |
+| 주행 화면 유지 | 주행 상태 시작·유지·A/B 전환·제보·수신, 멀티윈도우·앱 이탈 | 주행 상태 변화로 별도 화면 전환/축소 없음. A/B 정보만 같은 UI에서 갱신. 비가시 시 정리·복귀 재준비 |
 
 ## 11. 구현 순서와 단계별 완료 조건
 
 | 순서 | 구현할 것 | 선행 입력 / 산출물 | 완료 증거 |
 |---|---|---|---|
-| 1 | FusedLocation·에뮬레이터 spike, 화면 규제 확인 | 실제 SDK 버전·LocationData 필드·권한·위치 주입 경로·Gleo 가시성 영향 확인 | 합성 경로 변화가 실제 SDK 콜백에 도착한 로그. 실패 시 명시 오류·미검증, 자동 대체 없음 |
-| 2 | 세션·시계·위치 샘플 계약·45초 메모리 버퍼 | 동의/권한/수집 수명, 두 입력 모두 SDK 통과·JVM Fake는 테스트 한정 | 45초/5초 경계·공백 이력 유지·null 역전·Main 선택 시각·재시작 단위 테스트 |
+| 1 | FusedLocation·에뮬레이터 spike, 화면 규제 확인 | 실제 SDK 버전·LocationData 필드·권한·위치 주입 경로·Gleo 가시성 영향 확인 | 합성 경로 변화가 실제 SDK 콜백에 도착한 로그. 안 되면 명시적 대체 경로와 미검증 표시 |
+| 2 | 세션·시계·위치 샘플 계약·45초 메모리 버퍼 | 동의/권한/수집 수명, LIVE와 REPLAY 분리 | 45초/5초 경계·공백 이력 유지·null 역전·Main 선택 시각·재시작 단위 테스트 |
 | 3 | Room 쪽지/수신 이력·fixture 경로 문맥 | RoadNote/NoteReceipt/DAO, 세션 초기화, TTL·트랜잭션 | 저장/재조회/만료/복합키 중복/cascade/재시작 테스트 |
 | 4 | A 심기 유스케이스와 Gleo 연결 | 기존 Parser 유지, Receiver 수신 문맥 → 버퍼 anchor → Room | 실제 저장 후 success, 준비 부족 fail, timeout·콜백 실패 구분. debug preview와 실행 모드 구분 |
 | 5 | B 접근 판정·수신함·표시 ACK | 위치 + Room 후보 + 경로 진행값 | 전방 150m·정차/이미 반경 안·쪽지 변경 트리거·동방향·자기 제외·다른 도로·만료·이미 수신 제외 테스트 |
-| 6 | 기존 동일 UI 기반 상태/쪽지 표시·keep-screen-on·A/B 시연 컨트롤 | 07의 MainActivity DO metadata 계획·CarUx 기능별 제한 유지·DB Flow | 주행 중 동일 UI 유지·A/B 전환·전경/배경·분할·회전·화면 꺼짐 방지/원복 실제 증거 |
-| 7 | 한 노트북 E2E 시연 패키지 | 두 경로 fixture, 재현 순서, 초기화, 상태/로그 확인 | 심기→저장→B 접근→1회 수신 영상·DB 검증. 실제 SDK/외부입력/JVM Fake 증거 분리 |
+| 6 | 기존 동일 UI 기반 상태/쪽지 표시·keep-screen-on·A/B 시연 컨트롤 | 기존 DO 선언·UI 상태·DB Flow | 주행 중 동일 UI 유지·A/B 전환·전경/배경·분할·회전·화면 꺼짐 방지/원복 실제 증거 |
+| 7 | 한 노트북 E2E 시연 패키지 | 두 경로 fixture, 재현 순서, 초기화, 상태/로그 확인 | 심기→저장→B 접근→1회 수신 영상·DB 검증. SDK/Gleo/REPLAY 증거 분리 |
 
 각 단계는 구현 → 해당 단위/통합 검사 → 실제 환경 검토 → 실패 수정 순서로 수행한다. `python3 scripts/verify_harness.py --build` 및 작업별 JSON report를 사용한다. 자동 검사 PASS가 실차/시장 심사 PASS를 의미하지 않는다. 실제 구현 완료 상태는 단계별 작업 기록에서 갱신하며 이 설계 문서만으로 완료 체크하지 않는다.
 
@@ -411,58 +381,3 @@ NAMED_PLACE는 명시 장소 검색·후보 선택·좌표 확정 및 별도 입
 실제 도로 식별·고가/지하·방향 정확도, 위치 시간의 SDK 심볼 보장, 프라이버시 차단 UX, 공급자 인증을 통한 외부 Gleo 수신, Gleo의 자발적 접근 음성 안내는 추가 확인 과제다. 제출 프로토타입의 ‘줍기’는 화면 수신이며 음성 경고를 보장하지 않는다.
 
 설계에서 고정한 숫자는 합성 시연 정책이며 현장 측정 후 조정한다. 위치·화면·개인정보는 [Pleos 개인정보 설계](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/security-privacy) 및 공식 가이드에 따라 구현 시 다시 추적한다. 이 문서 개편의 검토/검증 기록은 [prototype-e2e-spec.md](../work/prototype-e2e-spec.md)에 남긴다.
-
-## 13. PR #4 단계별 재구현 계획 보강
-
-최신 작업 순서는 [00 전체 계획](https://github.com/jin-kim-240204/hyundai-and-gretel/blob/625a1fb/docs/specs/road-notes/00-overview.md)과 [01 위치 수집](https://github.com/jin-kim-240204/hyundai-and-gretel/blob/625a1fb/docs/specs/road-notes/01-current-location.md)을 따른다.01은 화면 진단 대신 debug 로그, FGS 요건·수명 확인과 실제 SDK 콜백 수신까지다.02에서 추적 세션의45초 메모리 버퍼 및 제보 신선도를 구현하고 홈 이동/재생성 중 지속 갱신을 검증한다.03~07은 Room→H3→SDK 접근·수신→debug 도구→통합 시연 순이다. Gleo 코드는 별도 PR 소유이며 재작성하지 않는다.
-
-원본·수신이력은 Room, 원시 위치는 메모리 전용이다. 화면이 숨겨져도 버퍼는 현재 시점 기준으로 갱신해야 한다. FGS는 영구 메모리 저장소가 아니며 프로세스 사망 시 버퍼는 소멸한다. 서비스 유형/권한·지속 알림·Pleos 화면 밖 콜백을 실제 환경에서 확인하기 전에는 이 목표를 구현 완료로 판정하지 않는다. 과거 가시 세션 E2E PASS는 이번 화면 독립 추적 검증이 아니다.
-
-
-## 03단계 저장 구현의 확정 범위 (2026-11-12)
-
-이 절은 위 최종 설계의 원본 필드·중복 처리·서비스 종료에 대한 최신 단계별 적용 기준이다. 후속 H3/접근/시연 필드는 해당 단계에서 migration과 기존 행 처리를 정한 뒤 도입한다.
-
-- 현재 원본은 noteId(UUID, PK), authorId, content, category, latitude/longitude, anchorOffsetMillis, createdAtUtcMillis, expiresAtUtcMillis다. noteId 하나를 요청·원본 식별에 함께 사용하며 별도 requestId는 만들지 않는다. scenarioId 및 시나리오/만료 인덱스는06단계로 미루고 기존 행 소속·초기화 정책을 그때 정한다. source/isSynthetic은 현재 사용처가 없어 저장하지 않는다. 합성 시연 전용·실위치 영속화 비활성·서버 자동 업로드 없음이라는 범위는 유지한다.
-- 단순 생성만 제공한다. 같은 noteId는 내용과 무관하게 중복 거절하고 기존 원본을 성공으로 반환하거나 덮어쓰지 않는다. 단일 INSERT와 PK로 동시 중복을 막는다. 앱의 연타 차단은 DB 고유성 보장과 별개다. 제약 오류 뒤 같은 ID가 있으면 Duplicate로 분류하는 것은 SQL 원인이 PK임을 엄밀히 판별한다는 뜻이 아니며, 추가 제약 도입 시 재검토한다.
-- 사용자/자동 재시도·영속 재시도 큐는 없다. 실패 후 새 제보는 새 ID다. Main에서 과거 anchor와 생성 UTC를 고정하며 만료는 생성+600초다. DB 대기도 TTL에 포함한다. content는 trim 후 Unicode 코드 포인트1~500, 초과 절삭 없이 거절한다. 내부 시간 단위는ms이고 정책 기간은 초에서ms로 명시 변환한다.
-- 수집 중지/SDK 오류는 SDK·신규 제보를 막되 수락한 저장1건은 최종결과까지 서비스 수명 안에서 처리한다. 마지막 화면이 해제돼도 저장 동안 foreground/‘제보 저장 중’ 알림을 유지하고 결과 정리 후 종료한다. 강제 종료 뒤 완료·자동 재제출은 보장하지 않는다.
-- Saved는 로컬 Room 커밋 완료다. 서버 공유 완료가 아니다. 서버 전환 시 성공 기준·작성자 식별/인증/권한·시각 권위·Room 역할·데이터 이관을 별도 결정한다. 클라이언트가 보낸 작성자 문자열이나 noteId를 안다는 사실을 권한으로 신뢰하지 않는다.
-- 실제 생성/사용 DB가 없다는 사용자 확인에 따라03-a 리뷰의 isSynthetic 삭제는 v1 스키마 자체를 정리한다. 버전 증가·migration·destructive fallback은 추가하지 않는다. 영속 DB를 사용하기 시작한 이후 스키마 변경은 명시적 migration을 별도로 설계한다.
-
-
-## 04단계 후보 관찰·지원 영역 확정 (2026-11-12)
-
-- H3 res9·약400m 공간 후보는 현재 cover의 Room observable query 한 구독으로 관찰한다. 최초/cover·세션 교체/DB 변경/유효 위치 변경이 재계산을 깨우며10초 폴링은 도입하지 않는다. SQL은 공간 셀 또는 legacy null 행을 관찰하고 조회 시작 UTC를 영구 시간 필터로 바인딩하지 않는다. 원시 버퍼 콜백은 전부 유지한다.
-- 후보 raw snapshot은 조회 자료이며 유효성 보장 목록이 아니다.05는§8.1의 현재 세션/UTC/위치 신선도/거리 재검사 진입점만 사용한다. 만료/위치 없음/stale/세션 불일치에서는 유효 후보를 내보내지 않는다. 이전 구독/느린 결과는 적용 직전 무효화한다.
-- 후보 중심 허용 범위는 위도[37.4900,37.5100],경도[127.0200,127.0500] 닫힌 사각형이다. 서울 행정구역/실도로 보장이 아닌 합성 프로토타입 제한이다. 검증 여유 영역은 위도[37.4800,37.5200],경도[127.0100,127.0600]이며 R=6,371,000m haversine으로 중심별400m 원 포함을 확인한다. 중심 경계 바깥의400m 내 원본도 전체 cover로 조회하고 중심 영역으로 원본을 자르지 않는다. 이 제한은03 원본 저장·보존 범위를 축소하지 않는다.
-- 유한 격자/셀변·꼭짓점/영역 경계/399.99·400·400.01m fixture의 통과는 연속영역 전체 무누락 증명과 구분한다. 중심cover+이웃링을 먼저 검증하고 누락/셀상한 문제가 나올 때만 overlap API와 보수적 확장 중 단일 방식을 선택한다. 아직04 H3/JNI/Room 구현 및 실제 검증은 미실행이다.
-
-
-## 05단계 접근·수신 확정 계약 (2026-11-12)
-
-PR4 05 독립 리뷰 B1/P1/P2/P3의 리뷰이 수용 및 사용자 전달에 따른 공통 정책이다. 위 과거 계획과 충돌하면 이 절과 갱신된§8.1을 우선한다. 구현/런타임 검증 완료를 뜻하지 않는다.
-
-- 합성 전용 수신 자격: 내부 actor/route/direction 설정과 fixture 투영으로 판단한다. 경로 띠20m는 위치 측정 정확도가 아니다. 일반 실도로 GPS에서 합성 방향/accuracy를 만들어내지 않는다. anchor 과거 좌표를 투영하며, 메타데이터 없는 legacy는 보존하되 수신 제외한다. 문맥 없는 신규 원본은03대로 저장 가능하다. 수신150m/2초, 후보400m/5초, TTL600초 유지. 선정은 실제 거리→noteId이고 전방 판정에는 directionSign을 곱한다.
-- 접근 등록은 가까운 최대16개(pending 포함, 앱 상한), 등록 성공은 onRegistered 기준이다. ENTER와 등록 후 이미 반경 안 보완은 동일 앱 조건을 검사한다. proximity 등록 동기 실패 및 등록 전/후 onError는 **현재 수신 세션 Failed 유지**로 처리한다. 먼저 전체 요청을 무효화하고 알려진 ID는 소유 SDK에서 제거 시도한다. 오류가 온 등록 전 요청은 로컬 제거 근거에 따라 pending 종료 가능하나 대체 등록은 금지한다. 다른 미지 ID는 tombstone/슬롯을 유지하고 늦은 ID를 정리한다. 등록 후 onError는 SDK 자동 해제가 아니다. 해제 예외가 있어도 다른 정리를 계속하며 원격 해제 완료/물리적16개 보장은 하지 않는다.
-- 실패한 수신 세션은 신규 등록·ENTER/이미 안 보완·수신 수락을 차단한다. 공유 SDK 위치 수집과03·05의 이미 수락된 쓰기는 유지한다. 명시 추적 중지에서 접근 정리→위치 리스너 해제→finally release를 계속 시도하고 **stop→새 start**의 새 추적 세션에서만 수신을 재허용한다. null 복구·위치/DB/화면 신호·중복 start는 실패를 해제하지 않는다.
-- 수신 INSERT의 StorageFailure도 동일 세션 실패/전체 요청 정리 정책을 따른다. 이후 위치/후보/이력 Flow로 자동 재시도하지 않는다. 기존 수신함 조회·명시 확인 ACK·수락된 쓰기는 유지하고 이전 세션의 늦은 실패/결과는 새 세션에 반영하지 않는다. AlreadyReceived/Ineligible은 저장 실패와 구분한다. 항목별 재시도 버튼/영속 큐 없음.
-- 수신이력은 복합 PK(noteId,recipientId)와 원본 FK CASCADE, 한 JOIN으로 읽는다. PENDING은 displayedAtUtc null에서 파생한다. 사용자 확인 ACK만 최초 값을 멱등 기록하고 ACK 실패는 수신 INSERT 실패와 별개로 PENDING 유지 후 명시 확인 클릭에서만 재시도한다. 자동 composition/노출 ACK는 없다. 이미 수락한 수신/ACK 쓰기는03처럼 서비스 종료를 지연하고 원래 사용자로 끝내며 새 세션 UI와 격리한다.
-
-
-## 06단계 시연·규제·보존 확정 계약 (2026-11-12)
-
-06 리뷰이 판단 B1/P1/P2 및 사용자 지시에 따른 정책이다. 새 코드/실행 검증 완료가 아니다. A 기본610±5m·실제 저장 anchor에서 B600m 뒤 요청, 두 실제 SDK 입력·no REPLAY, 현재 시나리오만 원자 reset, CarUx 기능별 제한/NO_SETUP·미연결 설정 차단을 채택한다. 제품 수신함은 **recipient 전체 JOIN·동일 한 건 큐·명시 ACK를 debug/release 모두 유지**한다. null legacy/다른 시나리오도 보존되어 있으면 조회·확인이 가능하다. 후보/등록·신규수신/대상·진행축·시연카운트만 활성 시나리오로 제한한다. nullable scenarioId/단일 활성 상태행은 현재 새v1에 포함하며 소속 추정은 하지 않는다. 이전 개발v4→새v1 이관 지원은 없고 기존 앱 데이터를 초기화한다. reset은 수락 쓰기0·명시 확인 후 현재 시나리오만 삭제·새 ID 갱신하며 실패 시 롤백한다.
-
-
-## 07 사용자 추가 범위: 주행 중 제품 화면 사용 (2026-11-12)
-
-사용자는 주행 중에도 앱을 사용할 수 있어야 하며 속도가 올라가면 화면이 사라지는 문제를07에서 해결하도록 명시했다. **06 당시 DO 미선언은 코드 현황/과거 범위이고, 앞으로도 추가하지 않는다는 정책은 이번 요구로 대체한다.** 이번 변경은 명세이며 앱 Manifest는 아직 바꾸지 않는다. 독립 스펙 리뷰 후 구현한다.
-
-[지역별 정책](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/driving-restiction-policy)의 ‘주행 상황에 따른 앱 사용 여부’는 DO 미선언 Drive 사용 불가를 설명한다. [개발 가이드](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)의 CarUxRestrictions 연동은 DO 선언 이후에도 기능별 제한 적용을 요구한다. 두 조건을 함께 지킨다.
-
-계획하는 최소 선언은 기존 MainActivity의 `<activity>` 자식 `<meta-data android:name="distractionOptimized" android:value="true" />`다. application/service 아래에 잘못 놓거나 debug에만 넣지 않는다. debug/release merged Manifest 및 패키징 Manifest에서 같은 Activity의 단일 Boolean true 선언을 검사한다. 기존 제품 UI/명시 확인 ACK·수락 쓰기·메모리/Room 수명·CarUx NO_SETUP/문자·깊이·항목·본문·NO_VIDEO 제한과 중지/취소/닫기를 유지한다. KEEP_SCREEN_ON은 가시성에 따른 화면 꺼짐 방지로 별도다. 주행 전용 축소 화면·강제 foreground 복귀·Gleo 확장을 추가하지 않는다.
-
-git fetch origin 후 확인한 gm/feat-speech-to-text의 b61ffd71fadc4b0d88625de85f664cdaf4e53565는 위 Activity metadata를 추가했고819df06fbd7508ecdc4b75691f5143d3db0999da는 전체 UI 복원 때 선언을 유지했다. 현재 main/위치 기능 브랜치에는 없는 변경이다. 해당 브랜치 전체 merge/cherry-pick이나 옛 UI/CarUx 구현 복사는 하지 않고 선언과 현 UI 규제 계약만 검토한다.
-
-07의 허용 host/빌드·정적 회귀와 별도 실행 허용 후의 실제 주행 재현을 분리한다. DO 선언만으로 화면 유지/주행 UX 적합성·심사 통과를 PASS로 보지 않는다. 현재 실제 주행/SDK/CarUx/UI는 NOT_TESTED이며 실행 금지는 유지한다. 독립 스펙 리뷰 대상인 세부 검증은 기능 PR의07 명세에서 연결한다.

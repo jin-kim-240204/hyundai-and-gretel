@@ -1,0 +1,24 @@
+{
+  "task": "gleo-spec-base",
+  "selected_rules": [
+    "ENV-02",
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "문서 소유권 변경만 수행하며 앱 구조/코드 불변."
+    },
+    {
+      "id": "INT-01",
+      "status": "PASS",
+      "evidence": "Gleo 상세 문서는 이 기능 브랜치에 유지, 공통 시스템 설계는 부모 브랜치 문서로 링크. schema 변경 없음."
+    },
+    {
+      "id": "DOC-24357cf5e59a#공통계약상속",
+      "status": "PASS",
+      "evidence": "spec 브랜치를 merge한 뒤 implementation-plan/diagrams 전체 계획 파일은 spec 대비 diff 없음. 앱 스키마는 기존 기능 계약 유지. 코드 변경 없음."
+    }
+  ]
+}

@@ -8,6 +8,18 @@ class LocationBufferTest {
     private fun LocationBuffer.add(at: Long) = offer(fix = fix(at), receivedElapsedMillis = at, nowElapsedMillis = at)
     private fun LocationBuffer.anchor(now: Long) = (select(now) as AnchorSelection.Selected).anchor
 
+    @Test fun delayedGleoRequestUsesReceiptTimeAndNeverAFutureSample() {
+        val buffer = LocationBuffer()
+        for (at in 0L..40_000L step 1_000) buffer.add(at)
+        val selected = (buffer.selectAt(38_000, 40_000) as AnchorSelection.Selected).anchor
+        assertEquals(8_000L, selected.sample.receivedElapsedMillis)
+        assertEquals(30_000L, selected.offsetMillis)
+        assertEquals(AnchorSelection.Unavailable.INVALID_TIME, buffer.selectAt(41_000, 40_000))
+        assertEquals(AnchorSelection.Unavailable.STALE, buffer.selectAt(32_000, 40_000))
+        val newerSession = LocationBuffer().apply { add(40_000) }
+        assertEquals(AnchorSelection.Unavailable.EMPTY, newerSession.selectAt(39_000, 40_000))
+    }
+
     @Test fun emptyFirstAndShortHistory() {
         val buffer = LocationBuffer()
         assertEquals(AnchorSelection.Unavailable.EMPTY, buffer.select(100_000))

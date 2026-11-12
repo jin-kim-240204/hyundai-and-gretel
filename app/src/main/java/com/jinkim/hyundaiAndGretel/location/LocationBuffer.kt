@@ -44,26 +44,30 @@ class LocationBuffer {
         return Update.ACCEPTED
     }
 
-    fun select(now: Long): AnchorSelection {
-        if (now < 0 || now < lastEventElapsedMillis) return AnchorSelection.Unavailable.INVALID_TIME
-        prune(now)
-        val oldest = samples.firstOrNull() ?: return AnchorSelection.Unavailable.EMPTY
-        val latest = samples.last()
-        if (now - latest.receivedElapsedMillis > FRESHNESS_MILLIS) return AnchorSelection.Unavailable.STALE
-        val historyCoversTarget = now - oldest.receivedElapsedMillis >= TARGET_MILLIS
-        val targetElapsedMillis = now - TARGET_MILLIS
+    fun select(now: Long): AnchorSelection = selectAt(now, now)
+
+    fun selectAt(receivedElapsedMillis: Long, nowElapsedMillis: Long): AnchorSelection {
+        if (nowElapsedMillis < lastEventElapsedMillis || receivedElapsedMillis !in 0L..nowElapsedMillis)
+            return AnchorSelection.Unavailable.INVALID_TIME
+        prune(nowElapsedMillis)
+        val history = samples.filter { it.receivedElapsedMillis <= receivedElapsedMillis }
+        val oldest = history.firstOrNull() ?: return AnchorSelection.Unavailable.EMPTY
+        val latest = history.last()
+        if (nowElapsedMillis - latest.receivedElapsedMillis > FRESHNESS_MILLIS)
+            return AnchorSelection.Unavailable.STALE
+        val historyCoversTarget = receivedElapsedMillis - oldest.receivedElapsedMillis >= TARGET_MILLIS
+        val targetElapsedMillis = receivedElapsedMillis - TARGET_MILLIS
         val sample = when {
             !historyCoversTarget -> oldest
-            else -> samples.minWith(
+            else -> history.minWith(
                 compareBy<LocationFix> { abs(it.receivedElapsedMillis - targetElapsedMillis) }
                     .thenBy { it.receivedElapsedMillis },
             )
         }
-
         val targetErrorMillis = abs(sample.receivedElapsedMillis - targetElapsedMillis)
         return when {
             historyCoversTarget && targetErrorMillis > TARGET_TOLERANCE_MILLIS -> AnchorSelection.Unavailable.NO_TARGET_SAMPLE
-            else -> AnchorSelection.Selected(LocationAnchor(sample, now))
+            else -> AnchorSelection.Selected(LocationAnchor(sample, receivedElapsedMillis))
         }
     }
 

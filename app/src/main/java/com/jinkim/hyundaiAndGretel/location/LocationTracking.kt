@@ -130,6 +130,7 @@ class LocationTracking(
     fun bufferSnapshot() = LocationBufferSnapshot(buffer.size, buffer.oldestElapsedMillis, buffer.latestElapsedMillis)
 
     fun selectAnchor(): AnchorSelection = buffer.select(clock())
+    fun selectAnchorAt(receivedElapsedMillis: Long): AnchorSelection = buffer.selectAt(receivedElapsedMillis, clock())
 
     private fun update(value: TrackingStatus) {
         if (mutableStatus.value == value) return

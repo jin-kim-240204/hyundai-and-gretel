@@ -1,0 +1,29 @@
+{
+  "task": "revert-driving-ui",
+  "selected_rules": [
+    "ENV-02",
+    "SAF-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "기존 ComponentActivity/Compose UI 및 Gleo 관측 코드를 b61ffd7 직전으로 복원. Android car library/monitor/UI/test 제거, 빌드/lint/Studio PASS."
+    },
+    {
+      "id": "SAF-01",
+      "status": "FAIL",
+      "evidence": "사용자 명시 요청에 따라 DO만 유지하고 앱의 CarUxRestrictions 기능 제한 처리를 제거했다. 공식 주행 규제 준수/출시 적합성 완료로 보고하지 않는다."
+    },
+    {
+      "id": "DOC-6386c5462132#DO",
+      "status": "PASS",
+      "evidence": "MainActivity distractionOptimized=true 유지, 플랫폼 전체 차단 해제 선언."
+    },
+    {
+      "id": "DOC-9faba42791f0#UX제한",
+      "status": "FAIL",
+      "evidence": "사용자 요청으로 상태 감시·UI 축소를 원복. DO 앱의 기능 제한 연동 공식 요구 충족으로 간주하지 않는다."
+    }
+  ]
+}

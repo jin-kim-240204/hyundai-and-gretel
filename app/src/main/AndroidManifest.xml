@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <queries><package android:name="ai.pleos.playground.service.location.fused" /></queries>
     <application
+        android:name=".HyundaiAndGretelApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -20,6 +21,11 @@
 
         <service android:name=".service.RoadNoteService" android:exported="false"
             android:foregroundServiceType="location|dataSync" />
+        <receiver android:name=".gleo.GleoActionReceiver" android:exported="${gleoReceiverExported}">
+            <intent-filter>
+                <action android:name="com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"
