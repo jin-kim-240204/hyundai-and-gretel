@@ -1,0 +1,109 @@
+package com.jinkim.hyundaiAndGretel.notes.pickup
+
+import com.jinkim.hyundaiAndGretel.location.LocationFix
+import com.jinkim.hyundaiAndGretel.notes.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.test.*
+import org.junit.Assert.*
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class ReceiptRepositoryTest {
+    private val note = RoadNote("00000000-0000-0000-0000-000000000001", "A", "구덩이", NoteCategory.WARNING,
+        37.5, 127.03, 0, 0, 600_000, SyntheticRoute.project(37.5, 127.03, SyntheticSession()))
+    private class Store : ReceiptStore {
+        val rows = MutableStateFlow<List<InboxItem>>(emptyList())
+        var confirmCalls = 0
+        var fail = false
+        var gate = CompletableDeferred<Unit>().also { it.complete(Unit) }
+        override fun observeInbox(recipientId: String) = rows.map { list -> list.filter { it.recipientId == recipientId } }
+        override suspend fun receive(request: ReceiptRequest): ReceiveResult { gate.await(); return ReceiveResult.RECEIVED }
+        override suspend fun confirm(noteId: String, recipientId: String) {
+            confirmCalls++
+            gate.await()
+            if (fail) error("db")
+            rows.value = rows.value.map { if (it.note.noteId == noteId && it.recipientId == recipientId) it.copy(displayedAtUtcMillis = 50) else it }
+        }
+    }
+
+    @Test fun confirmationIsExplicitKeyedAndOnlyAdvancesAfterCommit() = runTest {
+        val store = Store()
+        val repo = ReceiptRepository(backgroundScope, store, MutableStateFlow("B"), {})
+        store.rows.value = listOf(InboxItem(note, "B", 10, 0.0, null))
+        runCurrent()
+        val key = ReceiptKey(note.noteId, "B")
+        runCurrent() // Collection/composition/re-entry do not acknowledge anything.
+        assertEquals(0, store.confirmCalls)
+        repo.confirm(key, false)
+        repo.confirm(key.copy(recipientId = "A"), true)
+        repo.confirm(key.copy(noteId = "old"), true)
+        runCurrent()
+        assertEquals(0, store.confirmCalls)
+        store.gate = CompletableDeferred()
+        repo.confirm(key, true)
+        repo.confirm(key, true)
+        runCurrent()
+        assertEquals(1, store.confirmCalls)
+        assertNotNull(repo.inbox.value.pending)
+        assertTrue(repo.hasPendingWrites)
+        store.gate.complete(Unit)
+        runCurrent()
+        assertNull(repo.inbox.value.pending)
+        assertFalse(repo.hasPendingWrites)
+        assertEquals(50L, repo.inbox.value.items.single().displayedAtUtcMillis)
+    }
+
+    @Test fun ackFailureKeepsPendingAndOnlyAnotherExplicitClickRetries() = runTest {
+        val store = Store().apply { fail = true }
+        val actor = MutableStateFlow("B")
+        val repo = ReceiptRepository(backgroundScope, store, actor, {})
+        store.rows.value = listOf(InboxItem(note, "B", 10, 0.0, null))
+        runCurrent()
+        val key = ReceiptKey(note.noteId, "B")
+        repo.confirm(key, true)
+        runCurrent()
+        assertTrue(repo.inbox.value.error)
+        assertNotNull(repo.inbox.value.pending)
+        store.rows.value = store.rows.value.toList()
+        runCurrent()
+        assertEquals(1, store.confirmCalls)
+        store.fail = false
+        repo.confirm(key, true)
+        runCurrent()
+        assertEquals(2, store.confirmCalls)
+        assertNull(repo.inbox.value.pending)
+    }
+
+    @Test fun acceptedWritesSurviveActorSwitchAndNeverAlterNewInbox() = runTest {
+        val store = Store().apply { gate = CompletableDeferred() }
+        val actor = MutableStateFlow("B")
+        var finished = 0
+        val repo = ReceiptRepository(backgroundScope, store, actor, { finished++ })
+        runCurrent()
+        val request = ReceiptRequest(note.noteId, SyntheticSession("B"), LocationFix(37.5, 127.03, 0))
+        var result: ReceiveResult? = null
+        repo.receive(request) { result = it }
+        runCurrent()
+        actor.value = "C"
+        runCurrent()
+        assertTrue(repo.hasPendingWrites)
+        store.gate.complete(Unit)
+        runCurrent()
+        assertEquals(ReceiveResult.RECEIVED, result)
+        assertTrue(repo.inbox.value.items.isEmpty())
+        assertEquals(1, finished)
+        assertFalse(repo.hasPendingWrites)
+    }
+
+    @Test fun eligibilityPreservesExpirySelfDirectionAndLegacyBoundaries() {
+        val p = LocationFix(37.5, 127.03, 0)
+        assertEquals(0.0, eligibleDistance(note, SyntheticSession("B"), p, 1)!!, 0.0)
+        assertNull(eligibleDistance(note, SyntheticSession(), p, 1))
+        assertNull(eligibleDistance(note, SyntheticSession("B"), p, 600_000))
+        assertNull(eligibleDistance(note.copy(route = null), SyntheticSession("B"), p, 1))
+        assertNull(eligibleDistance(note, SyntheticSession("B", direction = -1), p, 1))
+        assertNull(eligibleDistance(note, SyntheticSession("B"), p.copy(longitude = 127.031), 1))
+        assertNull(eligibleDistance(note, SyntheticSession("B"), p.copy(latitude = 37.501), 1))
+    }
+}

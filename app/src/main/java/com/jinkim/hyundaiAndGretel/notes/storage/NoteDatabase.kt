@@ -27,6 +27,7 @@ internal interface RoadNoteDao {
 @Database(entities = [RoadNoteEntity::class, ReceiptEntity::class], version = 3, exportSchema = true)
 internal abstract class NoteDatabase : RoomDatabase() {
     abstract fun notes(): RoadNoteDao
+    abstract fun receipts(): ReceiptDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {

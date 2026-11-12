@@ -9,3 +9,7 @@
 ## 묶음1
 
 합성 R1 투영/방향 부호·메타데이터 경계 검증,03 anchor에만 투영·문맥없음 저장 허용. Room v3 nullable route3컬럼+receipts 복합PK/FK/인덱스, 명시2→3 migration. 기존1/2 schema 수정 없음. PASS: JVM51/51(합성2추가), 계측 APK 컴파일. migration1/2→3 보존 검사는 작성·컴파일만 하며 실제 Room 실행 NOT_TESTED.
+
+## 묶음2
+
+수신 자격 공통 함수/불변 수락 입력,Room트랜잭션 재조회·TTL/타인/경로·거리 재검사/중복 확인·INSERT OR IGNORE, 실패와중복구분. 단일JOIN·멱등명시ACK·확인시각, UI와분리된수락쓰기수명. PASS: JVM55/55(수신/ACK4추가), 계측APK컴파일. Room동시복합키/다른수신자/JOIN/만료/ACK/CASCADE 검사는 작성·컴파일만, 실제실행 NOT_TESTED.
