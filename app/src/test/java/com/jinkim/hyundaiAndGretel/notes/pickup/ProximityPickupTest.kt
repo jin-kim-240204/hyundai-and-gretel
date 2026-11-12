@@ -3,12 +3,12 @@ package com.jinkim.hyundaiAndGretel.notes.pickup
 import com.jinkim.hyundaiAndGretel.location.*
 import com.jinkim.hyundaiAndGretel.notes.*
 import com.jinkim.hyundaiAndGretel.notes.spatial.*
+import java.io.IOException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
-import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProximityPickupTest {
@@ -54,7 +54,7 @@ class ProximityPickupTest {
         val signals = MutableStateFlow<CandidateState>(CandidateState.Loading)
         var notes = listOf(note())
         val store = Store()
-        val receipts = ReceiptRepository(scope, store, MutableStateFlow("B"), {})
+        val receipts = NoteReceiptProcessor(scope, store, MutableStateFlow("B"), {})
         val pickup = ProximityPickup(scope, positions, signals, {
             val p = positions.value
             if (p == null || elapsed - p.fix.receivedElapsedMillis !in 0L..5_000) null else notes

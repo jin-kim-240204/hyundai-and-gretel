@@ -8,25 +8,25 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.DisposableEffect
-import android.view.WindowManager
-import com.jinkim.hyundaiAndGretel.demo.DemoPanel
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.jinkim.hyundaiAndGretel.ui.location.LocationViewModel
-import com.jinkim.hyundaiAndGretel.ui.location.LocationView
+import com.jinkim.hyundaiAndGretel.demo.DemoPanel
+import com.jinkim.hyundaiAndGretel.ui.roadnotes.RoadNotesScreen
+import com.jinkim.hyundaiAndGretel.ui.roadnotes.RoadNotesViewModel
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: LocationViewModel by viewModels()
+    private val viewModel: RoadNotesViewModel by viewModels()
     private enum class PendingStart { NONE, WAITING_FOR_PERMISSION, PERMISSION_RESULT_READY }
     private var pendingStart = PendingStart.NONE
     private var permissionMessage by mutableStateOf("")
@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
                 else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 onDispose { window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
             }
-            LocationView(
+            RoadNotesScreen(
                 state = uiState,
                 startCommandFailed = startCommandFailed,
                 permissionMessage = permissionMessage,

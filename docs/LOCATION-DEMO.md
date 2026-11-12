@@ -18,7 +18,7 @@ MainActivity에 DO activity metadata를 선언했다. 이 선언과 KEEP_SCREEN_
 1. 노트북1·Pleos 에뮬레이터1·앱1개/동일 Room DB를 사용한다. 합성 데이터만 준비하고 실제 사용자 위치/제보 원문을 원격 보고에 올리지 않는다.
 2. 테스트 앱을 mock 위치 제공자로 선택할 수 있는 환경인지와 SDK 위치 권한/Android 위치 설정·알림을 각각 확인한다. 앱은 스스로 권한/app-op을 승격하지 않는다. 웹모드는 단독 mock writer, 외부 모드는 앱 provider 정리 완료가 전제다.
 3. 웹콘솔 경로는 `http://127.0.0.1:8088/vehicle/state`, `controls.speed_kph`, `gear.actual.value`다. 기존 관찰 형식이며 공식 안정 API 보장이 아니다. 접속/응답 형식이 다르면 오류로 두고 환경을 확인한다. 임의 주소나 직접 Fake 위치로 대체하지 않는다.
-4. 기존 DB를 지우거나 uninstall/clear-data 하지 않는다. legacy/다른 시나리오 기록과 현재 시나리오를 구분한다. reset은 명시 확인 후 현재 시나리오만 삭제하고 새 ID를 선택한다.
+4. 최신 구조의 새v1으로 기준을 재설정했다. 이전 개발1~4 DB가 있는 설치본은 최초 실행 전 앱 데이터 전체를 초기화한다(현재 실행 금지라 이번에는 수행하지 않음). 이후 새v1의 소속 없는 행/다른 시나리오와 현재 시나리오를 구분하며, 시연 reset은 현재 소속만 삭제한다.
 
 ## 주 시연 대본
 
@@ -55,6 +55,6 @@ MainActivity에 DO activity metadata를 선언했다. 이 선언과 KEEP_SCREEN_
 - 등록 전/후 onError·수신 StorageFailure는 해당 수신 세션 Failed. 위치/수락 쓰기/기존 큐는 유지하고 위치/DB 신호로 자동 복구하지 않는다. 명시 stop→새 start에서만 재허용한다.
 - 저장/수신/ACK/reset 수락 후에는 역할/모드/시작/reset 설정을 거절한다. 일반 stop은 가능하고 원래 키의 수락 쓰기는 끝낸다. 수집 location/저장전용 dataSync와 마지막 쓰기 뒤 종료를 각각 확인한다.
 - 실제 SDK 오류→수락 저장→마지막 unbind→알림/서비스 종료는 [4541836293](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/4#discussion_r4541836293)의 미해결 근거다. Fake·종료 판단·계측 컴파일은 실제 SDK/Android 수명 성공이 아니다.
-- Room migration v1→2→3→4·동시 복합키/단일 JOIN·ACK·현재 소속만 reset/롤백은 계측 실행 허용 후 확인한다. Fake의 저장/삭제 모델은 SQLite 원자성 증거가 아니다.
+- 새v1의 동시 복합키/단일 JOIN·ACK·현재 소속만 reset/롤백은 계측 실행 허용 후 확인한다. Fake의 저장/삭제 모델은 SQLite 원자성 증거가 아니다.
 
 각 장면은 [07 R01~07](specs/road-notes/07-integration-and-demo.md)의 PASS/FAIL/NOT_TESTED로 개별 기록한다. 현재 전부 NOT_TESTED다. 수신 중복 방지와 표시 확인을 구분하며 이번 구현의 명시 확인 ACK는 현재 검증 계약이다. 최종 읽음 정의/버튼 필수·음성 의존을 새로 확정하거나 Gleo/자동 ACK를 추가하지 않는다.

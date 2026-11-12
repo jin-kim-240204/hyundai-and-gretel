@@ -4,13 +4,17 @@ import com.jinkim.hyundaiAndGretel.location.*
 import com.jinkim.hyundaiAndGretel.notes.*
 import com.jinkim.hyundaiAndGretel.notes.pickup.*
 import com.jinkim.hyundaiAndGretel.notes.spatial.*
+import com.jinkim.hyundaiAndGretel.notes.submit.RoadNoteSubmission
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
+import com.jinkim.hyundaiAndGretel.service.shouldStopRoadNoteService
 import com.jinkim.hyundaiAndGretel.ui.ux.*
+import java.util.UUID
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
-import java.util.UUID
 
 /** Production orchestration with in-memory ports; not Android service/Room/SDK evidence. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -82,7 +86,7 @@ class RoadNotesDemoFlowTest {
         }
         override fun removeProximity(alertId: String) = Unit
     }
-    private class Input : DemoInput {
+    private class Input : DemoInputSource {
         var last = 0.0
         override suspend fun prepare() = Unit
         override suspend fun readMotion() = 36.0 to "Drive"
@@ -100,21 +104,21 @@ class RoadNotesDemoFlowTest {
         val policy = MutableStateFlow(UiRestrictions(connected = true))
         var stopDecisions = 0
         lateinit var demo: DemoRuntime
-        val receipts: ReceiptRepository = ReceiptRepository(test.backgroundScope, store, actor, { finish() })
+        val receipts: NoteReceiptProcessor = NoteReceiptProcessor(test.backgroundScope, store, actor, { finish() })
         val tracking: LocationTracking = LocationTracking(test.backgroundScope, { Source().also { sources += it } }, {}, {
             demo.onSourceFailure(); pickup.stop(); finish()
         }, ::elapsed, { demo.accept(it) })
-        val submissions: RoadNoteRepository = RoadNoteRepository(test.backgroundScope, store, tracking::selectAnchor, ::utc, { finish() },
+        val submissions: RoadNoteSubmission = RoadNoteSubmission(test.backgroundScope, store, tracking::selectAnchor, ::utc, { finish() },
             setup = { setup }, scenarioId = { store.active.value })
         val spatial = object : SpatialIndex {
             override fun cell(latitude: Double, longitude: Double) = "fixture"
             override fun cover(latitude: Double, longitude: Double) = setOf("fixture")
         }
-        val candidates: NearbyCandidates = NearbyCandidates(test.backgroundScope, tracking.currentPosition, spatial, store, ::elapsed, ::utc)
+        val candidates: NearbyNoteCandidates = NearbyNoteCandidates(test.backgroundScope, tracking.currentPosition, spatial, store, ::elapsed, ::utc)
         val pickup: ProximityPickup = ProximityPickup(test.backgroundScope, tracking.currentPosition, candidates.state, candidates::currentCandidates,
             receipts, tracking::ownsSource, ::elapsed, ::utc, scenarioId = { store.active.value })
         init {
-            demo = DemoRuntime(test.backgroundScope, object : DemoHost {
+            demo = DemoRuntime(test.backgroundScope, object : DemoServiceContract {
                 override val busy get() = submissions.isSubmitting || receipts.hasPendingWrites
                 override fun startTracking() {
                     tracking.start()
@@ -131,7 +135,7 @@ class RoadNotesDemoFlowTest {
             }, store, store.active, policy, ::elapsed, ::utc, input)
         }
         fun finish() {
-            if (shouldStopTrackingService(tracking.status.value, submissions.state.value, receipts.hasPendingWrites)) stopDecisions++
+            if (shouldStopRoadNoteService(tracking.status.value, submissions.state.value, receipts.hasPendingWrites)) stopDecisions++
         }
         fun emit(progress: Double) {
             val fix = DemoGeometry.fix(progress, elapsed())

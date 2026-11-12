@@ -1,0 +1,35 @@
+{
+  "task": "길쪽지 책임별 구조 정리와 개발DB v1",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "DES-06"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "JVM95/Python4/debug/release/계측compile/lint/harness/새service·DO·release·v1 schema 정적 PASS. docs/work/road-note-structure-refactor.md"
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "현재콜백/수락쓰기/취소·수명 host 회귀 PASS; 실제 SDK/서비스/알림/Room 실행 금지 유지"
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "화면/정책 본문 이름 외 동일·양variant compile PASS. 실제 UI/주행 검증 없음"
+    },
+    {
+      "id": "DOC-1ba06876919b#초기화해제",
+      "status": "NOT_TESTED",
+      "evidence": "11개 서비스 함수 및 기존 초기화순서 정규화 비교 동일/host 회귀 PASS. 실제 SDK/서비스 미검증"
+    },
+    {
+      "id": "DOC-9faba42791f0#기능별규제",
+      "status": "NOT_TESTED",
+      "evidence": "CarUx·최신 ACK·DO 보존 정적/host PASS. 실제 신호·화면 미검증"
+    }
+  ]
+}

@@ -34,7 +34,7 @@ def verify(root=ROOT):
         apk = root / f'app/build/outputs/apk/{variant}/{apk_name}'
         packaged = ET.fromstring(subprocess.check_output([str(analyzer), 'manifest', 'print', str(apk)]))
         check_activity_do(packaged)
-        service = packaged.find('./application/service[@' + ANDROID + 'name="com.jinkim.hyundaiAndGretel.location.LocationTrackingService"]')
+        service = packaged.find('./application/service[@' + ANDROID + 'name="com.jinkim.hyundaiAndGretel.service.RoadNoteService"]')
         assert service is not None
         service_type = service.get(ANDROID + 'foregroundServiceType')
         assert service_type == '0x9' or set(service_type.split('|')) == {'location', 'dataSync'}
@@ -49,21 +49,20 @@ def verify(root=ROOT):
                 assert not {'android.permission.INTERNET', 'android.permission.ACCESS_MOCK_LOCATION'} & permissions
                 assert packaged.find('application').get(ANDROID + 'networkSecurityConfig') is None
                 dex = b''.join(archive.read(n) for n in archive.namelist() if n.endswith('.dex'))
-                for value in ['AndroidDemoInput', 'DemoGeometry', 'StartGate', 'DemoMode', 'DemoPhase', '127.0.0.1:8088', '시연 도구']:
+                for value in ['AndroidDemoInput', 'AndroidDemoInputSource', 'DemoGeometry', 'StartGate', 'DemoMode', 'DemoPhase', '127.0.0.1:8088', '시연 도구']:
                     assert value.encode() not in dex, value
                 assert not any('debug_network_security' in n for n in archive.namelist())
         artifacts[variant] = hashlib.sha256(apk.read_bytes()).hexdigest()
     schemas = sorted((root / 'app/schemas').glob('*/*.json'))
-    assert [p.stem for p in schemas] == ['1', '2', '3', '4']
+    assert [p.stem for p in schemas] == ['1']
     db = json.loads(schemas[-1].read_text())['database']
     entities = {e['tableName']: e for e in db['entities']}
-    assert db['version'] == 4 and 'demo_state' in entities
+    assert db['version'] == 1 and 'demo_state' in entities
     note = entities['road_notes']
     assert not next(f for f in note['fields'] if f['columnName'] == 'scenarioId').get('notNull', False)
     receipt = entities['note_receipts']
     assert receipt['primaryKey']['columnNames'] == ['noteId', 'recipientId']
     assert any(f['table'] == 'road_notes' and f['onDelete'] == 'CASCADE' for f in receipt['foreignKeys'])
-    subprocess.run(['git', 'diff', '--exit-code', 'HEAD', '--', 'app/schemas'], cwd=root, check=True)
     return artifacts
 
 

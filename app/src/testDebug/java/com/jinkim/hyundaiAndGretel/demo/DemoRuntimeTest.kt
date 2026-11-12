@@ -28,7 +28,7 @@ class DemoRuntimeTest {
             return next
         }
     }
-    private class Host : DemoHost {
+    private class Host : DemoServiceContract {
         override var busy = false
         var starts = 0; var stops = 0; var finished = 0; var actor = "A"
         var holdFails = false
@@ -39,7 +39,7 @@ class DemoRuntimeTest {
         override fun holdStorage() { check(!holdFails) { "승격 실패" } }
         override fun writesFinished() { finished++ }
     }
-    private class Input : DemoInput {
+    private class Input : DemoInputSource {
         val injected = mutableListOf<Double>()
         var closes = 0; var deny = false
         var motionGate: CompletableDeferred<Unit>? = null

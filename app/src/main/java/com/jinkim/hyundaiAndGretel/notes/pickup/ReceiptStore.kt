@@ -16,6 +16,7 @@ data class InboxItem(
 )
 enum class ReceiveResult { RECEIVED, ALREADY_RECEIVED, INELIGIBLE, STORAGE_FAILURE }
 
+/** 사용자별 수신·확인 저장 계약. 구체 트랜잭션과 JOIN은 RoomReceiptStore가 담당한다. */
 interface ReceiptStore {
     fun observeInbox(recipientId: String): Flow<List<InboxItem>>
     suspend fun receive(request: ReceiptRequest): ReceiveResult

@@ -6,11 +6,11 @@ import android.database.sqlite.SQLiteException
 import com.jinkim.hyundaiAndGretel.notes.CreateNoteResult
 import com.jinkim.hyundaiAndGretel.notes.RoadNote
 import com.jinkim.hyundaiAndGretel.notes.RoadNoteStore
-import com.jinkim.hyundaiAndGretel.notes.validationError
+import com.jinkim.hyundaiAndGretel.notes.pickup.NearbyNoteStore
 import com.jinkim.hyundaiAndGretel.notes.spatial.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.*
+import com.jinkim.hyundaiAndGretel.notes.validationError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 
 class RoomRoadNoteStore internal constructor(
     private val database: NoteDatabase,

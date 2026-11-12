@@ -28,7 +28,7 @@ class ReceiptAdmissionTest {
     }
     @Test fun rawDepthChangeRejectsQueuedAckBeforeDerivedUiStateCatchesUp() = runTest {
         val store = Store()
-        val repo = ReceiptRepository(backgroundScope, store, MutableStateFlow("B"), {})
+        val repo = NoteReceiptProcessor(backgroundScope, store, MutableStateFlow("B"), {})
         val raw = MutableStateFlow(UiRestrictions(connected = true))
         val displayed = raw.map { it }.stateIn(backgroundScope, SharingStarted.Eagerly, raw.value)
         runCurrent()
@@ -46,7 +46,7 @@ class ReceiptAdmissionTest {
     @Test fun currentVisitedBudgetRejectsNewItemButAcceptedAckFinishesAfterRestrictionsChange() = runTest {
         val store = Store(); store.gate = CompletableDeferred()
         var finished = 0
-        val repo = ReceiptRepository(backgroundScope, store, MutableStateFlow("B"), { finished++ })
+        val repo = NoteReceiptProcessor(backgroundScope, store, MutableStateFlow("B"), { finished++ })
         val raw = MutableStateFlow(UiRestrictions(true, true, F.UX_RESTRICTIONS_LIMIT_CONTENT, 100, 1, 1))
         runCurrent()
         val visited = mutableSetOf("debug:settings")

@@ -2,6 +2,8 @@ package com.jinkim.hyundaiAndGretel.notes
 
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
+import com.jinkim.hyundaiAndGretel.notes.spatial.SpatialIndex
+import com.jinkim.hyundaiAndGretel.notes.spatial.SpatialUnavailableException
 import com.jinkim.hyundaiAndGretel.notes.storage.NoteDatabase
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
 import kotlinx.coroutines.*
@@ -108,6 +110,22 @@ class RoomRoadNoteStoreTest {
         }
     }
 
+    @Test fun h3CreationFailureNeverInsertsAnUnindexedNewOriginal() = runBlocking {
+        val fixture = RoadNote("00000000-0000-0000-0000-000000000001", "A", "구덩이", NoteCategory.WARNING, 37.5, 127.03, 0, 1_000, 601_000)
+        val db = Room.inMemoryDatabaseBuilder(context, NoteDatabase::class.java).build()
+        val broken = object : SpatialIndex {
+            override fun cell(latitude: Double, longitude: Double): String = throw SpatialUnavailableException(UnsatisfiedLinkError("test"))
+            override fun cover(latitude: Double, longitude: Double): Set<String> = error("unused")
+        }
+        try {
+            val store = RoomRoadNoteStore(db, broken)
+            assertEquals(CreateNoteResult.StorageFailure, store.create(fixture))
+            assertNull(store.findById(fixture.noteId))
+        } finally {
+            db.close()
+        }
+    }
+
     private fun rowCount(db: NoteDatabase): Int =
         db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM road_notes").use { cursor ->
             cursor.moveToFirst()
@@ -121,4 +139,5 @@ private inline fun NoteDatabase.withDatabase(block: (NoteDatabase) -> Unit) {
     } finally {
         close()
     }
+
 }

@@ -1,6 +1,10 @@
 package com.jinkim.hyundaiAndGretel.location
 
 import com.jinkim.hyundaiAndGretel.notes.*
+import com.jinkim.hyundaiAndGretel.notes.submit.RoadNoteSubmission
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
+import com.jinkim.hyundaiAndGretel.service.shouldStopRoadNoteService
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
@@ -25,9 +29,9 @@ class SubmissionSdkFailureTest {
             val release = CompletableDeferred<Unit>()
             var writes = 0
             var stopRequests = 0
-            lateinit var repository: RoadNoteRepository
+            lateinit var repository: RoadNoteSubmission
             lateinit var tracking: LocationTracking
-            val finish = { if (shouldStopTrackingService(tracking.status.value, repository.state.value)) stopRequests++; Unit }
+            val finish = { if (shouldStopRoadNoteService(tracking.status.value, repository.state.value)) stopRequests++; Unit }
             tracking = LocationTracking(this, { source }, {}, finish, { 100_000 })
             val store = object : RoadNoteStore {
                 override suspend fun create(note: RoadNote): CreateNoteResult {
@@ -37,7 +41,7 @@ class SubmissionSdkFailureTest {
                 }
                 override suspend fun findById(noteId: String): RoadNote? = null
             }
-            repository = RoadNoteRepository(this, store, tracking::selectAnchor, { 1_000 }, finish)
+            repository = RoadNoteSubmission(this, store, tracking::selectAnchor, { 1_000 }, finish)
             tracking.start()
             source.location(LocationFix(37.5, 127.0, 100_000), 100_000)
             runCurrent()

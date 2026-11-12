@@ -3,6 +3,8 @@ package com.jinkim.hyundaiAndGretel.notes.pickup
 import com.jinkim.hyundaiAndGretel.location.*
 import com.jinkim.hyundaiAndGretel.notes.*
 import com.jinkim.hyundaiAndGretel.notes.spatial.*
+import com.jinkim.hyundaiAndGretel.notes.submit.RoadNoteSubmission
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
@@ -35,7 +37,7 @@ class RoadNotePickupFlowTest {
                 received.value = received.value.map { if (it.note.noteId == noteId && it.recipientId == recipientId) it.copy(displayedAtUtcMillis = 2_000) else it }
             }
         }
-        val submissions = RoadNoteRepository(backgroundScope, notes, {
+        val submissions = RoadNoteSubmission(backgroundScope, notes, {
             AnchorSelection.Selected(LocationAnchor(LocationFix(37.5, 127.03, 0), 30_000))
         }, { 1_000 }, {})
         submissions.submit("구덩이", NoteCategory.WARNING)
@@ -48,8 +50,8 @@ class RoadNotePickupFlowTest {
             override fun cell(latitude: Double, longitude: Double) = "fixture"
             override fun cover(latitude: Double, longitude: Double) = setOf("fixture")
         }
-        val candidates = NearbyCandidates(backgroundScope, positions, index, notes, { 0 }, { 1_000 })
-        val receipts = ReceiptRepository(backgroundScope, receiptStore, MutableStateFlow("B"), {})
+        val candidates = NearbyNoteCandidates(backgroundScope, positions, index, notes, { 0 }, { 1_000 })
+        val receipts = NoteReceiptProcessor(backgroundScope, receiptStore, MutableStateFlow("B"), {})
         var registeredCallback: ((String) -> Unit)? = null
         var enterCallback: ((String) -> Unit)? = null
         var removes = 0

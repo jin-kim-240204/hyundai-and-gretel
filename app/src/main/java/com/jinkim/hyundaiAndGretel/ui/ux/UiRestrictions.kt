@@ -1,8 +1,8 @@
 package com.jinkim.hyundaiAndGretel.ui.ux
 
 import android.car.drivingstate.CarUxRestrictions as Flags
+import com.jinkim.hyundaiAndGretel.notes.pickup.NoteReceiptProcessor
 import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
-import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptRepository
 
 data class UiRestrictions(
     val connected: Boolean = false,
@@ -25,7 +25,7 @@ data class UiRestrictions(
 }
 
 /** Main admission uses the service's raw policy, not the asynchronously derived screen state. */
-fun ReceiptRepository.confirmVisibleReceipt(
+fun NoteReceiptProcessor.confirmVisibleReceipt(
     key: ReceiptKey,
     screenResumed: Boolean,
     policy: UiRestrictions,

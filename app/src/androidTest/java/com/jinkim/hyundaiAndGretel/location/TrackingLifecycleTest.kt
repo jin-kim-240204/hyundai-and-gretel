@@ -1,23 +1,24 @@
 package com.jinkim.hyundaiAndGretel.location
 
-import android.app.NotificationManager
 import android.app.Application
-import android.os.Build
-import android.os.SystemClock
-import android.util.Log
+import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
-import com.jinkim.hyundaiAndGretel.ui.location.LocationViewModel
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jinkim.hyundaiAndGretel.MainActivity
+import com.jinkim.hyundaiAndGretel.service.RoadNoteService
+import com.jinkim.hyundaiAndGretel.ui.roadnotes.RoadNotesViewModel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -47,14 +48,14 @@ class TrackingLifecycleTest {
         val scenario = ActivityScenario.launch(MainActivity::class.java)
         var bound = false
         try {
-            bound = context.bindService(Intent(context, LocationTrackingService::class.java), connection, Context.BIND_AUTO_CREATE)
+            bound = context.bindService(Intent(context, RoadNoteService::class.java), connection, Context.BIND_AUTO_CREATE)
             assertTrue(bound)
             val binder = withTimeout(10_000) { connected.await() }
-            val status = (binder as LocationTrackingService.LocalBinder).status
+            val status = (binder as RoadNoteService.LocalBinder).status
             val registrationsBefore = registeredLogs(instrumentation)
             scenario.onActivity {
                 ContextCompat.startForegroundService(it,
-                    Intent(it, LocationTrackingService::class.java).setAction(LocationTrackingService.ACTION_START))
+                    Intent(it, RoadNoteService::class.java).setAction(RoadNoteService.ACTION_START))
             }
             withTimeout(10_000) {
                 while (status.value !in setOf(TrackingStatus.WAITING, TrackingStatus.RECEIVING)) delay(50)
@@ -90,7 +91,7 @@ class TrackingLifecycleTest {
                 var screenConnected = false
                 while (!screenConnected) {
                     scenario.onActivity {
-                        val screenStatus = ViewModelProvider(it)[LocationViewModel::class.java].status.value
+                        val screenStatus = ViewModelProvider(it)[RoadNotesViewModel::class.java].status.value
                         screenConnected = screenStatus in setOf(TrackingStatus.WAITING, TrackingStatus.RECEIVING)
                     }
                     if (!screenConnected) delay(50)
@@ -107,16 +108,16 @@ class TrackingLifecycleTest {
             assertEquals(TrackingStatus.STOPPED, status.value)
             scenario.onActivity {
                 ContextCompat.startForegroundService(it,
-                    Intent(it, LocationTrackingService::class.java).setAction(LocationTrackingService.ACTION_START))
+                    Intent(it, RoadNoteService::class.java).setAction(RoadNoteService.ACTION_START))
             }
             withTimeout(10_000) {
                 while (status.value !in setOf(TrackingStatus.WAITING, TrackingStatus.RECEIVING)) delay(50)
             }
-            context.startService(Intent(context, LocationTrackingService::class.java).setAction("unknown-test-command"))
+            context.startService(Intent(context, RoadNoteService::class.java).setAction("unknown-test-command"))
             withTimeout(5_000) { while (status.value != TrackingStatus.STOPPED) delay(50) }
         } finally {
-            context.startService(Intent(context, LocationTrackingService::class.java)
-                .setAction(LocationTrackingService.ACTION_STOP))
+            context.startService(Intent(context, RoadNoteService::class.java)
+                .setAction(RoadNoteService.ACTION_STOP))
             if (bound) context.unbindService(connection)
             scenario.close()
         }
@@ -129,7 +130,7 @@ class TrackingLifecycleTest {
             override fun onServiceConnected(name: ComponentName, binder: IBinder) { connected.complete(binder) }
             override fun onServiceDisconnected(name: ComponentName) = Unit
         }
-        val bound = context.bindService(Intent(context, LocationTrackingService::class.java), connection, Context.BIND_AUTO_CREATE)
+        val bound = context.bindService(Intent(context, RoadNoteService::class.java), connection, Context.BIND_AUTO_CREATE)
         assertTrue(bound)
         val store = ViewModelStore()
         try {
@@ -140,16 +141,16 @@ class TrackingLifecycleTest {
                     override fun bindService(intent: Intent, connection: ServiceConnection, flags: Int) = false
                     override fun startForegroundService(intent: Intent): ComponentName? = throw SecurityException("test")
                 }
-                val model = LocationViewModel(app)
+                val model = RoadNotesViewModel(app)
                 store.put("test", model)
                 model.start()
                 assertTrue(model.startCommandFailed.value)
-                model.onServiceConnected(ComponentName(context, LocationTrackingService::class.java), binder)
+                model.onServiceConnected(ComponentName(context, RoadNoteService::class.java), binder)
             }
             // Allow the ViewModel's collector to receive the service's initial state.
             withContext(Dispatchers.Main) {
-                val model = store.get("test") as LocationViewModel
-                assertEquals((binder as LocationTrackingService.LocalBinder).status.value, model.status.value)
+                val model = store.get("test") as RoadNotesViewModel
+                assertEquals((binder as RoadNoteService.LocalBinder).status.value, model.status.value)
                 assertTrue(model.startCommandFailed.value)
             }
         } finally {

@@ -1,10 +1,9 @@
 package com.jinkim.hyundaiAndGretel.notes.pickup
 
 import com.jinkim.hyundaiAndGretel.location.*
-import com.jinkim.hyundaiAndGretel.notes.spatial.*
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.util.concurrent.TimeUnit
 
 enum class PickupFailure { PROXIMITY, STORAGE }
 sealed interface PickupState {
@@ -19,7 +18,7 @@ class ProximityPickup(
     private val positions: StateFlow<TrackedPosition?>,
     candidateSignals: StateFlow<CandidateState>,
     private val currentCandidates: () -> List<NearbyCandidate>?,
-    private val receipts: ReceiptRepository,
+    private val receipts: NoteReceiptProcessor,
     private val ownsSource: (ProximitySource) -> Boolean,
     private val elapsedMillis: () -> Long,
     private val utcMillis: () -> Long,

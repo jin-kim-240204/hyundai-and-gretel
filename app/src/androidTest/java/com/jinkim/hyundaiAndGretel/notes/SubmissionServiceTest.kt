@@ -13,9 +13,11 @@ import androidx.room.withTransaction
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jinkim.hyundaiAndGretel.MainActivity
-import com.jinkim.hyundaiAndGretel.location.LocationTrackingService
 import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import com.jinkim.hyundaiAndGretel.notes.storage.NoteDatabase
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
+import com.jinkim.hyundaiAndGretel.service.RoadNoteService
 import kotlinx.coroutines.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -39,14 +41,14 @@ class SubmissionServiceTest {
                 override fun onServiceConnected(name: ComponentName, service: IBinder) { connected.complete(service) }
                 override fun onServiceDisconnected(name: ComponentName) = Unit
             }
-            var bound = context.bindService(Intent(context, LocationTrackingService::class.java), connection, Context.BIND_AUTO_CREATE)
+            var bound = context.bindService(Intent(context, RoadNoteService::class.java), connection, Context.BIND_AUTO_CREATE)
             val release = CompletableDeferred<Unit>()
             var blocker: Job? = null
             try {
-                val binder = withTimeout(10_000) { connected.await() } as LocationTrackingService.LocalBinder
+                val binder = withTimeout(10_000) { connected.await() } as RoadNoteService.LocalBinder
                 scenario.onActivity {
-                    ContextCompat.startForegroundService(it, Intent(it, LocationTrackingService::class.java)
-                        .setAction(LocationTrackingService.ACTION_START))
+                    ContextCompat.startForegroundService(it, Intent(it, RoadNoteService::class.java)
+                        .setAction(RoadNoteService.ACTION_START))
                 }
                 withTimeout(30_000) { while (binder.status.value != TrackingStatus.RECEIVING) delay(50) }
                 val locked = CompletableDeferred<Unit>()
@@ -62,7 +64,7 @@ class SubmissionServiceTest {
                 withTimeout(5_000) { locked.await() }
                 withContext(Dispatchers.Main) { binder.submitTestNote("구덩이", NoteCategory.WARNING) }
                 assertEquals(SubmissionState.Submitting, binder.submissionState.value)
-                context.startService(Intent(context, LocationTrackingService::class.java).setAction(LocationTrackingService.ACTION_STOP))
+                context.startService(Intent(context, RoadNoteService::class.java).setAction(RoadNoteService.ACTION_STOP))
                 withTimeout(5_000) { while (binder.status.value != TrackingStatus.STOPPED) delay(50) }
                 context.unbindService(connection)
                 bound = false
@@ -84,13 +86,13 @@ class SubmissionServiceTest {
                     while (context.getSystemService(NotificationManager::class.java).activeNotifications.any { it.id == 1 }) delay(50)
                     @Suppress("DEPRECATION")
                     while (context.getSystemService(ActivityManager::class.java).getRunningServices(Int.MAX_VALUE)
-                            .any { it.service.className == LocationTrackingService::class.java.name }) delay(50)
+                            .any { it.service.className == RoadNoteService::class.java.name }) delay(50)
                 }
             } finally {
                 release.complete(Unit)
                 blocker?.join()
                 withContext(Dispatchers.IO) { db.openHelper.writableDatabase.execSQL("DROP TRIGGER IF EXISTS reject_submission") }
-                context.startService(Intent(context, LocationTrackingService::class.java).setAction(LocationTrackingService.ACTION_STOP))
+                context.startService(Intent(context, RoadNoteService::class.java).setAction(RoadNoteService.ACTION_STOP))
                 if (bound) context.unbindService(connection)
                 scenario.close()
             }

@@ -18,7 +18,7 @@
         android:theme="@style/Theme.HyundaiAndGretel">
         <uses-library android:name="android.car" android:required="false" />
 
-        <service android:name=".location.LocationTrackingService" android:exported="false"
+        <service android:name=".service.RoadNoteService" android:exported="false"
             android:foregroundServiceType="location|dataSync" />
         <activity
             android:name=".MainActivity"

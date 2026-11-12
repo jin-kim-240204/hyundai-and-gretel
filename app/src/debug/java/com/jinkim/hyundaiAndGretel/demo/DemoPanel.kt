@@ -1,9 +1,7 @@
 package com.jinkim.hyundaiAndGretel.demo
 
-import android.os.SystemClock
 import android.content.pm.PackageManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
+import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -17,20 +15,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
-import com.jinkim.hyundaiAndGretel.notes.SubmissionState
-import com.jinkim.hyundaiAndGretel.ui.location.*
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
+import com.jinkim.hyundaiAndGretel.ui.roadnotes.*
 import kotlinx.coroutines.delay
 
-private fun LocationViewModel.demoRole(actor: String) { demoRuntime.value?.role(actor) }
-private fun LocationViewModel.demoMode(mode: DemoMode) { demoRuntime.value?.mode(mode) }
-private fun LocationViewModel.resetDemo(confirmed: Boolean) { demoRuntime.value?.reset(confirmed) }
+private fun RoadNotesViewModel.demoRole(actor: String) { demoRuntime.value?.role(actor) }
+private fun RoadNotesViewModel.demoMode(mode: DemoMode) { demoRuntime.value?.mode(mode) }
+private fun RoadNotesViewModel.resetDemo(confirmed: Boolean) { demoRuntime.value?.reset(confirmed) }
 
 /** An app-window overlay only. Closing never stops input or consumes a receipt. */
 @Composable
-fun DemoPanel(viewModel: LocationViewModel, onStart: () -> Unit, onStop: () -> Unit) {
+fun DemoPanel(viewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> Unit) {
     val runtime by viewModel.demoRuntime.collectAsStateWithLifecycle()
     val tools = runtime ?: return
     val demo by tools.state.collectAsStateWithLifecycle()

@@ -11,17 +11,17 @@ import kotlinx.coroutines.flow.*
 /** Debug-only orchestration; the existing service retains SDK and accepted database write ownership. */
 class DemoRuntime(
     private val scope: CoroutineScope,
-    private val host: DemoHost,
+    private val host: DemoServiceContract,
     private val store: ScenarioStore,
     private val active: StateFlow<String?>,
     private val restrictions: StateFlow<UiRestrictions>,
     private val clock: () -> Long,
     private val utc: () -> Long,
-    private val input: DemoInput,
+    private val input: DemoInputSource,
 ) {
-    constructor(context: Context, scope: CoroutineScope, host: DemoHost, store: ScenarioStore,
+    constructor(context: Context, scope: CoroutineScope, host: DemoServiceContract, store: ScenarioStore,
                 active: StateFlow<String?>, restrictions: StateFlow<UiRestrictions>) :
-        this(scope, host, store, active, restrictions, SystemClock::elapsedRealtime, System::currentTimeMillis, AndroidDemoInput(context))
+        this(scope, host, store, active, restrictions, SystemClock::elapsedRealtime, System::currentTimeMillis, AndroidDemoInputSource(context))
 
     val enabled = true
     private val mutable = MutableStateFlow(DemoState())
