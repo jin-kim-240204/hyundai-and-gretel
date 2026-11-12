@@ -5,6 +5,7 @@ import com.jinkim.hyundaiAndGretel.location.TrackedPosition
 import com.jinkim.hyundaiAndGretel.notes.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -35,6 +36,84 @@ class NearbyCandidatesTest {
     private fun note(id: Int = 1, latitude: Double = 37.5, longitude: Double = 127.03, expires: Long = 1_600_000) =
         RoadNote("00000000-0000-0000-0000-${id.toString().padStart(12,'0')}", "A", "구덩이", NoteCategory.WARNING,
             latitude, longitude, 0, expires - RoadNote.TTL_MILLIS, expires)
+
+    @Test fun cancelledOldFailuresCannotClearSameKeyReplacementButCurrentFailuresStillApply() = runTest {
+        val failures = listOf(
+            SpatialUnavailableException(UnsatisfiedLinkError("old")) to CandidateFailure.H3_UNAVAILABLE,
+            IllegalArgumentException("old") to CandidateFailure.INDEX_ERROR,
+            IOException("old") to CandidateFailure.STORAGE_ERROR,
+        )
+        for ((error, reason) in failures) {
+            checkLateObservation(error, reason)
+        }
+    }
+
+    @Test fun cancelledOldResultCannotReplaceSameKeyCandidatesOrStopSubsequentUpdates() = runTest {
+        checkLateObservation(null, CandidateFailure.STORAGE_ERROR)
+    }
+
+    @OptIn(InternalCoroutinesApi::class)
+    private suspend fun TestScope.checkLateObservation(oldError: Exception?, currentFailure: CandidateFailure) {
+        val releaseOld = CompletableDeferred<Unit>()
+        val updates = Channel<Result<List<RoadNote>>>(Channel.UNLIMITED)
+        var requests = 0
+        var replacementActive = false
+        val diagnostics = mutableListOf<String>()
+        val store = object : NearbyNoteStore {
+            override fun observeNearby(cells: Set<String>): Flow<List<RoadNote>> {
+                if (++requests != 1) return updates.receiveAsFlow().map { it.getOrThrow() }
+                    .onStart { replacementActive = true }.onCompletion { replacementActive = false }
+                // Deliberately non-cooperative cleanup exercises the cancelled observation's own Job.
+                return object : Flow<List<RoadNote>> {
+                    override suspend fun collect(collector: FlowCollector<List<RoadNote>>) {
+                        try {
+                            awaitCancellation()
+                        } finally {
+                            withContext(NonCancellable) {
+                                releaseOld.await()
+                                oldError?.let { throw it }
+                                collector.emit(listOf(note(1)))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        val positions = MutableStateFlow<TrackedPosition?>(position())
+        val nearby = NearbyCandidates(backgroundScope, positions, Index(), store, { 0 }, { 1_000_000 },
+            onFailure = { reason, _ -> diagnostics += reason })
+        try {
+            runCurrent()
+            positions.value = null
+            runCurrent()
+            positions.value = position()
+            runCurrent()
+            updates.send(Result.success(listOf(note(2))))
+            runCurrent()
+            assertEquals(2, requests)
+            assertEquals(note(2), nearby.currentCandidates()!!.single().note)
+            releaseOld.complete(Unit)
+            runCurrent()
+            assertTrue(nearby.state.value is CandidateState.Ready)
+            assertEquals(note(2), nearby.currentCandidates()!!.single().note)
+            assertTrue(replacementActive)
+            assertTrue(diagnostics.isEmpty())
+            updates.send(Result.success(listOf(note(3))))
+            runCurrent()
+            assertEquals(note(3), nearby.currentCandidates()!!.single().note)
+            updates.send(Result.failure(oldError ?: IOException("current")))
+            runCurrent()
+            assertEquals(CandidateState.Failed(currentFailure), nearby.state.value)
+            assertNull(nearby.currentCandidates())
+            assertFalse(replacementActive)
+            assertEquals(listOf(currentFailure.name), diagnostics)
+        } finally {
+            releaseOld.complete(Unit)
+            positions.value = null
+            runCurrent()
+            updates.close()
+        }
+    }
 
     @Test fun flowChangeAndSameCoverMovementReevaluateDistanceWithoutPollingOrDuplicateSubscriptions() = runTest {
         val positions = MutableStateFlow<TrackedPosition?>(position())

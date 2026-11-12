@@ -21,3 +21,18 @@ PASS: v1export불변·v2의기존9컬럼/PK동일·nullableH3/인덱스추가정
 NOT_TESTED: 실제Room v1→v2 migration/Flow/동시쓰기, Android JNI동적로드·16KB page size·SDK/서비스/Binder/알림·UI·성능·실주행. 계측/앱/설치/Studio/adb/에뮬레이터/시뮬레이터/GPS주입은전혀실행하지않음. 새도구/런타임에서통과했다고확대하지않는다. 03단계의기기실행결과재사용없음. H3 host native access/Gradledeprecation경고가있지만현재허용검사FAIL은없다.
 
 production변경은04내공간인덱스/관찰·시간소비경계만.05proximity/수신/receipt·06가상주행·A/B·새UI/Gleo·서버없음. currentCandidates()는null=현재사용불가/empty=유효한빈후보이며rawReady직접소비금지. 다른기간의최신위치와오래된cover를조합하지않도록적용위치/세션/키검사. 기존사용자polling파일은변경·stage하지않음.
+
+## PR 필수 P2 후속 — 동일 키 관찰 교체
+
+적용 ENV-02/VEH-03/PRIV-01, clean-code-review 취소·수명 규칙. 대상 ef4f860 / PR 인라인4544756327. 범위는 NearbyCandidates 관찰 결과·세 catch, 순수 JVM 회귀와 이 기록. 기존 SDK/저장 정책·다른 미커밋 변경 보존. 앱·Studio·adb·기기·계측 실행 금지, resolve/05 진행 없음.
+
+수정 전 반례를 직접 실행하여 FAIL 확인: OldObservationProbeTest 1개 중 1실패. `Old cancelled failure cleared new observation: Failed(reason=STORAGE_ERROR)`. `/private/tmp/step04-p2-before-result.xml`과 before.log에 증거 보관. 같은 session/cells B Ready 뒤 취소된 A 정리 IOException이 B를 지움. 관찰 launch 자신의 context를 결과 적용과 세 오류 처리 전에 검사하는 최소 수정으로 방어한다.
+
+수정: 관찰 launch에서 자신의 coroutineContext를 잡고 collect 결과 적용 전 및 H3/인덱스/저장 오류 catch의 fail 전 ensureActive 검사 4곳 추가. 기존 key/session/신선도 guard와 CancellationException 재전파 유지. 서비스 scope/현재 observation Job 검사·새 token/계층 없음. 서비스 호출부·SDK·스키마 수정 없음.
+
+검증 결과:
+- PASS: 같은 외부 반례 수정 후 1/1 통과 (`/private/tmp/step04-p2-probe-after.log`). 수정 전 1실패와 대조.
+- PASS: 기존 47+추가 2=전체 JVM49, 실패/오류/skip 0. 새 테스트는 A의 늦은 H3/IllegalArgument/IO 예외와 NonCancellable 문맥의 늦은 결과, 동일키 B Ready/후보/구독 유지·후속 목록 갱신·B 자신의 세 오류 분류·취소 진단 없음 검증.
+- PASS: assembleDebug/assembleRelease/assembleDebugAndroidTest(컴파일만)/lintDebug (`/private/tmp/step04-p2-checks.log`), 하네스 정적 검사 및 diff --check.
+- NOT_TESTED: 사용자 제한으로 Studio/앱/adb/기기/에뮬레이터/계측 실행 안 함. 실제 Room 정리 오류 순서·JNI/SDK/서비스 런타임 입증 아님. 기존 미커밋 PleosLocationSource polling은 보존하며 이번 커밋에 포함하지 않음.
+- 다음: PR4544756327에 구현 SHA·결과 답글 후 독립 재검토 대기. resolve 및 05 진행하지 않음.

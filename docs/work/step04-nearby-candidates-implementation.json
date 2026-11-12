@@ -14,7 +14,7 @@
     {
       "id": "VEH-03",
       "status": "NOT_TESTED",
-      "evidence": "JVM47개PASS, 후보세션/시간/관찰/소비경계검증. 사용자금지로실제Roommigration/Flow·AndroidJNI·SDK/서비스/Binder/기기실행미검증. 전체AC완료아님."
+      "evidence": "JVM49개PASS. 동일키 A취소 후 늦은 결과/세 오류 차단·B후속갱신·B자신 오류 분류 회귀PASS. 수정전 독립반례 직접1FAIL→수정후1PASS. 사용자금지로 실제Room/AndroidJNI/SDK/서비스/기기 실행 NOT_TESTED, 전체AC완료 아님."
     },
     {
       "id": "DOC-9844e9eaad3c#콜백",

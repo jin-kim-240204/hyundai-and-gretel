@@ -80,8 +80,10 @@ class NearbyCandidates(
             key = nextKey
             mutableState.value = CandidateState.Loading
             observation = scope.launch {
+                val observationContext = coroutineContext
                 try {
                     store.observeNearby(cells).collect { result ->
+                        observationContext.ensureActive()
                         val current = positions.value
                         if (key == nextKey && current?.session == nextKey.session && isFresh(current)) {
                             rows = result.toList()
@@ -91,10 +93,13 @@ class NearbyCandidates(
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: SpatialUnavailableException) {
+                    observationContext.ensureActive()
                     if (key == nextKey) fail(CandidateFailure.H3_UNAVAILABLE, error)
                 } catch (error: IllegalArgumentException) {
+                    observationContext.ensureActive()
                     if (key == nextKey) fail(CandidateFailure.INDEX_ERROR, error)
                 } catch (error: Exception) {
+                    observationContext.ensureActive()
                     if (key == nextKey) fail(CandidateFailure.STORAGE_ERROR, error)
                 }
             }
