@@ -23,7 +23,7 @@ object RoadNoteDimensions {
     val messageGap = 12.dp
     val statusGap = 26.dp
     val compactStatusGap = 14.dp
-    val compactMessageWidth = 194.dp
+    val compactMessageWidth = 220.dp
     val messageBottom = 31.dp
     val compactMessageBottom = 15.dp
     val actionHeight = 49.dp

@@ -82,7 +82,8 @@ fun RoadNoteMessageCard(
             }
             Text(message, style = if (compact) Type.compactMessage else Type.message,
                 color = PleosTheme.colors.textPrimary,
-                modifier = if (compact) Modifier.widthIn(max = Dimensions.compactMessageWidth) else Modifier)
+                modifier = if (compact) Modifier.widthIn(max = Dimensions.compactMessageWidth).fillMaxWidth()
+                    else Modifier.fillMaxWidth())
         }
     }
 }
