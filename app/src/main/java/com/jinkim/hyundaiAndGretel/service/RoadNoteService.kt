@@ -22,6 +22,7 @@ import com.jinkim.hyundaiAndGretel.speech.AnnouncementOwner
 import com.jinkim.hyundaiAndGretel.speech.CarAudioPower
 import com.jinkim.hyundaiAndGretel.speech.PleosNoteSpeaker
 import com.jinkim.hyundaiAndGretel.speech.ReceiptAnnouncement
+import com.jinkim.hyundaiAndGretel.speech.speechFailureCode
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
@@ -87,7 +88,10 @@ class RoadNoteService : Service() {
     }
 
     private fun stopNotePickup() {
-        if (announcementsDelegate.isInitialized()) announcements.reset()
+        if (announcementsDelegate.isInitialized()) {
+            logSpeech("RESET_TRACKING")
+            announcements.reset()
+        }
         if (pickupDelegate.isInitialized()) pickup.stop()
     }
 
@@ -141,8 +145,13 @@ class RoadNoteService : Service() {
         stopSelf()
     }
 
+    private fun logSpeech(event: String) {
+        if (BuildConfig.DEBUG) Log.d("RoadSpeech", event)
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val audioPower: CarAudioPower = CarAudioPower(scope) {
+    private val audioPower: CarAudioPower = CarAudioPower(scope, ::logSpeech) {
+        logSpeech("RESET_POWER")
         if (announcementsDelegate.isInitialized()) announcements.reset()
     }
     private val activeScenario = MutableStateFlow<String?>(null)
@@ -191,7 +200,7 @@ class RoadNoteService : Service() {
         ReceiptAnnouncement(
             scope = scope,
             store = receiptStore,
-            speaker = PleosNoteSpeaker(this),
+            speaker = PleosNoteSpeaker(this, ::logSpeech),
             currentOwner = {
                 if (isTracking && audioPower.enabled && !demo.blocksNewWrites) {
                     AnnouncementOwner(recipient.value, activeScenario.value, tracking.sessionId)
@@ -200,8 +209,9 @@ class RoadNoteService : Service() {
             utcMillis = System::currentTimeMillis,
             canReadBody = { restrictions.state.value.connected && restrictions.state.value.canShowBody },
             onFailure = { error ->
-                if (BuildConfig.DEBUG) Log.d("RoadSpeech", "ANNOUNCEMENT_FAILED ${error.javaClass.simpleName}")
+                logSpeech("ANNOUNCEMENT_FAILED ${speechFailureCode(error)}")
             },
+            log = ::logSpeech,
         )
     }
     private val announcements: ReceiptAnnouncement by announcementsDelegate
@@ -230,7 +240,10 @@ class RoadNoteService : Service() {
             onError = { operation, error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
             }, scenarioId = { activeScenario.value },
-            onReceived = { request -> announcements.enqueue(request) })
+            onReceived = { request ->
+                logSpeech("RECEIPT_COMMITTED tracking=$isTracking audio=${audioPower.enabled} transition=${demo.blocksNewWrites}")
+                announcements.enqueue(request)
+            })
     }
     private val pickup by pickupDelegate
 
@@ -274,7 +287,10 @@ class RoadNoteService : Service() {
         audioPower.start(this)
         scope.launch {
             restrictions.state.map { it.connected && it.canShowBody }.distinctUntilChanged().collect {
-                if (announcementsDelegate.isInitialized()) announcements.reset()
+                if (announcementsDelegate.isInitialized()) {
+                    logSpeech("RESET_BODY_POLICY")
+                    announcements.reset()
+                }
             }
         }
         scope.launch {
