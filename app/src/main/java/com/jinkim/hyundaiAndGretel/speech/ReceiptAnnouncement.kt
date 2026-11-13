@@ -27,6 +27,7 @@ class ReceiptAnnouncement(
     private val utcMillis: () -> Long,
     private val canReadBody: () -> Boolean,
     private val onFailure: (Exception) -> Unit = {},
+    private val log: (String) -> Unit = {},
 ) {
     private data class Pending(val key: ReceiptKey, val owner: AnnouncementOwner)
     private val pending = ArrayDeque<Pending>()
@@ -35,14 +36,25 @@ class ReceiptAnnouncement(
     private var generation = 0L
 
     fun enqueue(request: ReceiptRequest) {
-        val owner = currentOwner() ?: return
-        if (owner.recipientId != request.recipient.actorId || owner.scenarioId != request.scenarioId) return
+        val owner = currentOwner()
+        if (owner == null) {
+            log("ENQUEUE_NO_OWNER")
+            return
+        }
+        if (owner.recipientId != request.recipient.actorId || owner.scenarioId != request.scenarioId) {
+            log("ENQUEUE_OWNER_MISMATCH")
+            return
+        }
         val now = utcMillis()
         seen.entries.removeAll { entry -> now - entry.value >= RoadNote.TTL_MILLIS }
         val key = ReceiptKey(request.noteId, owner.recipientId)
-        if (key in seen || pending.size >= MAX_PENDING) return
+        if (key in seen || pending.size >= MAX_PENDING) {
+            log(if (key in seen) "ENQUEUE_DUPLICATE" else "ENQUEUE_FULL")
+            return
+        }
         seen[key] = now
         pending.addLast(Pending(key, owner))
+        log("ENQUEUE_ACCEPTED")
         if (worker?.isActive == true) return
         val token = generation
         val next = scope.launch(start = CoroutineStart.LAZY) { drain(token) }
@@ -54,14 +66,25 @@ class ReceiptAnnouncement(
         try {
             while (pending.isNotEmpty() && token == generation) {
                 val next = pending.removeFirst()
-                if (next.owner != currentOwner()) continue
+                if (next.owner != currentOwner()) {
+                    log("LOOKUP_SKIPPED_OWNER_CHANGED")
+                    continue
+                }
+                log("LOOKUP_STARTED")
                 val item = withTimeout(LOOKUP_TIMEOUT_MS) {
                     store.observeInbox(next.key.recipientId).first()
                 }.firstOrNull { it.note.noteId == next.key.noteId && it.recipientId == next.key.recipientId }
                 currentCoroutineContext().ensureActive()
-                if (token != generation || next.owner != currentOwner()) continue
-                val note = item?.note ?: continue
-                if (note.scenarioId != next.owner.scenarioId || !note.isActiveAt(utcMillis())) continue
+                if (token != generation || next.owner != currentOwner()) {
+                    log("LOOKUP_DISCARDED_OWNER_CHANGED")
+                    continue
+                }
+                val note = item?.note
+                if (note == null || note.scenarioId != next.owner.scenarioId || !note.isActiveAt(utcMillis())) {
+                    log("LOOKUP_NO_ELIGIBLE_NOTE")
+                    continue
+                }
+                log("LOOKUP_DONE")
                 val readBody = canReadBody()
                 speaker.speak(announcementText(note, readBody)) {
                     // SDK 초기화/선행 묵음 중 바뀐 세션·만료·본문 정책도 출력 전에 확인한다.
@@ -69,10 +92,10 @@ class ReceiptAnnouncement(
                         note.isActiveAt(utcMillis()) && readBody == canReadBody()
                 }
             }
-        } catch (timeout: TimeoutCancellationException) {
+        } catch (_: TimeoutCancellationException) {
             currentCoroutineContext().ensureActive()
             if (token == generation) pending.clear()
-            onFailure(timeout)
+            onFailure(SpeechFailure("LOOKUP", "TIMEOUT"))
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {

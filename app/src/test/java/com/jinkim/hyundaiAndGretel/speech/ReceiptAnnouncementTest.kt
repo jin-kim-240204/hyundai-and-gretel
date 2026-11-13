@@ -31,7 +31,7 @@ class ReceiptAnnouncementTest {
         val texts = mutableListOf<String>()
         var gate: CompletableDeferred<Unit>? = null
         var prepare: CompletableDeferred<Unit>? = null
-        var fail = false
+        var failure: Exception? = null
         var stops = 0
         var active = 0
         var maxActive = 0
@@ -43,7 +43,7 @@ class ReceiptAnnouncementTest {
             try {
                 texts += text
                 gate?.await()
-                if (fail) throw IOException("engine")
+                failure?.let { throw it }
             } finally { active-- }
         }
         override fun stop() { stops++ }
@@ -56,7 +56,10 @@ class ReceiptAnnouncementTest {
         var owner: AnnouncementOwner? = AnnouncementOwner("B", null, 1)
         var readBody = true
         val failures = mutableListOf<Exception>()
-        val announcements = ReceiptAnnouncement(scope, store, speaker, { owner }, { now }, { readBody }, failures::add)
+        val events = mutableListOf<String>()
+        val announcements = ReceiptAnnouncement(
+            scope, store, speaker, { owner }, { now }, { readBody }, failures::add, events::add,
+        )
 
         fun add(id: Int): ReceiptRequest {
             val note = RoadNote("note-$id", "A", "오른쪽에 물체가 있는 것 같습니다.", NoteCategory.WARNING,
@@ -128,10 +131,10 @@ class ReceiptAnnouncementTest {
 
     @Test fun engineFailureDropsRemainingAudioWithoutChangingTheInbox() = runTest {
         val h = Harness(backgroundScope)
-        h.speaker.fail = true
+        h.speaker.failure = SpeechFailure("TTS_PLAYBACK", "ON_DEVICE_ENGINE_ERROR")
         h.announcements.enqueue(h.add(1)); h.announcements.enqueue(h.add(2)); runCurrent()
         assertEquals(1, h.speaker.texts.size)
-        assertEquals(1, h.failures.size)
+        assertEquals("TTS_PLAYBACK ON_DEVICE_ENGINE_ERROR", speechFailureCode(h.failures.single()))
         assertEquals(2, h.store.rows.size)
         assertEquals(0, h.store.confirms)
     }
@@ -147,12 +150,35 @@ class ReceiptAnnouncementTest {
         assertEquals(8, h.speaker.texts.size)
     }
 
+    @Test fun policyRecoveryOnlyAllowsNewReceipts() = runTest {
+        val h = Harness(backgroundScope)
+        h.owner = null
+        h.announcements.enqueue(h.add(1))
+        h.owner = AnnouncementOwner("B", null, 1)
+        runCurrent()
+        assertTrue(h.speaker.texts.isEmpty())
+        assertEquals(listOf("ENQUEUE_NO_OWNER"), h.events)
+
+        h.announcements.enqueue(h.add(2))
+        runCurrent()
+        assertEquals(1, h.speaker.texts.size)
+        assertEquals(
+            listOf("ENQUEUE_NO_OWNER", "ENQUEUE_ACCEPTED", "LOOKUP_STARTED", "LOOKUP_DONE"),
+            h.events,
+        )
+        assertEquals(0, h.store.confirms)
+    }
+
+    @Test fun unexpectedFailureDiagnosticOmitsExceptionMessage() {
+        assertEquals("IOException", speechFailureCode(IOException("private note text")))
+    }
+
     @Test fun readTimeoutDoesNotReplayStaleQueuedNotesOnTheNextEvent() = runTest {
         val h = Harness(backgroundScope)
         h.store.readGate = CompletableDeferred()
         h.announcements.enqueue(h.add(1)); h.announcements.enqueue(h.add(2)); runCurrent()
         advanceTimeBy(5_001); runCurrent()
-        assertEquals(1, h.failures.size)
+        assertEquals("LOOKUP TIMEOUT", speechFailureCode(h.failures.single()))
         h.store.readGate = null
         h.announcements.enqueue(h.add(3)); runCurrent()
         assertEquals(1, h.speaker.texts.size)

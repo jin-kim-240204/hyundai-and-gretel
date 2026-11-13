@@ -5,3 +5,10 @@ interface NoteSpeaker {
     suspend fun speak(text: String, canStart: () -> Boolean = { true })
     fun stop()
 }
+
+internal class SpeechFailure(stage: String, code: String) : Exception("$stage $code")
+
+internal fun speechFailureCode(error: Exception): String = when (error) {
+    is SpeechFailure -> error.message.orEmpty()
+    else -> error.javaClass.simpleName
+}
