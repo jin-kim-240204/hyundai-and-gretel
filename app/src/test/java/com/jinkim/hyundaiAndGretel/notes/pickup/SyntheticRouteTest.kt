@@ -5,6 +5,19 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SyntheticRouteTest {
+    @Test fun generatedCoordinatesProjectAtBothEndpointsInEitherDirection() {
+        for (direction in listOf(-1, 1)) {
+            val setup = SyntheticSession(direction = direction)
+            for (progress in listOf(0.0, 610.0, SyntheticRoute.endProgressMeters)) {
+                val fix = SyntheticRoute.fixAt(progress, 42)
+                val route = requireNotNull(SyntheticRoute.project(fix.latitude, fix.longitude, setup))
+                assertEquals(progress, route.progressMeters, 1e-6)
+                assertEquals(direction, route.direction)
+                assertEquals(42L, fix.receivedElapsedMillis)
+            }
+        }
+    }
+
     @Test fun projectionRejectsUnknownOrOutsideAndKeepsSignedDirection() {
         val east = SyntheticSession()
         val a = SyntheticRoute.project(37.5, 127.03, east)!!

@@ -31,9 +31,10 @@ class RoadNotesDemoFlowTest {
         var creates = 0; var generation = 100L
         override fun observeActive() = active
         override fun observeNotes(scenarioId: String) = originals.map { rows -> rows.filter { it.scenarioId == scenarioId } }
+        var nearbySubscriptions = 0
         override fun observeNearby(cells: Set<String>) = combine(originals, active) { rows, selected ->
             rows.filter { selected != null && it.scenarioId == selected }
-        }
+        }.onStart { nearbySubscriptions++ }
         override suspend fun create(note: RoadNote): CreateNoteResult {
             creates++; createGate.await()
             note.validationError()?.let { return CreateNoteResult.Invalid(it) }
@@ -102,6 +103,7 @@ class RoadNotesDemoFlowTest {
         val actor = MutableStateFlow("A")
         val policy = MutableStateFlow(UiRestrictions(connected = true))
         var stopDecisions = 0
+        val announcements = mutableListOf<ReceiptRequest>()
         lateinit var demo: DemoRuntime
         val receipts: NoteReceiptProcessor = NoteReceiptProcessor(test.backgroundScope, store, actor, { finish() })
         val tracking: LocationTracking = LocationTracking(test.backgroundScope, { Source().also { sources += it } }, {}, {
@@ -115,7 +117,8 @@ class RoadNotesDemoFlowTest {
         }
         val candidates: NearbyNoteCandidates = NearbyNoteCandidates(test.backgroundScope, tracking.currentPosition, spatial, store, ::elapsed, ::utc)
         val pickup: ProximityPickup = ProximityPickup(test.backgroundScope, tracking.currentPosition, candidates.state, candidates::currentCandidates,
-            receipts, tracking::ownsSource, ::elapsed, ::utc, scenarioId = { store.active.value })
+            receipts, tracking::ownsSource, ::elapsed, ::utc, scenarioId = { store.active.value },
+            onReceived = { announcements += it })
         init {
             demo = DemoRuntime(test.backgroundScope, object : DemoServiceContract {
                 override val busy get() = submissions.isSubmitting || receipts.hasPendingWrites
@@ -202,7 +205,7 @@ class RoadNotesDemoFlowTest {
         assertEquals(activeScenario, h.store.active.value)
         assertEquals(DemoPhase.READY, h.demo.state.value.phase)
         assertEquals(1, b.registrations)
-        assertEquals(1, b.registrations)
+        val subscriptions = h.store.nearbySubscriptions
         h.drive(9)
         assertTrue(h.store.received.value.none { it.note.noteId == note.noteId })
         h.drive(2)
@@ -210,6 +213,10 @@ class RoadNotesDemoFlowTest {
         assertEquals(1, newRows().size)
         b.enters.forEach { it() }; runCurrent()
         assertEquals(1, newRows().size)
+        assertEquals(subscriptions, h.store.nearbySubscriptions)
+        assertEquals(note.noteId, h.announcements.single().noteId)
+        assertEquals("B", h.announcements.single().recipient.actorId)
+        assertEquals(activeScenario, h.announcements.single().scenarioId)
         assertNull(newRows().single().displayedAtUtcMillis)
         assertEquals(h.store.legacy.noteId, h.receipts.inbox.value.pending!!.note.noteId)
         h.confirmPending(); h.confirmPending()

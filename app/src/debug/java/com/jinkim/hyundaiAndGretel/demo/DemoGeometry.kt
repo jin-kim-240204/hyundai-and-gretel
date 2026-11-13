@@ -4,15 +4,10 @@ import com.jinkim.hyundaiAndGretel.location.LocationFix
 import com.jinkim.hyundaiAndGretel.notes.RoadNote
 import com.jinkim.hyundaiAndGretel.notes.pickup.*
 import kotlin.math.abs
-import kotlin.math.cos
 
 object DemoGeometry {
-    private val scale = 6_371_000.0 * cos(Math.toRadians(37.5))
-    val end = scale * Math.toRadians(0.03)
-    fun fix(progress: Double, received: Long): LocationFix {
-        require(progress.isFinite() && progress in 0.0..end) { "출발점이 경로 밖입니다" }
-        return LocationFix(37.5, 127.02 + Math.toDegrees(progress / scale), received)
-    }
+    val end = SyntheticRoute.endProgressMeters
+    fun fix(progress: Double, received: Long) = SyntheticRoute.fixAt(progress, received)
     fun progress(fix: LocationFix) = SyntheticRoute.project(fix.latitude, fix.longitude, SyntheticSession())?.progressMeters
     fun start(actor: String, notes: List<RoadNote>, now: Long): Pair<Double, RoadNote?> {
         if (actor == "A") return 610.0 to null
