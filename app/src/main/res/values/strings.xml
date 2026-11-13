@@ -32,4 +32,15 @@
     <string name="receipt_confirming">확인 기록 중</string>
     <string name="receipt_failed">수신함 처리 실패. 확인 실패 시 같은 쪽지의 확인 버튼으로 다시 시도해주세요.</string>
     <string name="pickup_failed">쪽지 수신이 중단되었습니다. 위치 수집을 중지한 뒤 다시 시작해주세요.</string>
+    <string name="road_note_title">도로 쪽지</string>
+    <string name="road_note_intro">앞서 지나간 운전자의 쪽지</string>
+    <string name="road_note_warning_label">주의</string>
+    <string name="road_note_information_label">정보</string>
+    <string name="road_note_saved">도로 쪽지를 남겼습니다</string>
+    <string name="road_note_saving">제보를 저장하고 있습니다</string>
+    <string name="road_note_save_failed">제보를 저장하지 못했습니다</string>
+    <string name="receipt_restricted">수신한 쪽지가 있습니다 · 현재 표시 제한</string>
+    <string name="location_permission_title">위치 권한이 필요합니다</string>
+    <string name="location_permission_allow">위치 권한 허용</string>
+    <string name="location_permission_restricted">차량 규제 연결 및 설정 허용 상태에서 권한을 설정해주세요</string>
 </resources>
