@@ -4,6 +4,8 @@
 
 생성형 API 심볼별 레퍼런스와 Fleet 문서는 미러 범위에서 제외했다. 심볼의 권한·인자·지원 여부는 작업 시 연결된 공식 API 레퍼런스를 추가 확인한다. 이미지에만 있는 수치도 원본 도해를 열어 확인한다.
 
+TTS 생성형 API 탐색(2026-11-14): [TextToSpeech 클래스](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/text-to-speech/ai.pleos.playground.tts/text-to-speech/entry)의 목록에서 [setAudioAttributes](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/text-to-speech/ai.pleos.playground.tts/text-to-speech/set-audio-attributes), [setAudioZoneId](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/text-to-speech/ai.pleos.playground.tts/text-to-speech/set-audio-zone-id), [setSpeakerType](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/text-to-speech/ai.pleos.playground.tts/text-to-speech/set-speaker-type), [speak](https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/TextToSpeech/text-to-speech/ai.pleos.playground.tts/text-to-speech/speak)를 확인했다. 웹 추출 본문에는 상세 인자/반환/동작 설명이 없어 시그니처·지원 보장은 미확인이다. 위 미러 제외 방침을 유지하며, SDK 선언 확인과 출력 정책 결정은 [수신 음성 계획](../../../../docs/plans/gleo-tts.md) 4절의 선행 단계로 수행한다.
+
 - **DOC-eb1428718f0c** [Pleos Connect 앱 개발 시작하기](sources/eb1428718f0c.md) — [공식 원문](https://document.pleos.ai/docs/pleos-only/getting-started)
 - **DOC-81d445e8e7a1** [프로젝트 생성 및 SDK 사용 신청](sources/81d445e8e7a1.md) — [공식 원문](https://document.pleos.ai/docs/pleos-only/create-my-project)
 - **DOC-447cb4d9b001** [Pleos Connect Emulator 설치 및 실행](sources/447cb4d9b001.md) — [공식 원문](https://document.pleos.ai/docs/connect/guide/getting-started/application-development/setup-connect-sdk-emulator)

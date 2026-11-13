@@ -23,6 +23,7 @@ class ProximityPickup(
     private val utcMillis: () -> Long,
     private val onError: (String, Exception) -> Unit = { _, _ -> },
     private val scenarioId: () -> String? = { null },
+    private val onReceived: (ReceiptRequest) -> Unit = {},
 ) {
 
     private class PickupSession(val session: Long, val source: ProximitySource, val setup: SyntheticSession) {
@@ -166,8 +167,14 @@ class ProximityPickup(
         unregisterRequest(request)
         if (!isCurrentSession(owner)) return
 
-        receipts.receive(ReceiptRequest(note.noteId, owner.setup, position.fix, scenarioId())) { result ->
+        val input = ReceiptRequest(note.noteId, owner.setup, position.fix, scenarioId())
+        receipts.receive(input) { result ->
             if (isCurrentSession(owner)) {
+                if (result == ReceiveResult.RECEIVED) {
+                    try { onReceived(input) }
+                    catch (cancelled: CancellationException) { throw cancelled }
+                    catch (error: Exception) { onError("RECEIPT_ANNOUNCEMENT", error) }
+                }
                 if (result == ReceiveResult.STORAGE_FAILURE) fail(owner, PickupFailure.STORAGE, IllegalStateException("Receipt storage failed"))
                 else refreshNearbyNotes()
             }
