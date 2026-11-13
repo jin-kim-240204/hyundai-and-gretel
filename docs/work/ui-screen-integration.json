@@ -64,12 +64,12 @@
     {
       "id": "DOC-3790286d55ee#주행제한",
       "status": "NOT_TESTED",
-      "evidence": "RoadNotesPresentationTest의 차량 표시 정책 분기 JVM PASS. 실제 CarUxRestrictions 전환 미확인."
+      "evidence": "차량 표시 제한 및 정책 변경 후 이전 판정 차단 JVM PASS. 실제 CarUxRestrictions 전환 미확인."
     },
     {
       "id": "DOC-9c1fe6a8475c#텍스트",
       "status": "NOT_TESTED",
-      "evidence": "RoadNoteMessageCard의 본문 3줄 상한 적용. 표시 잘림 및 물리 높이 미측정."
+      "evidence": "본문 3줄 상한. Compose 시각적 넘침/ellipsis 검사로 ACK를 제한하며 실제 잘림 및 물리 높이는 미검증."
     },
     {
       "id": "DOC-728dd6fe8092#글자위계",
@@ -99,7 +99,7 @@
     {
       "id": "DOC-d771e574367a#버튼상태",
       "status": "NOT_TESTED",
-      "evidence": "확인 기록 중 입력 비활성은 JVM PASS. 실제 버튼 상태와 배치 미검증."
+      "evidence": "초기/넘침/확인 중/재측정 상태 변환 JVM PASS. 실제 렌더링과 버튼 상태 미검증."
     },
     {
       "id": "DOC-6b1b8763468a#아이콘격자",

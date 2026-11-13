@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import com.jinkim.hyundaiAndGretel.R
 import com.jinkim.hyundaiAndGretel.ui.theme.PleosSpacing
@@ -71,6 +72,7 @@ fun RoadNoteMessageCard(
     tone: RoadNoteTone = RoadNoteTone.Warning,
     compact: Boolean = false,
     maxMessageLines: Int = Int.MAX_VALUE,
+    onMessageLayout: (TextLayoutResult) -> Unit = {},
 ) {
     Surface(modifier.semantics(mergeDescendants = true) {},
         shape = RoundedCornerShape(Dimensions.cardRadius), color = PleosTheme.colors.surface) {
@@ -85,6 +87,7 @@ fun RoadNoteMessageCard(
             }
             Text(message, style = if (compact) Type.compactMessage else Type.message,
                 maxLines = maxMessageLines, overflow = TextOverflow.Ellipsis,
+                onTextLayout = onMessageLayout,
                 color = PleosTheme.colors.textPrimary,
                 modifier = if (compact) Modifier.widthIn(max = Dimensions.compactMessageWidth).fillMaxWidth()
                     else Modifier.fillMaxWidth())

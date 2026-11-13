@@ -39,3 +39,14 @@
 - PASS · `python3 scripts/verify_harness.py` 및 `python3 scripts/verify_harness.py --build`로 정적 하네스, `:app:assembleDebug`, `:app:lintDebug` 확인.
 - PASS · `./gradlew :app:testDebugUnitTest :app:assembleRelease --console=plain`. JVM 114개 중 실패·오류·건너뜀 0개. 신규 상태 변환 검사 4개는 위치 상태, 제보 상태, 수신 분류·확인 상태, 차량 표시 제한을 확인했다. release APK의 DEX에 debug DemoViewModel/AndroidDemoInputSource 및 PR #5 Preview Activity가 없다.
 - PASS · `git diff --check`. 보고서 검사는 미검증 항목을 보존하여 종료 코드 2를 반환한다.
+
+## PR #9 독립 리뷰 수정
+
+- [P1 리뷰](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/9#issuecomment-6860324207)의 본문 생략 시 ACK 위험을 UI에서 보완한다. DES-02/04/06 및 DOC-3790286d55ee#주행제한 적용. 기존 3줄 상한을 유지하고 현재 본문이 모두 표시된 레이아웃 결과를 받은 경우만 확인을 활성화한다.
+- 본문과 수신자/쪽지, 창 제약, 밀도/글꼴 배율, 레이아웃 방향, 언어 설정 및 차량 정책 변화 시 기존 판정을 폐기한다. 화면에서 제한으로 카드가 빠지면 판정도 폐기한다. 초기와 넘침은 각각 안내를 표시한다.
+- 최신 사용자 제공 Figma `qTFOxlBcrMdJ6UfzKAaX8l`의 노드 39675:4521과 PR #5 명세에 기록된 Figma `UMhLHbSurVcDVwaYsiwAKz`는 파일 키가 다르다. PR #5의 레이아웃·캡처를 재사용했으며 최신 제공 파일의 고충실도 대조와 현재 화면의 실제 표시는 NOT_TESTED다.
+- 구현은 Compose `TextLayoutResult`의 시각적 넘침 및 각 줄의 ellipsis를 함께 확인한다. 레이아웃 입력 변경 시 카드의 Text를 재구성해 같은 모양으로 렌더링되더라도 새 판정을 받는다. 확인 클릭에서도 현재 판정을 다시 검사한다. 표시 기록, 서비스 측 RESUMED 및 수신 정책은 기존 경로를 사용한다.
+- 첫 컴파일에서 중첩 Compose 스코프의 창 제약 참조 오류를 발견했다. 바깥 `BoxWithConstraints`에서 제약을 읽고 재검사했다.
+- PASS · `python3 scripts/verify_harness.py --build`로 하네스, debug 빌드, lint 통과. `./gradlew :app:testDebugUnitTest :app:assembleRelease --console=plain` 통과. JVM 116개 전부 통과(상태 변환 6개, 이번에 2개 추가). 초기/전체/넘침/확인 중 및 입력 변경 후 재측정을 검증했다. release DEX에서 debug 데모 구현 및 Preview Activity 제외를 재확인했다.
+- NOT_TESTED · 실제 Compose 렌더링 및 좁은 창/큰 글꼴에서의 확인 버튼, 차량 규제 전환, 최신 Figma 매칭, IDE 빌드. Studio에 전용 worktree가 열려 있지 않았다. 기기, 앱, adb, 화면 자동 제어는 실행하지 않았다.
+- 남은 제약 · 현재 3줄 안에 표시할 수 없는 쪽지는 확인할 수 없고 수신함에 남는다. 전체 본문을 별도로 여는 화면은 이번 변경 범위에 포함하지 않았다.
