@@ -18,6 +18,10 @@ import com.jinkim.hyundaiAndGretel.notes.spatial.H3SpatialIndex
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomReceiptStore
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomScenarioStore
+import com.jinkim.hyundaiAndGretel.speech.AnnouncementOwner
+import com.jinkim.hyundaiAndGretel.speech.CarAudioPower
+import com.jinkim.hyundaiAndGretel.speech.PleosNoteSpeaker
+import com.jinkim.hyundaiAndGretel.speech.ReceiptAnnouncement
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
@@ -30,6 +34,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -81,6 +87,7 @@ class RoadNoteService : Service() {
     }
 
     private fun stopNotePickup() {
+        if (announcementsDelegate.isInitialized()) announcements.reset()
         if (pickupDelegate.isInitialized()) pickup.stop()
     }
 
@@ -135,6 +142,9 @@ class RoadNoteService : Service() {
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val audioPower: CarAudioPower = CarAudioPower(scope) {
+        if (announcementsDelegate.isInitialized()) announcements.reset()
+    }
     private val activeScenario = MutableStateFlow<String?>(null)
     private val scenarioStore by lazy { RoomScenarioStore(this) }
     private val restrictions = CarRestrictionsSource(scope)
@@ -172,12 +182,34 @@ class RoadNoteService : Service() {
     private var setup = SyntheticSession()
     private val recipient = MutableStateFlow(setup.actorId)
 
+    private val receiptStore by lazy {
+        RoomReceiptStore(this, onError = { error ->
+            if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
+        })
+    }
+    private val announcementsDelegate: Lazy<ReceiptAnnouncement> = lazy {
+        ReceiptAnnouncement(
+            scope = scope,
+            store = receiptStore,
+            speaker = PleosNoteSpeaker(this),
+            currentOwner = {
+                if (isTracking && audioPower.enabled && !demo.blocksNewWrites) {
+                    AnnouncementOwner(recipient.value, activeScenario.value, tracking.sessionId)
+                } else null
+            },
+            utcMillis = System::currentTimeMillis,
+            canReadBody = { restrictions.state.value.connected && restrictions.state.value.canShowBody },
+            onFailure = { error ->
+                if (BuildConfig.DEBUG) Log.d("RoadSpeech", "ANNOUNCEMENT_FAILED ${error.javaClass.simpleName}")
+            },
+        )
+    }
+    private val announcements: ReceiptAnnouncement by announcementsDelegate
+
     private val receipts: NoteReceiptProcessor by lazy {
         NoteReceiptProcessor(
             scope = scope,
-            store = RoomReceiptStore(this, onError = { error ->
-                if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
-            }),
+            store = receiptStore,
             recipient = recipient,
             onFinished = ::finishWhenStorageIsIdle,
             onWriteAccepted = {
@@ -197,7 +229,8 @@ class RoadNoteService : Service() {
             utcMillis = System::currentTimeMillis,
             onError = { operation, error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
-            }, scenarioId = { activeScenario.value })
+            }, scenarioId = { activeScenario.value },
+            onReceived = { request -> announcements.enqueue(request) })
     }
     private val pickup by pickupDelegate
 
@@ -222,6 +255,7 @@ class RoadNoteService : Service() {
             override fun startTracking() = this@RoadNoteService.startTracking()
             override fun stopTracking() = this@RoadNoteService.stopTracking()
             override fun changeActor(actor: String) {
+                if (announcementsDelegate.isInitialized()) announcements.reset()
                 setup = SyntheticSession(actor)
                 recipient.value = actor
                 receipts.refreshObservation()
@@ -237,8 +271,17 @@ class RoadNoteService : Service() {
     override fun onCreate() {
         super.onCreate()
         restrictions.start(this)
+        audioPower.start(this)
         scope.launch {
-            try { scenarioStore.observeActive().collect { activeScenario.value = it } }
+            restrictions.state.map { it.connected && it.canShowBody }.distinctUntilChanged().collect {
+                if (announcementsDelegate.isInitialized()) announcements.reset()
+            }
+        }
+        scope.launch {
+            try { scenarioStore.observeActive().collect {
+                if (activeScenario.value != it && announcementsDelegate.isInitialized()) announcements.reset()
+                activeScenario.value = it
+            } }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "SCENARIO_READ ${error.javaClass.simpleName}") }
         }
@@ -281,6 +324,8 @@ class RoadNoteService : Service() {
             catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "DEMO_CLEANUP ${error.javaClass.simpleName}") }
             try { restrictions.close() }
             catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "UX_CLEANUP ${error.javaClass.simpleName}") }
+            try { audioPower.close() }
+            catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadSpeech", "POWER_CLEANUP ${error.javaClass.simpleName}") }
             stopNotePickup()
         } finally {
             try { tracking.stop() }

@@ -15,7 +15,7 @@
           "properties": {
             "content": {
               "type": "string",
-              "description": "The road condition observed by the user."
+              "description": "A concise, complete sentence in the user's language describing the observed road condition, preserving reported facts, negation, and uncertainty without adding details."
             },
             "locationMode": {
               "type": "string",
