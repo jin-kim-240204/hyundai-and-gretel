@@ -17,7 +17,7 @@
     {
       "id": "VEH-03",
       "status": "NOT_TESTED",
-      "evidence": "전원 API의 null 계약과 기존 권한 선언 확인. 차량 정책 콜백 및 연결 복구 미실행."
+      "evidence": "전원 API의 null 계약과 기존 권한 선언 확인. 실제 CarAudioPower 초기 null 조회 후 유효 정책 콜백과 연결 복구 미실행."
     },
     {
       "id": "AUDIO-01",
@@ -37,7 +37,7 @@
     {
       "id": "INT-01",
       "status": "PASS",
-      "evidence": "새 수신 전용·ACK 독립 JVM 검사와 Pleos TTS 3.3.1 AAR 공개 계약 대조."
+      "evidence": "일반 JVM 수신 큐의 새 수신 전용·ACK 독립 검사와 Pleos TTS 3.3.1 AAR 공개 계약 대조."
     },
     {
       "id": "DOC-5ec59d586502#초기화해제",
@@ -72,12 +72,12 @@
     {
       "id": "DOC-a243773e232d#Suspend",
       "status": "NOT_TESTED",
-      "evidence": "CarAudioPower의 미확인 차단과 복구 시 자동 재생 방지 JVM 검사. 실제 Suspend 미검증."
+      "evidence": "CarAudioPower 미확인 차단은 정적 검토. 일반 JVM 수신 큐 테스트에서 정책 회복 시 기존 수신 자동 재생 방지를 확인. 실제 차량 정책 콜백과 Suspend 미실행."
     },
     {
       "id": "DOC-2cbe51f12c43#PCM",
       "status": "NOT_TESTED",
-      "evidence": "PCM 160ms 및 marker 코드 확인. 출력 경로와 가청 결과 미검증."
+      "evidence": "PCM 160ms, marker 및 정리 경로는 정적 검토. 실제 AudioTrack 리스너 제거·stop·release, 출력 경로 및 가청 결과 미검증."
     }
   ]
 }

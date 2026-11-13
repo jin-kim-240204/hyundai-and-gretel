@@ -1,6 +1,6 @@
 # PR #8 수신 쪽지 TTS 무음 대응
 
-2026-11-14. 기준 c30abb94db50a1aacd9739b514b1c6e3f03b1d01, jarvis/fix-received-note-tts. 기존 조사와 설계는 tts-no-audio-code-review.md, ../plans/gleo-tts.md 참조. 보고 전 push 보류.
+2026-11-14. 기준 c30abb94db50a1aacd9739b514b1c6e3f03b1d01, jarvis/fix-received-note-tts. TTS 수정 커밋은 `ade2ab0717f40942c9ce40eeb1238ccfc230336c`이며 `gm/feat-gleo-tts`에 푸시됐다. [PR #8 무음 경로 진단](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/8#issuecomment-6860184415), [TTS 설계](../plans/gleo-tts.md) 참조.
 
 범위는 speech, RoadNoteService, JVM 회귀 테스트 및 작업 기록. AUDIO 미확인·비활성 시 출력 금지, 새 수신만 안내, ACK 독립, Pleos ON_DEVICE 및 160ms PCM 유지. ENV-02 / VEH-03 / AUDIO-01 / AUDIO-02 / PRIV-01 / INT-01 적용. 검증은 JVM·assemble·lint·하네스 및 SDK 배포물 정적 확인. 기기/앱/계측 실행과 가청 출력은 NOT_TESTED.
 
@@ -21,7 +21,7 @@
 
 ## 검증 결과
 
-- PASS: JDK 21 / Gradle 9.6.0, `./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:lintDebug`. JVM 123개 중 실패/오류/건너뜀 0, ReceiptAnnouncementTest 12개. 신규 테스트는 정책 회복 시 새 수신만 안내하고 ACK가 없는지, 예외 본문이 진단에 빠지는지 확인한다. 기존 실패 테스트는 SDK 오류 코드와 조회 시간 초과 구분을 단언한다. lint 0 errors / 53 warnings.
+- PASS: JDK 21 / Gradle 9.6.0, `./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:lintDebug`. JVM 123개 중 실패/오류/건너뜀 0, ReceiptAnnouncementTest 12개. 신규 테스트는 정책 회복 시 새 수신만 안내하고 ACK가 없는지, 예외 본문이 진단에 빠지는지 확인한다. 기존 실패 테스트는 SDK 오류 코드와 조회 시간 초과 구분을 단언한다. 수신 큐의 정책 회복과 재생 여부는 일반 JVM 테스트로 확인했다. 실제 `CarAudioPower`의 초기 null 정책 조회 후 유효 정책 콜백과 `AudioTrack`의 리스너 제거·stop·release는 JVM 테스트에서 실행하지 않았으며, 코드 검토 범위다. lint 0 errors / 53 warnings.
 - PASS: `python3 scripts/verify_harness.py --build` (원문 133개, 규칙 27개, Manifest 및 assembleDebug/lintDebug), `git diff --check`.
 - NOT_TESTED: 에뮬레이터·시뮬레이터·adb·기기·앱 실행·계측을 수행하지 않았다. 실제 청취, 초기 PCM 출력/첫 음절, 차량 전원 콜백과 Suspend/Resume, 권한·한국어 엔진·오디오 포커스·라우팅, 공급자 로그 및 관측 무음 재현은 미확인이다. Studio 빌드는 원본 checkout만 열려 있어 이 worktree에서 실행되지 않았다.
-- N/A: UI, DB, ACK, 과거 수신 재생, 별도 TTS 엔진, merge·deploy. Push는 사전 보고 요청에 따라 보류했다.
+- N/A: UI, DB, ACK, 과거 수신 재생, 별도 TTS 엔진, merge·deploy.
