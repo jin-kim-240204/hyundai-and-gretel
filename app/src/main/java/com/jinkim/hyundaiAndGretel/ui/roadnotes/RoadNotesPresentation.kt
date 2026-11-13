@@ -6,6 +6,7 @@ import com.jinkim.hyundaiAndGretel.R
 import com.jinkim.hyundaiAndGretel.location.TrackingStatus
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
+import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteTone
 import com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions
@@ -25,9 +26,13 @@ internal val SubmissionState?.messageRes: Int?
     get() = when (this) {
         is SubmissionState.Saved -> R.string.road_note_saved
         SubmissionState.Submitting -> R.string.road_note_saving
-        is SubmissionState.Failed -> R.string.road_note_save_failed
+        is SubmissionState.Failed -> if (reason == SubmissionFailure.DEMO_REQUIRED)
+            R.string.road_note_demo_required else R.string.road_note_save_failed
         SubmissionState.Idle, null -> null
     }
+
+internal fun SubmissionState?.statusMessageRes(demoBuild: Boolean): Int? =
+    messageRes ?: R.string.road_note_demo_required.takeUnless { demoBuild }
 
 internal data class VisibleReceipt(
     val key: ReceiptKey,

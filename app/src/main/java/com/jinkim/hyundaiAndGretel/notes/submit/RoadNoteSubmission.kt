@@ -23,7 +23,7 @@ sealed interface SubmissionState {
     data class Failed(val reason: SubmissionFailure) : SubmissionState
 }
 
-enum class SubmissionFailure { LOCATION_UNAVAILABLE, INVALID_TIME, INVALID_INPUT, DUPLICATE, STORAGE, CANCELLED, BUSY }
+enum class SubmissionFailure { DEMO_REQUIRED, LOCATION_UNAVAILABLE, INVALID_TIME, INVALID_INPUT, DUPLICATE, STORAGE, CANCELLED, BUSY }
 
 class RoadNoteSubmission(
     private val scope: CoroutineScope,
@@ -41,6 +41,12 @@ class RoadNoteSubmission(
     val isSubmitting get() = state.value == SubmissionState.Submitting
 
     fun clearResult() { if (!isSubmitting) mutableState.value = SubmissionState.Idle }
+
+    internal fun reject(reason: SubmissionFailure): Deferred<SubmissionState> {
+        val failure = SubmissionState.Failed(reason)
+        if (!isSubmitting) mutableState.value = failure
+        return CompletableDeferred(failure)
+    }
 
     fun submit(content: String, category: NoteCategory, anchorSelection: AnchorSelection? = null): Deferred<SubmissionState> {
         if (isSubmitting) return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.BUSY))

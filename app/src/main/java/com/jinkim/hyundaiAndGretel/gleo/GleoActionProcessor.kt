@@ -32,6 +32,7 @@ class GleoActionProcessor(
     private fun failure(reason: SubmissionFailure) = GleoResponse(
         GleoStatus.FAIL,
         when (reason) {
+            SubmissionFailure.DEMO_REQUIRED -> "Road reports can only be saved during a ready author demo session."
             SubmissionFailure.LOCATION_UNAVAILABLE -> "Start location collection in the app and wait for a valid location before reporting."
             SubmissionFailure.BUSY -> "Another road report is being saved. Please try again after it finishes."
             else -> "The road report could not be saved."

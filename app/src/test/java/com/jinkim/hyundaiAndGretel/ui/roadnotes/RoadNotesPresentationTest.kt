@@ -25,6 +25,13 @@ class RoadNotesPresentationTest {
     private val contentKey = "receipt:recipient/note"
     private val state = RoadNotesUiState(inbox = InboxState(listOf(item)))
 
+    @Test fun demoOnlyStorageHasItsOwnMessageBeforeReleaseSubmission() {
+        assertEquals(R.string.road_note_demo_required, SubmissionState.Idle.statusMessageRes(demoBuild = false))
+        assertNull(SubmissionState.Idle.statusMessageRes(demoBuild = true))
+        assertEquals(R.string.road_note_demo_required,
+            SubmissionState.Failed(SubmissionFailure.DEMO_REQUIRED).messageRes)
+    }
+
     @Test
     fun trackingDistinguishesWaitingReceivingAndErrors() {
         val expected = mapOf(

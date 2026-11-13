@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.jinkim.hyundaiAndGretel.BuildConfig
 import com.jinkim.hyundaiAndGretel.R
 import com.jinkim.hyundaiAndGretel.notes.pickup.PickupState
 import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
@@ -71,7 +72,7 @@ internal fun RoadNotesScreen(
                 }
 
                 if (state.startCommandFailed) RoadNoteStatus(policy.label(stringResource(R.string.location_command_failed)))
-                state.submission.messageRes?.let { message ->
+                state.submission.statusMessageRes(demoBuild = BuildConfig.DEBUG)?.let { message ->
                     RoadNoteStatus(
                         policy.label(stringResource(message)),
                         loading = state.submission == SubmissionState.Submitting && !policy.optimized,

@@ -25,6 +25,15 @@ class RoadNoteSubmissionTest {
         override suspend fun findById(noteId: String): RoadNote? = null
     }
 
+    @Test fun rejectedAdmissionPublishesReasonWithoutSelectingAnchorOrWriting() = runTest {
+        val store = Store { error("unexpected write") }
+        val repo = RoadNoteSubmission(this, store, { error("unexpected anchor selection") }, { 1_000 }, {})
+        val expected = SubmissionState.Failed(SubmissionFailure.DEMO_REQUIRED)
+        assertEquals(expected, repo.reject(SubmissionFailure.DEMO_REQUIRED).await())
+        assertEquals(expected, repo.state.value)
+        assertTrue(store.inputs.isEmpty())
+    }
+
     @Test fun requestCompletionWaitsForCommitAndCancelledWaiterDoesNotCancelAcceptedWrite() = runTest {
         val release = CompletableDeferred<Unit>()
         val store = Store { release.await(); CreateNoteResult.Created(it) }
@@ -35,6 +44,7 @@ class RoadNoteSubmissionTest {
         assertFalse(first.isCompleted)
         val other = repo.submit("두번째", NoteCategory.INFORMATION)
         assertEquals(SubmissionState.Failed(SubmissionFailure.BUSY), other.await())
+        assertEquals(SubmissionState.Failed(SubmissionFailure.BUSY), repo.reject(SubmissionFailure.BUSY).await())
         assertEquals(SubmissionState.Submitting, repo.state.value)
         val waiter = backgroundScope.launch { first.await() }
         runCurrent(); waiter.cancel(); runCurrent()

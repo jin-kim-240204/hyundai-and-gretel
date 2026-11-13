@@ -1,0 +1,41 @@
+{
+  "task": "release 제보 저장 차단",
+  "initial_head": "d938ca9c5e0ee71ce5344f5d16aaba91dd940548",
+  "selected_rules": [
+    "PRIV-01",
+    "INT-01",
+    "REL-01"
+  ],
+  "checks": [
+    {
+      "id": "PRIV-01",
+      "status": "NOT_TESTED",
+      "evidence": "서비스 쓰기 진입점 차단은 JVM 검증. 출시 동의·보존·실기기 검증 미실행."
+    },
+    {
+      "id": "INT-01",
+      "status": "FAIL",
+      "evidence": "출시 Gleo 발신자 신뢰 계약·Callback 대상·승인 증거 미확인."
+    },
+    {
+      "id": "REL-01",
+      "status": "FAIL",
+      "evidence": "제출용 서명 산출물·독립 합성 재생·깨끗한 설치 검증이 필요함."
+    },
+    {
+      "id": "DOC-72a5d7ab4ebb#개인정보최소수집",
+      "status": "PASS",
+      "evidence": "프로젝트의 합성 시연 쓰기 제한을 RoadNoteService 제보 진입점에 적용. JVM 정책 및 쓰기 미호출 검사."
+    },
+    {
+      "id": "DOC-f1d260bfb503#발신자와콜백",
+      "status": "NOT_TESTED",
+      "evidence": "공개 예시의 broadcast 형태를 확인. 공급자의 출시 발신자 인증·Callback 대상 계약 확인 필요."
+    },
+    {
+      "id": "DOC-2bec764daf11#스키마승인",
+      "status": "NOT_TESTED",
+      "evidence": "공식 문서의 승인 후 통합 활성화 확인. 실제 승인·활성화 미검증."
+    }
+  ]
+}

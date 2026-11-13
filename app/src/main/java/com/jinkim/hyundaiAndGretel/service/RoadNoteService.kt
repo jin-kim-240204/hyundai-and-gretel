@@ -23,7 +23,6 @@ import com.jinkim.hyundaiAndGretel.speech.CarAudioPower
 import com.jinkim.hyundaiAndGretel.speech.PleosNoteSpeaker
 import com.jinkim.hyundaiAndGretel.speech.ReceiptAnnouncement
 import com.jinkim.hyundaiAndGretel.speech.speechFailureCode
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
@@ -325,9 +324,15 @@ class RoadNoteService : Service() {
         }
 
         fun submitRoadNoteWithResult(content: String, category: NoteCategory, receivedElapsedMillis: Long): Deferred<SubmissionState> {
-            if (submissions.isSubmitting) return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.BUSY))
-            if (!isTracking || (demo.enabled && (!demo.canSubmit || demo.blocksNewWrites)))
-                return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.LOCATION_UNAVAILABLE))
+            val rejection = submissionRejection(
+                busy = submissions.isSubmitting,
+                demoEnabled = demo.enabled,
+                scenarioId = activeScenario.value,
+                canSubmit = demo.canSubmit,
+                blocksNewWrites = demo.blocksNewWrites,
+                tracking = isTracking,
+            )
+            if (rejection != null) return submissions.reject(rejection)
             return submissions.submit(content, category, tracking.selectAnchorAt(receivedElapsedMillis))
         }
     }
@@ -357,4 +362,18 @@ class RoadNoteService : Service() {
         const val ACTION_STOP = "com.jinkim.hyundaiAndGretel.STOP_LOCATION"
         private const val ACTION_STORAGE_HOLD = "com.jinkim.hyundaiAndGretel.HOLD_NOTE_WRITES"
     }
+}
+
+internal fun submissionRejection(
+    busy: Boolean,
+    demoEnabled: Boolean,
+    scenarioId: String?,
+    canSubmit: Boolean,
+    blocksNewWrites: Boolean,
+    tracking: Boolean,
+): SubmissionFailure? = when {
+    busy -> SubmissionFailure.BUSY
+    !demoEnabled || scenarioId.isNullOrBlank() || !canSubmit || blocksNewWrites -> SubmissionFailure.DEMO_REQUIRED
+    !tracking -> SubmissionFailure.LOCATION_UNAVAILABLE
+    else -> null
 }
