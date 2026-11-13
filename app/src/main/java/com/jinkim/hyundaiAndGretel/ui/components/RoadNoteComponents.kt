@@ -73,6 +73,7 @@ fun RoadNoteMessageCard(
     compact: Boolean = false,
     maxMessageLines: Int = Int.MAX_VALUE,
     onMessageLayout: (TextLayoutResult) -> Unit = {},
+    messageModifier: Modifier = Modifier,
 ) {
     Surface(modifier.semantics(mergeDescendants = true) {},
         shape = RoundedCornerShape(Dimensions.cardRadius), color = PleosTheme.colors.surface) {
@@ -89,8 +90,8 @@ fun RoadNoteMessageCard(
                 maxLines = maxMessageLines, overflow = TextOverflow.Ellipsis,
                 onTextLayout = onMessageLayout,
                 color = PleosTheme.colors.textPrimary,
-                modifier = if (compact) Modifier.widthIn(max = Dimensions.compactMessageWidth).fillMaxWidth()
-                    else Modifier.fillMaxWidth())
+                modifier = if (compact) messageModifier.widthIn(max = Dimensions.compactMessageWidth).fillMaxWidth()
+                    else messageModifier.fillMaxWidth())
         }
     }
 }

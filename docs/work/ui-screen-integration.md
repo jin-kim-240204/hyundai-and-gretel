@@ -50,3 +50,14 @@
 - PASS · `python3 scripts/verify_harness.py --build`로 하네스, debug 빌드, lint 통과. `./gradlew :app:testDebugUnitTest :app:assembleRelease --console=plain` 통과. JVM 116개 전부 통과(상태 변환 6개, 이번에 2개 추가). 초기/전체/넘침/확인 중 및 입력 변경 후 재측정을 검증했다. release DEX에서 debug 데모 구현 및 Preview Activity 제외를 재확인했다.
 - NOT_TESTED · 실제 Compose 렌더링 및 좁은 창/큰 글꼴에서의 확인 버튼, 차량 규제 전환, 최신 Figma 매칭, IDE 빌드. Studio에 전용 worktree가 열려 있지 않았다. 기기, 앱, adb, 화면 자동 제어는 실행하지 않았다.
 - 남은 제약 · 현재 3줄 안에 표시할 수 없는 쪽지는 확인할 수 없고 수신함에 남는다. 전체 본문을 별도로 여는 화면은 이번 변경 범위에 포함하지 않았다.
+
+## 긴 쪽지 수동 페이지
+
+- 적용 규칙 DES-02/04/06, DOC-9c1fe6a8475c#텍스트 및 DOC-9faba42791f0#플랫폼규제. [디자인 가이드](https://document.pleos.ai/docs/connect/guide/docs-design/Introduction/intro)의 3줄 상한과 주행 중 자동 스크롤 금지, [주행 규제 개발 가이드](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)의 플랫폼 규제 상태 사용을 적용한다.
+- 수동 페이지는 `connected && !optimized && flags == 0`에서만 제공하는 프로젝트 선택이다. 본문은 원문의 연속 구간으로 표시하고 실제 Text 레이아웃 검증을 거친 페이지에서만 이동한다. 현재 입력과 페이지의 재측정이 끝난 마지막 페이지에서 명시적 ACK를 허용한다.
+- 계획 검증: JVM으로 페이지 연속성·이동·리셋·Unicode·안전 차단, Gradle debug/lint/JVM/release, 독립 코드 리뷰. 실제 렌더링, 최신 Figma 파일 일치, Pleos 규정 적합성 판정은 NOT_TESTED.
+- Compose 3줄 레이아웃의 논리적 줄 끝을 후보 상한으로 삼는다. Unicode grapheme 경계(이모지, 결합 문자, CRLF 포함)에서 원문 접두부를 잘라 다시 측정한 뒤, 실제 카드의 레이아웃을 한 번 더 검사한다. 인접 페이지는 동일 경계에서 이어지고 원문을 가공하지 않는다. 글자 한 묶음도 표시할 수 없는 공간에서는 안내를 표시하고 진행과 ACK를 차단한다.
+- 독립 코드 리뷰에서 스크롤 위치가 유지되면 화면 밖 본문을 건너뛸 수 있음을 확인했다. 각 페이지 본문 전체의 가시 좌표가 확인된 뒤에만 다음 또는 마지막 ACK를 허용하도록 수정했다. 이전으로 돌아가도 페이지 가시 상태를 다시 확인한다. 현재 서비스의 규제·쪽지·확인 중 상태는 액션 실행 시 다시 비교한다. 플랫폼 StateFlow가 전달한 규제 변경을 반영하며 그 사이에 합쳐진 중간 상태까지 관측하는지는 확인하지 않았다.
+- 최초 가시 범위 구현의 좌표 API 인자는 프로젝트 Compose 버전에서 지원되지 않았다. 기존 `boundsInWindow()`의 잘린 크기를 실제 본문 크기와 대조하는 방식으로 수정한 뒤 영향받는 검사를 재실행했다.
+- PASS · 하네스, debug 빌드, lint, JVM 119개, release 빌드 및 release DEX의 debug 데모 제외 확인. JVM은 원문 이어붙이기, Unicode와 빈 줄, 다음/이전, 미측정·미표시·중간 페이지의 ACK 차단, 마지막 페이지, 입력 변경 및 비제한 조건을 검증한다.
+- NOT_TESTED · 실제 Compose 줄바꿈과 본문 가시성, 최소 폭·큰 글꼴, 차량 전환, 최신 Figma 및 Pleos 적합성. Studio MCP는 전용 worktree가 열려 있지 않아 IDE 빌드는 NOT_TESTED다. PR #5의 공용 카드·테마를 재사용했다.

@@ -105,6 +105,11 @@
       "id": "DOC-6b1b8763468a#아이콘격자",
       "status": "PASS",
       "evidence": "PR #5 VectorDrawable 3종 및 RoadNoteDimensions.icon의 48dp 정적 확인. 화면·원본 검증은 DES-07에 별도 기록."
+    },
+    {
+      "id": "DOC-9faba42791f0#플랫폼규제",
+      "status": "NOT_TESTED",
+      "evidence": "플랫폼 규제 비제한 조합, 전환 시 상태 무효화 및 차단 JVM PASS. 실제 차량 전환과 Pleos 적합성 미검증."
     }
   ]
 }

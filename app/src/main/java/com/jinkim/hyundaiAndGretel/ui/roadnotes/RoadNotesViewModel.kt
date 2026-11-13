@@ -27,6 +27,16 @@ class RoadNotesViewModel(app: Application) : AndroidViewModel(app) {
     fun startTracking() = serviceClient.startTracking()
     fun stopTracking() = serviceClient.stopTracking()
     fun submitRoadNote(content: String, category: NoteCategory) = serviceClient.submitRoadNote(content, category)
+    internal fun isReceiptCurrent(input: ReceiptLayoutInput): Boolean {
+        val service = serviceClient.service.value ?: return false
+        val pending = service.inboxState.value.pending ?: return false
+        return service.uiRestrictions.value == input.restrictions &&
+            service.inboxState.value.confirming == null &&
+            pending.note.noteId == input.key.noteId &&
+            pending.recipientId == input.key.recipientId &&
+            pending.note.content == input.message
+    }
+
     fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) {
         serviceClient.confirmReceipt(key, screenResumed, visited.value.toSet())
     }

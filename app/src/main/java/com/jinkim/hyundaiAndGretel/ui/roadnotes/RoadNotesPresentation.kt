@@ -63,22 +63,3 @@ internal data class ReceiptLayoutInput(
     val locales: String,
     val restrictions: UiRestrictions,
 )
-
-internal data class ReceiptLayoutMeasurement(
-    val input: ReceiptLayoutInput,
-    val wholeMessageFits: Boolean,
-)
-
-internal enum class ReceiptConfirmation {
-    AwaitingLayout, TextOverflow, Ready, Confirming,
-}
-
-internal fun VisibleReceipt.confirmation(
-    input: ReceiptLayoutInput,
-    measured: ReceiptLayoutMeasurement?,
-): ReceiptConfirmation = when {
-    confirming -> ReceiptConfirmation.Confirming
-    measured == null || measured.input != input -> ReceiptConfirmation.AwaitingLayout
-    !measured.wholeMessageFits -> ReceiptConfirmation.TextOverflow
-    else -> ReceiptConfirmation.Ready
-}

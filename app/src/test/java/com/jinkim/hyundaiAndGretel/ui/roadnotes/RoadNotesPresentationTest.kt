@@ -84,28 +84,18 @@ class RoadNotesPresentationTest {
 
     @Test
     fun confirmationRequiresCurrentLayoutToFitAndNoConfirmationInProgress() {
-        val receipt = requireNotNull(state.visibleReceipt())
-        val input = layoutInput(receipt)
-        val fits = ReceiptLayoutMeasurement(input, wholeMessageFits = true)
-
-        assertEquals(ReceiptConfirmation.AwaitingLayout, receipt.confirmation(input, null))
-        assertEquals(ReceiptConfirmation.Ready, receipt.confirmation(input, fits))
-        assertEquals(
-            ReceiptConfirmation.TextOverflow,
-            receipt.confirmation(input, fits.copy(wholeMessageFits = false)),
-        )
-        assertEquals(
-            ReceiptConfirmation.Confirming,
-            receipt.copy(confirming = true).confirmation(input, fits),
-        )
+        val input = layoutInput(requireNotNull(state.visibleReceipt()))
+        val page = ReceiptPages(input)
+        assertEquals(false, page.canConfirm(input, confirming = false))
+        assertEquals(false, page.measured(false).canConfirm(input, confirming = false))
+        assertEquals(true, page.measured(true).canConfirm(input, confirming = false))
+        assertEquals(false, page.measured(true).canConfirm(input, confirming = true))
     }
 
     @Test
     fun previousLayoutCannotEnableConfirmationAfterReceiptOrLayoutInputsChange() {
-        val receipt = requireNotNull(state.visibleReceipt())
-        val input = layoutInput(receipt)
-        val previous = ReceiptLayoutMeasurement(input, wholeMessageFits = true)
-
+        val input = layoutInput(requireNotNull(state.visibleReceipt()))
+        val previous = ReceiptPages(input).measured(true)
         val changedInputs = listOf(
             input.copy(key = key.copy(noteId = "new")),
             input.copy(key = key.copy(recipientId = "another")),
@@ -118,10 +108,86 @@ class RoadNotesPresentationTest {
             input.copy(restrictions = UiRestrictions(connected = true, optimized = true)),
         )
         for (changed in changedInputs) {
-            val current = receipt.copy(key = changed.key, message = changed.message)
-            assertEquals(ReceiptConfirmation.AwaitingLayout, current.confirmation(changed, previous))
-            val remeasured = ReceiptLayoutMeasurement(changed, wholeMessageFits = true)
-            assertEquals(ReceiptConfirmation.Ready, current.confirmation(changed, remeasured))
+            assertEquals(false, previous.canConfirm(changed, confirming = false))
+            val remeasured = ReceiptPages(changed).measured(true)
+            assertEquals(true, remeasured.canConfirm(changed, confirming = false))
+        }
+    }
+
+    @Test
+    fun pagesPreserveOriginalTextAndRequireSequentialMeasuredNavigation() {
+        val first = "👩‍🚒e\u0301\r\n\n"
+        val middle = "🚙전방"
+        val last = "공사"
+        val input = layoutInput(requireNotNull(state.visibleReceipt())).copy(
+            message = first + middle + last,
+            restrictions = UiRestrictions(connected = true),
+        )
+        val pending = ReceiptPages(input).measured(false, first.length)
+        assertEquals(pending, pending.next())
+        assertEquals(false, pending.canConfirm(input, confirming = false))
+
+        val unseen = pending.measured(true)
+        assertEquals(unseen, unseen.next())
+        val pageOne = unseen.copy(bodySeen = true)
+        val pageTwo = pageOne.next().measured(false, middle.length).measured(true).copy(bodySeen = true)
+        assertEquals(first, pageOne.text)
+        assertEquals(middle, pageTwo.text)
+        assertEquals(false, pageTwo.canConfirm(input, confirming = false))
+        assertEquals(first, pageTwo.previous().text)
+        assertEquals(false, pageTwo.previous().canGoNext)
+
+        val unmeasuredLast = pageTwo.next()
+        assertEquals(false, unmeasuredLast.canConfirm(input, confirming = false))
+        val unseenLast = unmeasuredLast.measured(true)
+        assertEquals(false, unseenLast.canConfirm(input, confirming = false))
+        val pageThree = unseenLast.copy(bodySeen = true)
+        assertEquals(input.message, pageOne.text + pageTwo.text + pageThree.text)
+        assertEquals(true, pageThree.canConfirm(input, confirming = false))
+        assertEquals(false, pageThree.previous().canConfirm(input, confirming = false))
+
+        val restricted = input.copy(restrictions = UiRestrictions(connected = true, optimized = true))
+        assertEquals(false, pageThree.canConfirm(restricted, confirming = false))
+        val reset = ReceiptPages(restricted).measured(false, first.length)
+        assertEquals(input.message, reset.text)
+        assertEquals(reset, reset.next())
+        assertEquals(false, reset.canConfirm(restricted, confirming = false))
+    }
+
+    @Test
+    fun measuredBoundaryNeverSplitsGraphemesOrDiscardsNewlines() {
+        val emoji = "👩‍🚒"
+        val accent = "e\u0301"
+        val breaks = "\r\n\n"
+        val content = emoji + accent + breaks + "긴 본문"
+        assertNull(fittingReceiptPrefix(content, listOf(1, 2)) { true })
+        assertEquals(emoji.length, fittingReceiptPrefix(content, listOf(emoji.length + 1)) { true })
+        assertEquals(
+            emoji.length + accent.length,
+            fittingReceiptPrefix(content, listOf(emoji.length + accent.length + 1)) { true },
+        )
+        assertEquals(
+            emoji.length + accent.length + breaks.length,
+            fittingReceiptPrefix(content, listOf(emoji.length + accent.length + breaks.length)) { true },
+        )
+        assertNull(fittingReceiptPrefix(content, listOf(content.length)) { false })
+    }
+
+    @Test
+    fun pagingRequiresKnownUnrestrictedPolicyWhileShortNotesKeepExistingRules() {
+        val input = layoutInput(requireNotNull(state.visibleReceipt()))
+        val policies = listOf(
+            UiRestrictions(),
+            UiRestrictions(connected = true, optimized = true),
+            UiRestrictions(connected = true, flags = Flags.UX_RESTRICTIONS_NO_SETUP),
+        )
+        for (policy in policies) {
+            val current = input.copy(restrictions = policy)
+            val overflow = ReceiptPages(current).measured(false, prefixLength = 1)
+            assertNull(overflow.end)
+            assertEquals(false, overflow.canGoNext)
+            assertEquals(false, overflow.canConfirm(current, confirming = false))
+            assertEquals(true, ReceiptPages(current).measured(true).canConfirm(current, confirming = false))
         }
     }
 

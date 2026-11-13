@@ -33,6 +33,7 @@ fun RoadNotesRoute(
                     onConfirmReceipt = { key ->
                         viewModel.confirmReceipt(key, lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
                     },
+                    isReceiptCurrent = viewModel::isReceiptCurrent,
                     onContentShown = viewModel::markPresented,
                 )
 

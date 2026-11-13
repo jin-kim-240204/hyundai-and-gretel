@@ -10,17 +10,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jinkim.hyundaiAndGretel.R
@@ -29,7 +20,6 @@ import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteAction
 import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteHeader
-import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteMessageCard
 import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteStateCard
 import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteStatus
 import com.jinkim.hyundaiAndGretel.ui.theme.PleosSpacing
@@ -37,12 +27,13 @@ import com.jinkim.hyundaiAndGretel.ui.theme.PleosTheme
 import com.jinkim.hyundaiAndGretel.ui.theme.RoadNoteDimensions
 
 @Composable
-fun RoadNotesScreen(
+internal fun RoadNotesScreen(
     state: RoadNotesUiState,
     startAllowed: Boolean,
     onStartTracking: () -> Unit,
     onStopTracking: () -> Unit,
     onConfirmReceipt: (ReceiptKey) -> Unit,
+    isReceiptCurrent: (ReceiptLayoutInput) -> Boolean,
     onContentShown: (String) -> Unit,
 ) {
     val policy = state.restrictions
@@ -59,61 +50,15 @@ fun RoadNotesScreen(
             ) {
                 RoadNoteHeader(policy.label(stringResource(R.string.road_note_title)))
                 if (receipt != null) {
-                    SideEffect { onContentShown(receipt.contentKey) }
-                    val density = LocalDensity.current
-                    val input = ReceiptLayoutInput(
-                        key = receipt.key,
-                        message = receipt.message,
+                    ReceiptCard(
+                        receipt = receipt,
+                        policy = policy,
                         constraints = windowConstraints,
-                        density = density.density,
-                        fontScale = density.fontScale,
-                        layoutDirection = LocalLayoutDirection.current,
-                        locales = LocalConfiguration.current.locales.toLanguageTags(),
-                        restrictions = policy,
-                    )
-                    var measured by remember(input) { mutableStateOf<ReceiptLayoutMeasurement?>(null) }
-                    // Recreate the text so even identical glyph layout reports a result for the new input.
-                    key(input) {
-                        RoadNoteMessageCard(
-                            label = policy.label(stringResource(receipt.labelRes)),
-                            message = receipt.message,
-                            modifier = Modifier.padding(top = RoadNoteDimensions.sectionGap - PleosSpacing.space04),
-                            tone = receipt.tone,
-                            compact = compact,
-                            maxMessageLines = 3,
-                            onMessageLayout = { layout ->
-                                val ellipsized = (0 until layout.lineCount).any(layout::isLineEllipsized)
-                                measured = ReceiptLayoutMeasurement(
-                                    input,
-                                    wholeMessageFits = layout.lineCount > 0 && !layout.hasVisualOverflow && !ellipsized,
-                                )
-                            },
-                        )
-                    }
-                    RoadNoteStatus(
-                        trackingMessage,
-                        Modifier.padding(top = (if (compact) RoadNoteDimensions.compactStatusGap
-                            else RoadNoteDimensions.statusGap) - PleosSpacing.space04),
-                    )
-                    RoadNoteStatus(policy.label(stringResource(R.string.receipt_title)))
-                    val confirmation = receipt.confirmation(input, measured)
-                    val notice = when (confirmation) {
-                        ReceiptConfirmation.AwaitingLayout -> R.string.receipt_measuring
-                        ReceiptConfirmation.TextOverflow -> R.string.receipt_overflow
-                        ReceiptConfirmation.Ready, ReceiptConfirmation.Confirming -> null
-                    }
-                    if (notice != null) RoadNoteStatus(policy.label(stringResource(notice)))
-                    RoadNoteAction(
-                        text = policy.label(stringResource(
-                            if (receipt.confirming) R.string.receipt_confirming else R.string.receipt_confirm,
-                        )),
-                        onClick = {
-                            if (receipt.confirmation(input, measured) == ReceiptConfirmation.Ready) {
-                                onConfirmReceipt(receipt.key)
-                            }
-                        },
-                        modifier = Modifier.align(Alignment.End),
-                        enabled = confirmation == ReceiptConfirmation.Ready,
+                        compact = compact,
+                        trackingMessage = trackingMessage,
+                        isReceiptCurrent = isReceiptCurrent,
+                        onConfirm = onConfirmReceipt,
+                        onContentShown = onContentShown,
                     )
                 } else {
                     RoadNoteStateCard(
