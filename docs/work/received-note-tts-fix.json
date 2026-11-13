@@ -1,0 +1,83 @@
+{
+  "task": "PR #8 수신 쪽지 TTS 무음 대응",
+  "selected_rules": [
+    "ENV-02",
+    "VEH-03",
+    "AUDIO-01",
+    "AUDIO-02",
+    "PRIV-01",
+    "INT-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "JDK 21/Gradle 9.6.0에서 JVM 123개 및 하네스 --build 통과. Studio worktree 빌드는 미실행."
+    },
+    {
+      "id": "VEH-03",
+      "status": "NOT_TESTED",
+      "evidence": "전원 API의 null 계약과 기존 권한 선언 확인. 실제 CarAudioPower 초기 null 조회 후 유효 정책 콜백과 연결 복구 미실행."
+    },
+    {
+      "id": "AUDIO-01",
+      "status": "NOT_TESTED",
+      "evidence": "요청/거절/상실/반납 코드 및 assemble/lint 확인. 실제 충돌·라우팅 미실행."
+    },
+    {
+      "id": "AUDIO-02",
+      "status": "NOT_TESTED",
+      "evidence": "AUDIO 미확인 차단·PCM 160ms 코드 확인. 실제 Suspend 및 첫 음절 미확인."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "NOT_TESTED",
+      "evidence": "앱 진단에서 예외 본문 제외 JVM 검사 통과. 공급자 시스템 로그 미확인."
+    },
+    {
+      "id": "INT-01",
+      "status": "PASS",
+      "evidence": "일반 JVM 수신 큐의 새 수신 전용·ACK 독립 검사와 Pleos TTS 3.3.1 AAR 공개 계약 대조."
+    },
+    {
+      "id": "DOC-5ec59d586502#초기화해제",
+      "status": "PASS",
+      "evidence": "PleosNoteSpeaker 초기화 성공 후 설정 및 finally 해제 순서를 배포 AAR 선언과 대조."
+    },
+    {
+      "id": "DOC-426eee956b29#재생이벤트",
+      "status": "PASS",
+      "evidence": "공식 이벤트 의미와 PleosNoteSpeaker 콜백·진단을 정적 대조."
+    },
+    {
+      "id": "DOC-72916a4c511a#오류코드",
+      "status": "PASS",
+      "evidence": "ReceiptAnnouncementTest에서 초기 단계 및 SDK 코드 보존 경로 중 발화 오류와 조회 timeout 진단 검증."
+    },
+    {
+      "id": "DOC-fac75a3790c3#권한선언",
+      "status": "PASS",
+      "evidence": "app/src/main/AndroidManifest.xml의 TTS_SERVICE 확인. 설치 권한 미검증."
+    },
+    {
+      "id": "DOC-cdaaba80cb83#온디바이스",
+      "status": "PASS",
+      "evidence": "공식 Introduction과 Mode.ON_DEVICE 생성 경로 정적 대조."
+    },
+    {
+      "id": "DOC-f04338dec3b6#포커스",
+      "status": "NOT_TESTED",
+      "evidence": "PleosNoteSpeaker에서 기존 거절/상실/반납 경로 확인. 실제 재생 미검증."
+    },
+    {
+      "id": "DOC-a243773e232d#Suspend",
+      "status": "NOT_TESTED",
+      "evidence": "CarAudioPower 미확인 차단은 정적 검토. 일반 JVM 수신 큐 테스트에서 정책 회복 시 기존 수신 자동 재생 방지를 확인. 실제 차량 정책 콜백과 Suspend 미실행."
+    },
+    {
+      "id": "DOC-2cbe51f12c43#PCM",
+      "status": "NOT_TESTED",
+      "evidence": "PCM 160ms, marker 및 정리 경로는 정적 검토. 실제 AudioTrack 리스너 제거·stop·release, 출력 경로 및 가청 결과 미검증."
+    }
+  ]
+}
