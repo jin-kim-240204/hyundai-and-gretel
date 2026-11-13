@@ -1,22 +1,12 @@
 # 프로젝트 구성
 
-과거 구성 빌드 검증: 2026-11-02 MCP build_project 성공, Gradle assembleDebug 및 lintDebug 성공. 병합 Manifest에서 Automotive 필수 선언, 일반 MainActivity 및 service 부재를 확인했다. 이 결과는 당시 구성의 기록이며 현재 변경 후 빌드·실행을 재검증한 결과가 아니다. 현재 소스/설정은 2026-11-08 대조했다. 에뮬레이터 관련 과거 점검은 docs/work에 있으며 현재 소스 빌드의 실행 완료 증거로 재사용하지 않는다.
+사용자가 선택한 Car → No Activity → 일반 Empty Activity 추가에 해당하는 구성입니다. 단일 Automotive application 모듈에서 일반 `ComponentActivity`와 Compose를 사용합니다.
 
-사용자 선택: Car → No Activity → 일반 Empty Activity 추가와 같은 최종 구성.
+- Gradle Wrapper 9.6.0, JDK 21로 비기기 검사를 수행했습니다. Android SDK Platform 35가 필요하며 `ANDROID_HOME` 또는 로컬 `local.properties`의 `sdk.dir`로 지정합니다.
+- minSdk 28, compileSdk 35, targetSdk 34. applicationId는 `com.jinkim.hyundaiAndGretel`, versionName은 1.0, versionCode는 1입니다.
+- Pleos 공식 Maven 저장소와 Vehicle 2.3.2, FusedLocation 1.1.3, TextToSpeech 3.3.1을 사용합니다. 의존성 다운로드, SDK 사용 승인, 기기에서 권한이 부여되는지는 각각 확인합니다.
+- `MainActivity`가 Compose 화면을 열고, `RoadNoteService`가 위치 수집·제보 저장·접근 수신과 TTS 수명을 관리합니다. Room은 시연별 쪽지와 수신 이력을, H3는 주변 후보의 셀 범위를 관리합니다. R1·A/B 합성 경로와 활성 시연이 저장·수신의 전제입니다.
+- debug는 외부 Gleo 입력과 시연 도구를 제공합니다. release의 새 설치 제한은 [제출 준비 점검표](RELEASE-READINESS.md)를 참고하세요.
+- 기기 준비와 재현 절차는 [시연 런북](PLEOS-DEMO.md), 비기기 검사 명령은 [README](../README.md)에 있습니다.
 
-현재 프로젝트는 MCP로 파일을 구성했다. Android Studio 마법사에서 해당 순서를 완주해 생성했다고 주장하지 않는다. 이전 Empty Activity 프로젝트의 Gradle wrapper, 기본 아이콘 및 Compose theme를 재사용했다.
-
-- Android Automotive OS에 설치하는 application 모듈.
-- android.hardware.type.automotive required=true, touchscreen required=false.
-- 일반 ComponentActivity가 Compose 화면을 표시한다.
-- Car App Library 의존성, CarAppService, Session/Screen 구조는 사용하지 않는다.
-- Pleos Vehicle SDK 2.3.2와 공식 Maven 저장소를 등록했다.
-- minSdk 28, compileSdk 35, targetSdk 34. targetSdk는 현재 설치된 Pleos API 34 에뮬레이터에 맞춘 개발 설정이며 출시 시 최신 심사 기준을 다시 확인해야 한다.
-- Manifest에는 pleos.car.permission.CAR_DOORS, CONTROL_CAR_DOORS, CAR_WINDOWS, CONTROL_CAR_WINDOWS가 선언되어 있다. MainActivity에는 Vehicle 초기화·조회/제어 호출이 없으며 권한 선언만으로 차량 연결·승인이 완료된 것은 아니다. 실제 기능 구현 시 필요한 권한·지원 여부를 재검토한다. 사용자 테스트 요청에 따라 MainActivity의 distractionOptimized 선언만 유지하고 별도 주행 상태 감시/간결 UI 전환은 원복했다. 기존 debug JSON 관측 UI를 그대로 표시하며 출시 주행 적합성은 미검증이다.
-- allowBackup=false 및 MainActivity의 windowSoftInputMode=adjustResize가 설정되어 있다. 초안 보안/키보드 동작의 실제 검증은 별도다.
-- 소스 package/namespace/applicationId는 com.jinkim.hyundaiAndGretel로 정합했다. 이전 com.jinnayeong.wakeup 설치본과는 별도 앱이며 데이터 자동 이전은 없다. versionName=1.0, versionCode=1.
-- Gleo Schema·입력 검증·Callback 생성·내부 전용 Receiver와 Android Keystore/AES-GCM 초안 저장·동의/목록/삭제 UI를 구현했다. debug는 무저장 Gleo 테스트 관측 화면을 표시하고 외부 입력을 받으며 Callback 대상은 에뮬레이터에 설치된 ai.umos.ambientai다. release는 외부 수신 비활성이다. 실제 음성/발신자 신뢰 계약은 미검증이다. 위치·서버·게시/공유는 미구현이다. 도로 제보의 현재 설계는 [Gleo 인터페이스](plans/gleo-interface-design.md)와 [구현 계획](plans/implementation-plan.md)을 따른다.
-- 수면 타이머·알람·좌석 제어는 아직 구현하지 않았다.
-
-공식 시작 가이드: https://document.pleos.ai/docs/pleos-only/getting-started
-공식 문구의 Car/Automotive → Empty Activity와 현재 Android Studio의 템플릿 선택지가 달라, 위 구성을 사용자가 선택했다.
+[공식 Pleos Connect 시작 가이드](https://document.pleos.ai/docs/pleos-only/getting-started)
