@@ -31,3 +31,10 @@ Gradle에서 기존 H3 configuration-time resolution 및 JVM native-access 경�
 
 - FAIL · `app-release-unsigned.apk`가 생성됐으나 서명·제출 파일·공개 링크가 없다. release의 시연 생성 비활성, 새 설치의 빈 주변 Flow, Gleo 수신기 비노출과 자기 패키지 Callback을 확인했다. [제출 준비 점검표](../RELEASE-READINESS.md) · [공식 공모전 제출 안내](https://appdevchallenge.auto-hmg.io/guide/submission)
 - NOT_TESTED · 에뮬레이터/adb/기기/앱 실행 전부 미실행. 설치·Console 응답·권한·실제 Gleo 음성/Callback·Room 및 위치 SDK 계측·실제 음성/첫 음절·AUDIO 전원·렌더링·주행 규제·최신 Figma 대조 미검증. [시연 런북](../PLEOS-DEMO.md)
+
+
+## PR #10 독립 리뷰 반영
+
+- 리뷰 기준 `6fc61ff..2d0c50c` · 검토 커밋 `2d0c50cc43778e2f9b27a9e2976243788738b3a3`. 독립 검토에서 신규 확정 코드 결함 없음, Python fake runner 5개와 diff 검사 PASS. [원격 리뷰](https://github.com/jin-kim-240204/hyundai-and-gretel/pull/10#pullrequestreview-5895737346)
+- ENV-01 · [시연 런북](../PLEOS-DEMO.md)에 공유 구성의 범위와 사용자 0/10 환경의 제약을 명시했다. CLI로 현재 사용자 설치를 확인하고 필요하면 수동 설치 후 재진단하는 절차를 보완했다. IDE 구성 로드·실제 설치 사용자·Activity 실행은 NOT_TESTED.
+- `git diff --check` 및 `python3 scripts/verify_harness.py` PASS. 보고서 검사는 구조를 통과했고 기존 제출 차단 항목으로 종료코드 1(FAIL)을 유지했다.

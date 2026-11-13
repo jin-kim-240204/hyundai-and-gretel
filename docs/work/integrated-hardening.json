@@ -14,7 +14,7 @@
     {
       "id": "ENV-01",
       "status": "NOT_TESTED",
-      "evidence": "Kotlin, minSdk 28, API 35 빌드와 기존 AVD 규격 확인. 이번 기기 실행 미실행."
+      "evidence": "Kotlin, minSdk 28, API 35 빌드와 기존 AVD 규격 확인. 이번 기기 실행 미실행. 공유 실행 구성 IDE 로드·설치 사용자·Activity 실행 미확인."
     },
     {
       "id": "ENV-02",
@@ -122,5 +122,11 @@
       "status": "FAIL",
       "evidence": "보고서 구조 통과, 제출 차단 항목으로 종료코드 1."
     }
-  ]
+  ],
+  "independent_review": {
+    "url": "https://github.com/jin-kim-240204/hyundai-and-gretel/pull/10#pullrequestreview-5895737346",
+    "commit": "2d0c50cc43778e2f9b27a9e2976243788738b3a3",
+    "finding": "신규 확정 코드 결함 없음. Python fake runner 5개와 diff 검사 PASS.",
+    "follow_up": "런북에 공유 구성 범위, 현재 사용자 CLI 진단과 수동 설치, IDE 로드 및 실제 설치 NOT_TESTED를 명시."
+  }
 }

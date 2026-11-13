@@ -4,11 +4,13 @@
 
 기존 개발 환경은 Pleos Connect Emulator v2.1.0 / API 34 / arm64 / 2560 × 1440 / 160dpi이며, TTS 확인에 사용한 CAAS 버전은 4.2.10입니다. AVD의 Boot option은 Cold boot로 설정합니다. 이번 통합 작업의 확인 범위는 비기기 검사입니다. [기존 TTS 환경](work/gleo-tts-implementation.md) · [공식 Emulator 설정](https://document.pleos.ai/docs/connect/guide/getting-started/application-development/configure-pleos-connect-emulator)
 
-Android Studio에서 프로젝트를 동기화하고 Build Variants의 `app`을 `debug`로 선택합니다. 공유 구성 **app Pleos**와 의도한 Pleos AVD를 선택해 기본 Activity를 실행할 수 있습니다. Studio 설치 후 현재 운전자 사용자에서 앱이 조회되는지 아래 진단으로 확인하세요. [Android Studio 실행 구성](https://developer.android.com/studio/run/rundebugconfig)
+Android Studio에서 프로젝트를 동기화하고 Build Variants의 `app`을 `debug`로 선택합니다. 실행 구성은 **app Pleos**, 대상은 시연에 사용할 Pleos AVD를 선택합니다. [Android Studio 실행 구성](https://developer.android.com/studio/run/rundebugconfig)
+
+공유 구성의 범위는 `app` 모듈, 실행 전 Gradle 빌드, 기본 Activity 실행 설정입니다. `ALL_USERS=false`이며 현재 사용자를 지정하는 Activity 실행 플래그가 없어, 사용자 0과 10이 나뉜 환경에서 현재 운전자 사용자로 설치·실행되는지는 보장할 수 없습니다. **NOT_TESTED** · Android Studio에서 구성 로드, 실제 설치 대상 사용자 및 Activity 실행 확인.
 
 ## 설치와 준비 진단
 
-저장소 루트에서 `emulator-5554`를 실제 시연 AVD의 serial로 바꿉니다.
+저장소 루트에서 `emulator-5554`를 실제 시연 AVD의 serial로 바꿉니다. Studio로 설치했더라도 시연 전에 CLI의 `--check`로 현재 운전자 사용자와 해당 사용자의 설치 상태를 확인하세요.
 
 ```sh
 # 기본 dry-run. 명령 출력만 수행
@@ -21,7 +23,7 @@ python3 scripts/pleos_demo_setup.py --serial emulator-5554 --setup-commands
 python3 scripts/pleos_demo_setup.py --serial emulator-5554 --check
 ```
 
-- `앱 설치 FAIL`이면 출력된 설치 명령으로 새 debug APK를 현재 사용자에 설치합니다. `앱 설치 PASS`는 패키지 존재 여부이며 현재 빌드와 버전이 같은지는 설치 경로로 확인합니다.
+- `앱 설치 FAIL`이면 `--setup-commands`가 출력한 설치 명령을 운영자가 수동으로 실행한 뒤 `--check`로 다시 확인합니다. 설치 명령은 실행 시점의 현재 운전자 사용자 ID를 사용합니다. `앱 설치 PASS`는 패키지 존재 여부이며 현재 빌드와 버전이 같은지는 설치 경로로 확인합니다.
 - `mock GPS FAIL`이면 시연 AVD의 현재 운전자 사용자에서 개발자 옵션의 모의 위치 앱으로 이 앱을 지정할 수 있는지 확인합니다. 해당 메뉴를 쓸 수 없는 환경에서는 운영자가 시연 권한 정책에 따라 현재 사용자의 `android:mock_location` AppOp를 설정하고 재진단합니다. 앱의 일반 위치 권한도 확인합니다. TTS에는 `pleos.car.permission.TTS_SERVICE`와 Speech Service, AUDIO 정책에는 `android.car.permission.READ_CAR_POWER_POLICY` 및 정책 연결이 필요합니다.
 - 호스트 브라우저에서 `http://127.0.0.1:8088/`를 사용합니다. 호스트 전달이 없으면 출력된 `forward --no-rebind`를 수동 실행하세요. 포트 충돌이 있으면 어떤 세션이 사용 중인지 확인합니다. [공식 Virtual Console 셋업](https://document.pleos.ai/docs/connect/guide/getting-started/application-development/use-vehicle-emulator) · [Android adb 포트 전달](https://developer.android.com/tools/adb)
 - 앱은 AVD **내부** `http://127.0.0.1:8088/vehicle/state`에서 HTTP 200과 `controls.speed_kph`, `gear.actual.value`를 읽습니다. 브라우저 전달 목록은 이 응답의 증거가 아닙니다. 앱에 콘솔 연결 오류가 표시되면 Pleos 이미지의 Console 지원·부팅 상태와 호스트에서 전달된 같은 경로의 응답을 점검합니다. 속도는 0~240km/h, 기어는 Park·Neutral·Drive를 사용합니다.
