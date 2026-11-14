@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jinkim.hyundaiAndGretel.BuildConfig
 import com.jinkim.hyundaiAndGretel.R
+import com.jinkim.hyundaiAndGretel.demo.demoPanelBottomPadding
 import com.jinkim.hyundaiAndGretel.notes.pickup.PickupState
 import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
@@ -46,7 +47,8 @@ internal fun RoadNotesScreen(
             val windowConstraints = constraints
             Column(
                 Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
-                    .padding(horizontal = RoadNoteDimensions.pagePadding, vertical = PleosSpacing.space04),
+                    .padding(horizontal = RoadNoteDimensions.pagePadding, vertical = PleosSpacing.space04)
+                    .padding(bottom = demoPanelBottomPadding),
                 verticalArrangement = Arrangement.spacedBy(PleosSpacing.space04),
             ) {
                 RoadNoteHeader(policy.label(stringResource(R.string.road_note_title)))

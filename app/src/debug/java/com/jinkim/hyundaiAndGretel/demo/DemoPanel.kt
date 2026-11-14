@@ -25,6 +25,10 @@ import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import com.jinkim.hyundaiAndGretel.ui.roadnotes.*
 import com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions
 
+private val demoButtonHeight = 56.dp
+private val demoButtonMargin = 8.dp
+internal val demoPanelBottomPadding = demoButtonHeight + demoButtonMargin
+
 @Composable
 fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> Unit) {
     val demoViewModel: DemoViewModel = viewModel(factory = viewModelFactory {
@@ -55,7 +59,10 @@ fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop:
             val label = ui.restrictions.label(stringResource(R.string.debug_tools_open))
             SmallFloatingActionButton(
                 onClick = { open = true },
-                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                modifier = Modifier.align(Alignment.BottomEnd)
+                    .padding(demoButtonMargin)
+                    .height(demoButtonHeight)
+                    .widthIn(min = demoButtonHeight)
                     .semantics { contentDescription = label },
                 containerColor = Color(0xFFF5C451),
                 contentColor = Color(0xFF171717),

@@ -53,7 +53,7 @@
     {
       "id": "DES-06",
       "status": "NOT_TESTED",
-      "evidence": "48dp 진입 크기, 접근성 레이블 선언. 실제 터치·포커스·버튼 상태 미확인."
+      "evidence": "56dp 진입 크기와 접근성 레이블 선언. 실제 터치·포커스·버튼 상태 미확인."
     },
     {
       "id": "DES-08",
@@ -73,12 +73,12 @@
     {
       "id": "DOC-e12e49cc3efc#레이아웃",
       "status": "NOT_TESTED",
-      "evidence": "우하단 48dp 버튼과 팝업 최대 너비 설정. 제품 카드·버튼 겹침 미측정."
+      "evidence": "56dp FAB와 64dp debug 전용 본문 스크롤 끝 패딩을 정적 회귀로 확인. 작은 창의 실제 겹침은 미검증."
     },
     {
       "id": "DOC-189d894e8124#윈도",
       "status": "NOT_TESTED",
-      "evidence": "앱 콘텐츠 제약을 기반으로 Dialog 폭·높이를 산정. 시스템 영역 비침범 실측 미실행."
+      "evidence": "targetSdk 34와 기본 decor fitting, 제품과 FAB가 공유하는 부모 확인. 추가 인셋 미적용. 실제 시스템 영역 검증 미실행."
     },
     {
       "id": "DOC-d771e574367a#레이블과상태",
@@ -94,6 +94,11 @@
       "id": "DOC-2bec764daf11#실제생성",
       "status": "NOT_TESTED",
       "evidence": "Gleo 스키마 등록 및 LLM의 실제 문장 생성 미검증."
+    },
+    {
+      "id": "DOC-e12e49cc3efc#스크롤끝패딩",
+      "status": "PASS",
+      "evidence": "python3 scripts/test_demo_panel_layout.py 통과. 56dp FAB와 동일 여백 기준, 스크롤 내부 패딩 적용 순서, release 0dp 확인."
     }
   ]
 }
