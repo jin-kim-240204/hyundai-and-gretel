@@ -26,12 +26,14 @@ object DemoGeometry {
 
 enum class DemoMode { WEB_CONSOLE, EXTERNAL_ADB }
 enum class DemoPhase { STOPPED, PREPARING, PROBE, START, READY, RESETTING, ERROR }
+internal const val initialDemoInputStatus = "입력/권한 미확인"
+
 data class DemoState(
     val actor: String = "A", val mode: DemoMode = DemoMode.WEB_CONSOLE,
     val phase: DemoPhase = DemoPhase.STOPPED, val scenarioId: String? = null,
     val target: Double? = null, val probe: Double? = null, val current: Double? = null,
     val targetNoteId: String? = null, val message: String? = null,
-    val receivedAtElapsed: Long? = null, val inputStatus: String = "입력/권한 미확인",
+    val receivedAtElapsed: Long? = null, val inputStatus: String = initialDemoInputStatus,
 ) { val transitioning get() = phase in setOf(DemoPhase.PREPARING, DemoPhase.PROBE, DemoPhase.START, DemoPhase.RESETTING) }
 
 class StartGate(val probe: Double, val target: Double, private val now: () -> Long) {

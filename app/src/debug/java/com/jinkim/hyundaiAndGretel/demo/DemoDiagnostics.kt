@@ -8,6 +8,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -56,16 +58,50 @@ internal fun DemoDiagnostics(ui: RoadNotesUiState, demo: DemoState, notes: List<
     rows.filter { it.first in visible }.forEach { (_, text) -> PolicyText(text, ui.restrictions) }
 }
 
+private val demoNoteColor = Color(0xFFED666B)
+private val demoPositionColor = Color(0xFFEDEDED)
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun DemoRoutePlot(demo: DemoState, notes: List<RoadNote>, policy: UiRestrictions) {
-    PolicyText(stringResource(R.string.debug_route_legend), policy)
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        DemoHeading(R.string.debug_route_title, policy)
+        DemoCaption(stringResource(R.string.debug_route_caption), policy)
+    }
     val points = notes.mapNotNull { it.route?.progressMeters }
     val current = demo.current
     val end = maxOf(1_500.0, (points + listOfNotNull(current)).maxOrNull()?.plus(100) ?: 1_500.0)
-    Canvas(Modifier.fillMaxWidth().height(100.dp)) {
-        fun x(progress: Double) = (progress / end * size.width).toFloat()
-        drawLine(Color.Gray, Offset(0f, size.height / 2), Offset(size.width, size.height / 2), 2f)
-        points.forEach { drawCircle(Color.Red, 7.dp.toPx(), Offset(x(it), size.height * 0.3f)) }
-        current?.let { drawCircle(Color.Blue, 7.dp.toPx(), Offset(x(it), size.height * 0.7f)) }
+    Canvas(Modifier.fillMaxWidth().height(38.dp).padding(horizontal = 11.dp)) {
+        fun position(progress: Double) = Offset((progress / end * size.width).toFloat(), size.height / 2)
+        drawLine(Color(0xFF9A9A9A), position(0.0), position(end), 1.dp.toPx())
+        points.forEach {
+            drawCircle(demoNoteColor.copy(alpha = 0.15f), 11.dp.toPx(), position(it))
+            drawCircle(demoNoteColor, 6.dp.toPx(), position(it))
+        }
+        current?.let {
+            drawCircle(demoPositionColor, 8.dp.toPx(), position(it), style = Stroke(2.dp.toPx()))
+        }
+    }
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        RouteLegend(R.string.debug_route_current, policy, isNote = false)
+        RouteLegend(R.string.debug_route_note, policy, isNote = true)
+    }
+}
+
+@Composable
+private fun RouteLegend(label: Int, policy: UiRestrictions, isNote: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+        Canvas(Modifier.size(10.dp)) {
+            if (isNote) drawCircle(demoNoteColor)
+            else drawCircle(demoPositionColor, radius = 4.dp.toPx(), style = Stroke(1.dp.toPx()))
+        }
+        DemoCaption(stringResource(label), policy)
     }
 }

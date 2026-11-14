@@ -30,40 +30,35 @@ class DemoPanelLayoutTest(unittest.TestCase):
 
     def test_debug_dialog_is_bounded_and_keeps_close_outside_the_scroll(self):
         debug = next((SOURCE / "debug").rglob("DemoPanel.kt")).read_text(encoding="utf-8")
-        dialog = debug.split("private fun DemoDialog(", 1)[1].split("@RequiresApi", 1)[0]
+        dialog = debug.split("private fun DemoDialog(", 1)[1].split("private fun DemoPanelContents", 1)[0]
         self.assertIn("DialogProperties(usePlatformDefaultWidth = false)", dialog)
         self.assertIn("onDismissRequest = onClose", dialog)
-        self.assertIn("minOf(maxWidth * 0.9f, demoDialogMaxWidth)", dialog)
-        self.assertIn(".heightIn(max = maxHeight * 0.9f)", dialog)
-        self.assertIn("shadowElevation = 8.dp", dialog)
+        self.assertIn("demoDialogMaxWidth = 780.dp", debug)
+        self.assertIn("widthIn(max = demoDialogMaxWidth).fillMaxWidth()", dialog)
+        self.assertIn("shape = RoundedCornerShape(18.dp)", dialog)
+        self.assertIn("shadowElevation = 24.dp", dialog)
         self.assertRegex(dialog, r"IconButton\(onClick = onClose, modifier = Modifier.size\(56\.dp\)\)")
         self.assertIn("contentDescription = policy.label(stringResource(R.string.debug_tools_close))", dialog)
-        self.assertRegex(
-            dialog,
-            r"\}\s*\}\s*Box\(Modifier.weight\(1f, fill = false\).verticalScroll"
-            r"\(rememberScrollState\(\)\)\)\s*\{\s*content\(\)",
-        )
-        self.assertIn("horizontalAlignment = Alignment.CenterHorizontally", debug)
+        self.assertLess(dialog.index("IconButton(onClick = onClose"), dialog.index(".verticalScroll("))
+        self.assertIn("Modifier.weight(1f, fill = false).verticalScroll", dialog)
+        self.assertIn("val narrow = maxWidth <= 580.dp", debug)
+        self.assertIn("maxItemsInEachRow = if (narrow) 1 else 2", debug)
 
-    def test_debug_window_blur_has_an_api_gate_and_dim_fallback(self):
+    def test_white_backdrop_and_web_console_only_switch(self):
         debug = next((SOURCE / "debug").rglob("DemoPanel.kt")).read_text(encoding="utf-8")
-        self.assertRegex(
-            debug,
-            r"WindowManager.LayoutParams.FLAG_DIM_BEHIND\)\s*"
-            r"window.setDimAmount\(dimWithoutBlur\)\s*"
-            r"if \(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S\) \{\s*"
-            r"val stopObserving = observeDemoBlur\(window, blurRadiusPx\)\s*"
-            r"onDispose \{ stopObserving\(\) \}",
-        )
-        self.assertIn("setBlurBehindRadius(if (enabled) blurRadiusPx else 0)", debug)
-        self.assertIn("dimAmount = if (enabled) dimWithBlur else dimWithoutBlur", debug)
-        self.assertIn("removeCrossWindowBlurEnabledListener(listener)", debug)
+        self.assertIn("Modifier.fillMaxSize().background(Color.White).padding(12.dp)", debug)
+        self.assertIn("window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)", debug)
+        self.assertIn("if (demo.mode == DemoMode.EXTERNAL_ADB)", debug)
+        self.assertIn("selectMode(DemoMode.WEB_CONSOLE)", debug)
+        self.assertNotIn("selectMode(DemoMode.EXTERNAL_ADB)", debug)
 
     def test_debug_label_and_close_icon_are_in_debug_resources(self):
         resources = SOURCE / "debug/res"
         strings = ET.parse(resources / "values/strings.xml")
         self.assertEqual(strings.findtext("./string[@name='debug_tools_badge']"), "Debug")
-        self.assertEqual(ET.parse(resources / "drawable/debug_close.xml").getroot().tag, "vector")
+        for name in ("debug_close", "debug_disclosure", "debug_reset"):
+            self.assertEqual(ET.parse(resources / f"drawable/{name}.xml").getroot().tag, "vector")
+        self.assertFalse(any("·" in (item.text or "") for item in strings.getroot()))
 
 
 if __name__ == "__main__":

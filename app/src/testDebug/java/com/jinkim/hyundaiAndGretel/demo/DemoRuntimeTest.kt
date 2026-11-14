@@ -124,6 +124,36 @@ class DemoRuntimeTest {
         assertEquals(DemoPhase.ERROR, h.runtime.state.value.phase)
         assertFalse(h.runtime.accept(h.fix(610.0)))
     }
+    @Test fun externalModeReturnsToConsoleOnlyAfterWritesAndInputCleanup() = runTest {
+        val h = Harness(this)
+        h.runtime.mode(DemoMode.EXTERNAL_ADB)
+        runCurrent()
+        h.ready()
+        val externalStatus = h.runtime.state.value.inputStatus
+        val stopsBeforeSwitch = h.host.stops
+        val closesBeforeSwitch = h.input.closes
+        assertTrue(h.input.injected.isEmpty())
+
+        h.host.busy = true
+        h.runtime.mode(DemoMode.WEB_CONSOLE)
+        runCurrent()
+        assertEquals(DemoMode.EXTERNAL_ADB, h.runtime.state.value.mode)
+        assertEquals(DemoPhase.READY, h.runtime.state.value.phase)
+        assertEquals(stopsBeforeSwitch, h.host.stops)
+
+        h.host.busy = false
+        h.runtime.mode(DemoMode.WEB_CONSOLE)
+        runCurrent()
+        assertEquals(DemoMode.WEB_CONSOLE, h.runtime.state.value.mode)
+        assertEquals(DemoPhase.STOPPED, h.runtime.state.value.phase)
+        assertNull(h.runtime.state.value.current)
+        assertNotEquals(externalStatus, h.runtime.state.value.inputStatus)
+        assertEquals(initialDemoInputStatus, h.runtime.state.value.inputStatus)
+        assertEquals(stopsBeforeSwitch + 1, h.host.stops)
+        assertEquals(closesBeforeSwitch + 1, h.input.closes)
+        assertEquals(1, h.host.starts)
+    }
+
     @Test fun acceptedResetSurvivesStopAndKeepsRoleChangesLockedUntilDatabaseCompletes() = runTest {
         val h = Harness(this); h.store.resetGate = CompletableDeferred()
         h.runtime.reset(false); runCurrent(); assertEquals(0, h.store.resets)

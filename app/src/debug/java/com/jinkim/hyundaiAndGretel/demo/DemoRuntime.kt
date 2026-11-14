@@ -100,7 +100,7 @@ class DemoRuntime(
         }
     }
     fun role(actor: String) { require(actor in setOf("A", "B")); configure { it.copy(actor = actor) } }
-    fun mode(mode: DemoMode) = configure { it.copy(mode = mode) }
+    fun mode(mode: DemoMode) = configure { if (it.mode == mode) it else it.copy(mode = mode, inputStatus = initialDemoInputStatus) }
 
     fun requestStart(): Boolean {
         if (state.value.phase == DemoPhase.READY) return true
@@ -123,8 +123,8 @@ class DemoRuntime(
                 if (selected.mode == DemoMode.WEB_CONSOLE) {
                     input.prepare()
                     validatedAt = clock()
-                    mutable.value = state.value.copy(inputStatus = "mock 권한/콘솔 응답 확인 · SDK 대기")
-                } else mutable.value = state.value.copy(inputStatus = "앱 provider 정리 · 외부 SDK 입력 대기")
+                    mutable.value = state.value.copy(inputStatus = "mock 권한/콘솔 응답 확인 / SDK 대기")
+                } else mutable.value = state.value.copy(inputStatus = "앱 provider 정리 / 외부 SDK 입력 대기")
                 ensureActive(); checkOwner(token)
                 check(note == null || note.isActiveAt(utc())) { "대상 쪽지가 만료됐습니다" }
                 val nextGate = StartGate(probe, target, clock)
