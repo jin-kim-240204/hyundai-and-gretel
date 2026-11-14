@@ -15,7 +15,7 @@
     {
       "id": "DOC-24357cf5e59a#설명과문자열",
       "status": "PASS",
-      "evidence": "§2.1, §4. assets/schema.json의 영어 설명 두 문장 이내, 구체 예시 없는 string 두 필드와 선택값. GleoActionTest에서 누락·타입·길이 검증."
+      "evidence": "§2.1, §4. assets/schema.json의 영어 설명 두 문장 이내, 구체 예시 없는 두 string 필드와 receiverGuidance 필수 선언을 scripts/test_receiver_guidance_schema.py로 확인. GleoActionTest에서 구버전 호환과 타입·길이 검증."
     },
     {
       "id": "DOC-c6fc94252d66#성공응답",

@@ -39,6 +39,7 @@
           },
           "required": [
             "content",
+            "receiverGuidance",
             "locationMode",
             "category"
           ]
