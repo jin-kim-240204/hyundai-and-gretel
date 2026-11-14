@@ -4,6 +4,8 @@ import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import android.database.sqlite.SQLiteException
 import com.jinkim.hyundaiAndGretel.notes.CreateNoteResult
+import com.jinkim.hyundaiAndGretel.notes.InvalidNote
+import com.jinkim.hyundaiAndGretel.notes.hasValidRouteMetadata
 import com.jinkim.hyundaiAndGretel.notes.RoadNote
 import com.jinkim.hyundaiAndGretel.notes.RoadNoteStore
 import com.jinkim.hyundaiAndGretel.notes.pickup.NearbyNoteStore
@@ -24,6 +26,7 @@ class RoomRoadNoteStore internal constructor(
     override suspend fun create(note: RoadNote): CreateNoteResult {
         val normalized = note.copy(content = note.content.trim())
         normalized.validationError()?.let { return CreateNoteResult.Invalid(it) }
+        if (!normalized.hasValidRouteMetadata()) return CreateNoteResult.Invalid(InvalidNote.ROUTE)
         return try {
             database.notes().insert(normalized.toEntity(spatial.cell(normalized.latitude, normalized.longitude)))
             CreateNoteResult.Created(normalized)

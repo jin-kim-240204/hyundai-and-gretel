@@ -42,10 +42,12 @@ internal fun RoadNote.validationError(): InvalidNote? = when {
     anchorOffsetMillis !in 0L..MAX_ANCHOR_OFFSET_MILLIS -> InvalidNote.OFFSET
     createdAtUtcMillis > Long.MAX_VALUE - RoadNote.TTL_MILLIS ||
         expiresAtUtcMillis != createdAtUtcMillis + RoadNote.TTL_MILLIS -> InvalidNote.TIME
-    route != null && !SyntheticRoute.matches(route, latitude, longitude) -> InvalidNote.ROUTE
     scenarioId != null && !scenarioId.isCanonicalUuid() -> InvalidNote.SCENARIO
     else -> null
 }
+
+internal fun RoadNote.hasValidRouteMetadata(): Boolean =
+    route == null || SyntheticRoute.matches(route, latitude, longitude)
 
 private fun String.isCanonicalUuid(): Boolean = try {
     UUID.fromString(this).toString() == this

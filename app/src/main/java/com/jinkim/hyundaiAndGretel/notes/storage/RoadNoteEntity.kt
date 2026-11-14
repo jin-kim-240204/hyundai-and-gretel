@@ -20,7 +20,6 @@ internal data class RoadNoteEntity(
     val expiresAtUtcMillis: Long,
     val h3CellId: String? = null,
     val routeId: String? = null,
-    val direction: Int? = null,
     val progressMeters: Double? = null,
     val scenarioId: String? = null,
     val receiverGuidance: String? = null,
@@ -34,10 +33,8 @@ internal data class RoadNoteEntity(
         route = routeContext(), scenarioId = scenarioId,
     )
 
-    private fun routeContext(): RouteContext? {
-        if (routeId == null && direction == null && progressMeters == null) return null
-        return RouteContext(requireNotNull(routeId), requireNotNull(direction), requireNotNull(progressMeters))
-    }
+    private fun routeContext(): RouteContext? =
+        if (routeId != null && progressMeters != null) RouteContext(routeId, progressMeters) else null
 }
 
 internal fun RoadNote.toEntity(h3CellId: String) = RoadNoteEntity(
@@ -45,5 +42,5 @@ internal fun RoadNote.toEntity(h3CellId: String) = RoadNoteEntity(
     category = category.name, latitude = latitude, longitude = longitude,
     anchorOffsetMillis = anchorOffsetMillis, createdAtUtcMillis = createdAtUtcMillis,
     expiresAtUtcMillis = expiresAtUtcMillis, h3CellId = h3CellId,
-    routeId = route?.routeId, direction = route?.direction, progressMeters = route?.progressMeters, scenarioId = scenarioId,
+    routeId = route?.routeId, progressMeters = route?.progressMeters, scenarioId = scenarioId,
 )

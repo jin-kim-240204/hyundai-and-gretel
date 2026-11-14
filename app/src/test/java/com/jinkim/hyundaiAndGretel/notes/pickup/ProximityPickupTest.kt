@@ -236,7 +236,7 @@ class ProximityPickupTest {
         assertEquals(1, h.store.inputs.size)
     }
 
-    @Test fun receiptClockBoundaryAndLegacySelfDirectionFiltersAreNotSdkMeasurements() = runTest {
+    @Test fun receiptClockBoundary() = runTest {
         for ((elapsed, expected) in listOf(2_000L to 1, 2_001L to 0)) {
             val h = Harness(backgroundScope)
             h.elapsed = elapsed
@@ -244,11 +244,19 @@ class ProximityPickupTest {
             h.source.requests.single().registered("boundary"); runCurrent()
             assertEquals(expected, h.store.inputs.size)
         }
+    }
+
+    @Test fun registersAndReceivesBehindAndOffTheDemoLineWithoutRouteMetadata() = runTest {
         val h = Harness(backgroundScope)
-        h.notes = listOf(note().copy(route = null), note(2).copy(authorId = "B"),
-            note(3).copy(route = note(3).route!!.copy(direction = -1)))
+        val behind = note(longitude = 127.029)
+        val adjacent = note(2).copy(latitude = 37.501, route = null)
+        h.notes = listOf(behind, adjacent, note(3).copy(authorId = "B"),
+            note(4).copy(latitude = 37.5101, route = null), note(5).copy(scenarioId = note().noteId))
         h.start(); runCurrent()
-        assertTrue(h.source.requests.isEmpty())
+        assertEquals(listOf(behind.longitude, adjacent.longitude), h.source.requests.map { it.longitude })
+        h.source.requests.forEachIndexed { index, request -> request.registered("radius-$index") }
+        runCurrent()
+        assertEquals(listOf(behind.noteId, adjacent.noteId), h.store.inputs.map { it.noteId })
     }
 
     @Test fun invalidationBeforeRegistrationRemovesLateIdWithoutReceiving() = runTest {

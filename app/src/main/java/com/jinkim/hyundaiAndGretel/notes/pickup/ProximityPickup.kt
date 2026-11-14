@@ -1,6 +1,7 @@
 package com.jinkim.hyundaiAndGretel.notes.pickup
 
 import com.jinkim.hyundaiAndGretel.location.*
+import com.jinkim.hyundaiAndGretel.notes.spatial.CandidateArea
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -75,13 +76,13 @@ class ProximityPickup(
         if (!isCurrentSession(owner)) return
         val position = positions.value
         val candidates = currentCandidates()
-        val route = position?.let { SyntheticRoute.project(it.fix.latitude, it.fix.longitude, owner.setup) }
-        if (position?.session != owner.session || candidates == null || route == null) {
+        if (position?.session != owner.session || candidates == null ||
+            !CandidateArea.contains(position.fix.latitude, position.fix.longitude)) {
             owner.requests.toList().forEach { unregisterRequest(it) }
             if (!owner.failed) mutableState.value = PickupState.Waiting
             return
         }
-        val eligible = unreceivedNotesAhead(owner, candidates, route)
+        val eligible = unreceivedNearbyNotes(owner, candidates)
         val selected = eligible.take(MAX_REGISTRATIONS)
         owner.overflow = (eligible.size - selected.size).coerceAtLeast(0)
         synchronizeRegistrations(owner, selected)
@@ -89,14 +90,15 @@ class ProximityPickup(
         publish(owner)
     }
 
-    private fun unreceivedNotesAhead(owner: PickupSession, candidates: List<NearbyCandidate>, route: RouteContext): List<NearbyCandidate> {
+    private fun unreceivedNearbyNotes(owner: PickupSession, candidates: List<NearbyCandidate>): List<NearbyCandidate> {
         val received = receipts.inbox.value.items.filter { it.recipientId == owner.setup.actorId }.map { it.note.noteId }.toSet()
+        val now = utcMillis()
+        val scenario = scenarioId()
         return candidates.filter { candidate ->
             val note = candidate.note
-            val noteRoute = note.route
-            noteRoute != null && SyntheticRoute.matches(noteRoute, note.latitude, note.longitude) &&
-                note.authorId != owner.setup.actorId && note.noteId !in received && note.noteId !in owner.accepted &&
-                (SyntheticRoute.ahead(noteRoute, route)?.let { it >= 0 } == true)
+            note.scenarioId == scenario && note.isActiveAt(now) && note.authorId != owner.setup.actorId &&
+                CandidateArea.contains(note.latitude, note.longitude) &&
+                note.noteId !in received && note.noteId !in owner.accepted
         }.sortedWith(compareBy<NearbyCandidate> { it.distanceMeters }.thenBy { it.note.noteId })
     }
 
@@ -162,12 +164,12 @@ class ProximityPickup(
         if (position.session != owner.session || elapsedMillis() - position.fix.receivedElapsedMillis !in 0L..RECEIPT_FRESHNESS) return
         val note = currentCandidates()?.firstOrNull { it.note.noteId == request.noteId }?.note ?: return
         if (receipts.inbox.value.items.any { it.recipientId == owner.setup.actorId && it.note.noteId == note.noteId }) return
-        if (note.noteId in owner.accepted || eligibleDistance(note, owner.setup, position.fix, utcMillis()) == null) return
+        if (note.scenarioId != scenarioId() || note.noteId in owner.accepted || eligibleDistance(note, owner.setup, position.fix, utcMillis()) == null) return
         owner.accepted += note.noteId
         unregisterRequest(request)
         if (!isCurrentSession(owner)) return
 
-        val input = ReceiptRequest(note.noteId, owner.setup, position.fix, scenarioId())
+        val input = ReceiptRequest(note.noteId, owner.setup, position.fix, note.scenarioId)
         receipts.receive(input) { result ->
             if (isCurrentSession(owner)) {
                 if (result == ReceiveResult.RECEIVED) {

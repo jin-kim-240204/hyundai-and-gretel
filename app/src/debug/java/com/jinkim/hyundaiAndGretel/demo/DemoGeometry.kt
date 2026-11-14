@@ -11,7 +11,7 @@ object DemoGeometry {
     fun progress(fix: LocationFix) = SyntheticRoute.project(fix.latitude, fix.longitude, SyntheticSession())?.progressMeters
     fun start(actor: String, notes: List<RoadNote>, now: Long): Pair<Double, RoadNote?> {
         if (actor == "A") return 610.0 to null
-        val note = notes.filter { it.authorId == "A" && it.isActiveAt(now) && it.route?.routeId == "R1" && it.route.direction == 1 }
+        val note = notes.filter { it.authorId == "A" && it.isActiveAt(now) && it.route?.routeId == "R1" }
             .sortedWith(compareByDescending<RoadNote> { it.createdAtUtcMillis }.thenBy { it.noteId }).firstOrNull()
             ?: error("출발 기준 쪽지가 없습니다")
         val start = note.route!!.progressMeters - 600
