@@ -1,5 +1,7 @@
 package com.jinkim.hyundaiAndGretel.speech
 
+import com.jinkim.hyundaiAndGretel.gleo.ParsedGleoAction
+import com.jinkim.hyundaiAndGretel.gleo.validateGleoParameters
 import com.jinkim.hyundaiAndGretel.location.LocationFix
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.RoadNote
@@ -61,9 +63,9 @@ class ReceiptAnnouncementTest {
             scope, store, speaker, { owner }, { now }, { readBody }, failures::add, events::add,
         )
 
-        fun add(id: Int): ReceiptRequest {
+        fun add(id: Int, guidance: String? = null): ReceiptRequest {
             val note = RoadNote("note-$id", "A", "오른쪽에 물체가 있는 것 같습니다.", NoteCategory.WARNING,
-                37.5, 127.0, 0, 0, RoadNote.TTL_MILLIS)
+                37.5, 127.0, 0, 0, RoadNote.TTL_MILLIS, receiverGuidance = guidance)
             store.rows = store.rows + InboxItem(note, "B", now, 10.0, null)
             return ReceiptRequest(note.noteId, SyntheticSession("B"), LocationFix(37.5, 127.0, 0))
         }
@@ -71,13 +73,14 @@ class ReceiptAnnouncementTest {
 
     @Test fun onlyExplicitNewReceiptPlaysAndDuplicatesNeverAckTheScreen() = runTest {
         val h = Harness(backgroundScope)
-        val input = h.add(1)
+        val guidance = "오른쪽에 물체가 있는 것 같습니다."
+        val input = h.add(1, guidance)
         runCurrent()
         assertTrue(h.speaker.texts.isEmpty())
         h.announcements.enqueue(input)
         h.announcements.enqueue(input)
         runCurrent()
-        assertEquals(listOf("도로 경고입니다. 오른쪽에 물체가 있는 것 같습니다."), h.speaker.texts)
+        assertEquals(listOf(guidance), h.speaker.texts)
         assertEquals(0, h.store.confirms)
         assertNull(h.store.rows.single().displayedAtUtcMillis)
     }
@@ -200,19 +203,34 @@ class ReceiptAnnouncementTest {
         }
     }
 
-    @Test fun textPreservesNegationAndUncertaintyAndDoesNotTruncateLongContent() {
+    @Test fun permittedGuidancePreservesNegationAndUncertaintyWithoutAPrefix() {
         val h = Harness(CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined))
-        h.add(1)
-        val note = h.store.rows.single().note.copy(content = "공사 중은 아닙니다.\n 물체가 있는 것 같습니다.")
+        h.add(1, "도로 경고입니다. 공사 중은 아닙니다.\n 물체가 있는 것 같습니다.")
+        val note = h.store.rows.single().note
         assertEquals("도로 경고입니다. 공사 중은 아닙니다. 물체가 있는 것 같습니다.", announcementText(note, true))
-        val long = note.copy(content = "가".repeat(121))
-        assertEquals("도로 경고 쪽지가 도착했습니다. 자세한 내용은 안전한 곳에서 확인해 주세요.", announcementText(long, true))
-        assertTrue(announcementText(note.copy(category = NoteCategory.INFORMATION), false).startsWith("도로 안내 쪽지"))
-        assertFalse(announcementText(note, false).contains("공사"))
-        val guidance = "도로 경고입니다. 물체가 있는 것 같습니다."
-        val guided = long.copy(receiverGuidance = guidance)
-        assertEquals(guidance, announcementText(guided, true))
-        assertEquals(announcementText(note, false), announcementText(guided, false))
-        assertEquals(announcementText(long, true), announcementText(note.copy(receiverGuidance = "가".repeat(121)), true))
+
+        val limit = "🚧".repeat(120)
+        assertEquals(limit, announcementText(note.copy(receiverGuidance = limit), true))
+        val information = note.copy(category = NoteCategory.INFORMATION)
+        assertEquals("도로 안내 쪽지가 도착했습니다. 자세한 내용은 안전한 곳에서 확인해 주세요.",
+            announcementText(information, false))
+    }
+
+    @Test fun invalidGleoGuidanceAndLegacyRowsOnlyPlayTheArrivalNotice() = runTest {
+        val h = Harness(backgroundScope)
+        val report = mapOf("content" to "공사 중은 아님", "category" to "WARNING", "locationMode" to "CURRENT_ROAD")
+        val actions = listOf(report) + listOf(null, " \n ", 42, "🚧".repeat(501), "🚧".repeat(121))
+            .map { report + ("receiverGuidance" to it) }
+        for ((index, action) in actions.withIndex()) {
+            val input = (validateGleoParameters(action) as ParsedGleoAction.Valid).input
+            val notice = h.add(index, input.receiverGuidance)
+            h.announcements.enqueue(notice)
+            runCurrent()
+        }
+        h.announcements.enqueue(h.add(actions.size, " \n "))
+        runCurrent()
+        val general = "도로 경고 쪽지가 도착했습니다. 자세한 내용은 안전한 곳에서 확인해 주세요."
+        assertEquals(List(actions.size + 1) { general }, h.speaker.texts)
+        assertEquals(0, h.store.confirms)
     }
 }

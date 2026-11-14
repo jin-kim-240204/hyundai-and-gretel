@@ -67,7 +67,7 @@
     {
       "status": "PASS",
       "command": "./gradlew --offline :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease :app:compileDebugAndroidTestKotlin",
-      "evidence": "JVM 140개, 실패·오류·스킵 0. 두 APK 및 lint, instrumentation 컴파일 성공."
+      "evidence": "JVM 141개, 실패·오류·스킵 0. 안내문 누락·NULL·빈값·타입 오류·길이 초과·본문 제한에서 일반 수신 알림만 출력하며 자동 ACK가 없음을 검증. 두 APK 및 lint, instrumentation 컴파일 성공."
     },
     {
       "status": "PASS",
