@@ -36,6 +36,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -43,14 +44,20 @@ class RoadNoteService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> requestStart()
-            ACTION_STOP -> { demo.stop(); stopTracking() }
+            ACTION_START -> { automaticTrackingPaused = false; requestStart() }
+            ACTION_STOP -> {
+                automaticTrackingPaused = intent.getBooleanExtra(EXTRA_PAUSE_AUTOMATIC, true)
+                demo.stop()
+                stopTracking()
+            }
             ACTION_STORAGE_HOLD -> finishWhenStorageIsIdle()
 
             else -> { demo.stop(); stopTracking() }
         }
         return START_NOT_STICKY
     }
+
+    private var automaticTrackingPaused = false
 
     private fun requestStart() {
         if (!demo.enabled) { startTracking(); return }
@@ -293,7 +300,12 @@ class RoadNoteService : Service() {
             }
         }
         scope.launch {
-            try { scenarioStore.observeActive().collect {
+            try {
+                if (BuildConfig.DEBUG) {
+                    restrictions.state.first { it.canSetup }
+                    scenarioStore.ensureActive()
+                }
+                scenarioStore.observeActive().collect {
                 if (activeScenario.value != it && announcementsDelegate.isInitialized()) announcements.reset()
                 activeScenario.value = it
             } }
@@ -312,6 +324,8 @@ class RoadNoteService : Service() {
         override val inboxState get() = receipts.inbox
         override val pickupState get() = pickup.state
         override val uiRestrictions get() = restrictions.state
+        override val automaticStartBlockReason get() =
+            if (automaticTrackingPaused) "사용자가 위치 수집을 중지했습니다" else demo.automaticStartBlockReason
         override val canStartTracking get() = !demo.enabled || (restrictions.state.value.canSetup && !demo.transitioning)
         val demoRuntime get() = demo
         fun bufferSnapshot() = tracking.bufferSnapshot()
@@ -363,6 +377,7 @@ class RoadNoteService : Service() {
     }
 
     companion object {
+        const val EXTRA_PAUSE_AUTOMATIC = "pauseAutomaticTracking"
         const val ACTION_START = "com.jinkim.hyundaiAndGretel.START_LOCATION"
         const val ACTION_STOP = "com.jinkim.hyundaiAndGretel.STOP_LOCATION"
         private const val ACTION_STORAGE_HOLD = "com.jinkim.hyundaiAndGretel.HOLD_NOTE_WRITES"

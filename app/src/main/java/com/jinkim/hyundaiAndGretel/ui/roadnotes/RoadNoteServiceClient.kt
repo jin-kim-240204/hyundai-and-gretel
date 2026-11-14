@@ -59,8 +59,9 @@ class RoadNoteServiceClient(context: Context, scope: CoroutineScope) : ServiceCo
         }
     }
 
-    fun stopTracking() {
-        context.startService(Intent(context, RoadNoteService::class.java).setAction(RoadNoteService.ACTION_STOP))
+    fun stopTracking(pauseAutomatic: Boolean = true) {
+        context.startService(Intent(context, RoadNoteService::class.java).setAction(RoadNoteService.ACTION_STOP)
+            .putExtra(RoadNoteService.EXTRA_PAUSE_AUTOMATIC, pauseAutomatic))
     }
 
     fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean, visited: Set<String>) {

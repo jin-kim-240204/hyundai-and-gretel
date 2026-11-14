@@ -31,9 +31,7 @@ import com.jinkim.hyundaiAndGretel.ui.theme.RoadNoteDimensions
 @Composable
 internal fun RoadNotesScreen(
     state: RoadNotesUiState,
-    startAllowed: Boolean,
-    onStartTracking: () -> Unit,
-    onStopTracking: () -> Unit,
+    trackingPreparation: String?,
     onConfirmReceipt: (ReceiptKey) -> Unit,
     isReceiptCurrent: (ReceiptLayoutInput) -> Boolean,
     onContentShown: (String) -> Unit,
@@ -82,17 +80,9 @@ internal fun RoadNotesScreen(
                 }
                 if (state.pickup is PickupState.Failed) RoadNoteStatus(policy.label(stringResource(R.string.pickup_failed)))
                 if (state.inbox.error) RoadNoteStatus(policy.label(stringResource(R.string.receipt_failed)))
-                RoadNoteAction(
-                    text = policy.label(stringResource(R.string.location_start)),
-                    onClick = onStartTracking,
-                    modifier = Modifier.align(Alignment.End),
-                    enabled = state.canStart && startAllowed,
-                )
-                RoadNoteAction(
-                    text = policy.label(stringResource(R.string.location_stop)),
-                    onClick = onStopTracking,
-                    modifier = Modifier.align(Alignment.End),
-                )
+                if (!state.trackingStatus.isCollecting && trackingPreparation != null) {
+                    RoadNoteStatus(policy.label(trackingPreparation))
+                }
             }
         }
     }

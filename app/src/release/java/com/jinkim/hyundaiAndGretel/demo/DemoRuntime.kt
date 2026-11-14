@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 @Suppress("UNUSED_PARAMETER")
 class DemoRuntime(context: Context, scope: CoroutineScope, host: DemoServiceContract, store: ScenarioStore,
                   active: StateFlow<String?>, restrictions: StateFlow<UiRestrictions>) {
+    val automaticStartBlockReason: String? = null
     val enabled = false
     val hasPendingWrites = false
     val transitioning = false

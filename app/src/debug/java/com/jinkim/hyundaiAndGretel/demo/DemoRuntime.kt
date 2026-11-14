@@ -17,11 +17,19 @@ class DemoRuntime(
     private val clock: () -> Long,
     private val utc: () -> Long,
     private val input: DemoInputSource,
+    private val mockAllowed: () -> Boolean = { true },
 ) {
     constructor(context: Context, scope: CoroutineScope, host: DemoServiceContract, store: ScenarioStore,
                 active: StateFlow<String?>, restrictions: StateFlow<UiRestrictions>) :
-        this(scope, host, store, active, restrictions, SystemClock::elapsedRealtime, System::currentTimeMillis, AndroidDemoInputSource(context))
+        this(scope, host, store, active, restrictions, SystemClock::elapsedRealtime, System::currentTimeMillis, AndroidDemoInputSource(context), { mockLocationAllowed(context) })
 
+    val automaticStartBlockReason: String? get() = when {
+        !restrictions.value.canSetup -> "운전자 연결 또는 설정 허용 대기"
+        active.value == null -> "시연 준비 중"
+        state.value.mode == DemoMode.WEB_CONSOLE && !mockAllowed() -> "개발자 옵션에서 모의 위치 앱을 선택해주세요"
+        transitioning -> "출발 위치 확인 중"
+        else -> null
+    }
     val enabled = true
     private val mutable = MutableStateFlow(DemoState())
     val state = mutable.asStateFlow()
