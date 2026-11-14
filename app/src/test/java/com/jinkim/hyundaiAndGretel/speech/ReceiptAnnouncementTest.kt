@@ -209,5 +209,10 @@ class ReceiptAnnouncementTest {
         assertEquals("도로 경고 쪽지가 도착했습니다. 자세한 내용은 안전한 곳에서 확인해 주세요.", announcementText(long, true))
         assertTrue(announcementText(note.copy(category = NoteCategory.INFORMATION), false).startsWith("도로 안내 쪽지"))
         assertFalse(announcementText(note, false).contains("공사"))
+        val guidance = "도로 경고입니다. 물체가 있는 것 같습니다."
+        val guided = long.copy(receiverGuidance = guidance)
+        assertEquals(guidance, announcementText(guided, true))
+        assertEquals(announcementText(note, false), announcementText(guided, false))
+        assertEquals(announcementText(long, true), announcementText(note.copy(receiverGuidance = "가".repeat(121)), true))
     }
 }

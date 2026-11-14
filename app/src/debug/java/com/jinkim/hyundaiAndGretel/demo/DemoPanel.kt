@@ -120,7 +120,7 @@ internal fun visibleDemoContent(ui: RoadNotesUiState, details: Boolean): Set<Str
     var presented = ui.visitedContent
     ui.inbox.pending?.let { item ->
         val key = "receipt:${item.recipientId}/${item.note.noteId}"
-        if (policy.canShowBody && policy.fits(item.note.content) && policy.allowsContent(key, presented)) presented += key
+        if (policy.canShowBody && policy.fits(item.note.receiverMessage) && policy.allowsContent(key, presented)) presented += key
     }
     val sections = buildList {
         add("settings")

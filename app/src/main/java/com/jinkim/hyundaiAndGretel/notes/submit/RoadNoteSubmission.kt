@@ -48,7 +48,12 @@ class RoadNoteSubmission(
         return CompletableDeferred(failure)
     }
 
-    fun submit(content: String, category: NoteCategory, anchorSelection: AnchorSelection? = null): Deferred<SubmissionState> {
+    fun submit(
+        content: String,
+        category: NoteCategory,
+        anchorSelection: AnchorSelection? = null,
+        receiverGuidance: String? = null,
+    ): Deferred<SubmissionState> {
         if (isSubmitting) return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.BUSY))
         val selection = (anchorSelection ?: captureAnchor()) as? AnchorSelection.Selected
         if (selection == null) {
@@ -70,6 +75,7 @@ class RoadNoteSubmission(
             expiresAtUtcMillis = createdAt + RoadNote.TTL_MILLIS,
             route = SyntheticRoute.project(anchor.sample.latitude, anchor.sample.longitude, context),
             scenarioId = scenarioId(),
+            receiverGuidance = receiverGuidance,
         )
         mutableState.value = SubmissionState.Submitting
 

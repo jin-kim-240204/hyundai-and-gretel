@@ -47,7 +47,7 @@ internal fun RoadNotesUiState.visibleReceipt(): VisibleReceipt? {
     val item = inbox.pending ?: return null
     val key = ReceiptKey(item.note.noteId, item.recipientId)
     val contentKey = "receipt:${key.recipientId}/${key.noteId}"
-    if (!restrictions.canShowBody || !restrictions.fits(item.note.content) ||
+    if (!restrictions.canShowBody || !restrictions.fits(item.note.receiverMessage) ||
         !restrictions.allowsContent(contentKey, visitedContent)
     ) return null
 
@@ -55,7 +55,7 @@ internal fun RoadNotesUiState.visibleReceipt(): VisibleReceipt? {
         NoteCategory.WARNING -> RoadNoteTone.Warning to R.string.road_note_warning_label
         NoteCategory.INFORMATION -> RoadNoteTone.Information to R.string.road_note_information_label
     }
-    return VisibleReceipt(key, contentKey, item.note.content, tone, label, inbox.confirming != null)
+    return VisibleReceipt(key, contentKey, item.note.receiverMessage, tone, label, inbox.confirming != null)
 }
 
 internal data class ReceiptLayoutInput(

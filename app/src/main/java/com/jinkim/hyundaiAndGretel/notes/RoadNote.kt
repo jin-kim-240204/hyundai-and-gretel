@@ -19,7 +19,10 @@ data class RoadNote(
     val expiresAtUtcMillis: Long,
     val route: RouteContext? = null,
     val scenarioId: String? = null,
+    val receiverGuidance: String? = null,
 ) {
+    val receiverMessage: String get() = receiverGuidance ?: content
+
     fun isActiveAt(nowUtcMillis: Long): Boolean = nowUtcMillis < expiresAtUtcMillis
 
     companion object {
@@ -27,12 +30,13 @@ data class RoadNote(
     }
 }
 
-enum class InvalidNote { ID, AUTHOR, CONTENT, COORDINATES, OFFSET, TIME, ROUTE, SCENARIO }
+enum class InvalidNote { ID, AUTHOR, CONTENT, RECEIVER_GUIDANCE, COORDINATES, OFFSET, TIME, ROUTE, SCENARIO }
 
 internal fun RoadNote.validationError(): InvalidNote? = when {
     !noteId.isCanonicalUuid() -> InvalidNote.ID
     authorId.isBlank() -> InvalidNote.AUTHOR
     content.codePointCount(0, content.length) !in 1..MAX_CONTENT_CODE_POINTS -> InvalidNote.CONTENT
+    receiverGuidance != null && !receiverGuidance.isValidReceiverGuidance() -> InvalidNote.RECEIVER_GUIDANCE
     !latitude.isFinite() || latitude !in -90.0..90.0 ||
         !longitude.isFinite() || longitude !in -180.0..180.0 -> InvalidNote.COORDINATES
     anchorOffsetMillis !in 0L..MAX_ANCHOR_OFFSET_MILLIS -> InvalidNote.OFFSET
@@ -48,6 +52,9 @@ private fun String.isCanonicalUuid(): Boolean = try {
 } catch (_: IllegalArgumentException) {
     false
 }
+
+internal fun String.isValidReceiverGuidance(): Boolean =
+    isNotBlank() && codePointCount(0, length) <= MAX_CONTENT_CODE_POINTS
 
 private const val MAX_CONTENT_CODE_POINTS = 500
 private val MAX_ANCHOR_OFFSET_MILLIS = TimeUnit.SECONDS.toMillis(35)

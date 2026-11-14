@@ -323,7 +323,12 @@ class RoadNoteService : Service() {
             submitRoadNoteWithResult(content, category, SystemClock.elapsedRealtime())
         }
 
-        fun submitRoadNoteWithResult(content: String, category: NoteCategory, receivedElapsedMillis: Long): Deferred<SubmissionState> {
+        fun submitRoadNoteWithResult(
+            content: String,
+            category: NoteCategory,
+            receivedElapsedMillis: Long,
+            receiverGuidance: String? = null,
+        ): Deferred<SubmissionState> {
             val rejection = submissionRejection(
                 busy = submissions.isSubmitting,
                 demoEnabled = demo.enabled,
@@ -333,7 +338,7 @@ class RoadNoteService : Service() {
                 tracking = isTracking,
             )
             if (rejection != null) return submissions.reject(rejection)
-            return submissions.submit(content, category, tracking.selectAnchorAt(receivedElapsedMillis))
+            return submissions.submit(content, category, tracking.selectAnchorAt(receivedElapsedMillis), receiverGuidance)
         }
     }
 

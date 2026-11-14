@@ -1,12 +1,11 @@
 package com.jinkim.hyundaiAndGretel.gleo
 
-import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import kotlinx.coroutines.CancellationException
 
 class GleoActionProcessor(
-    private val submitReport: suspend (String, NoteCategory, Long) -> SubmissionState,
+    private val submitReport: suspend (GleoRoadNoteInput, Long) -> SubmissionState,
 ) {
     suspend fun process(action: ParsedGleoAction, receivedElapsedMillis: Long): GleoResponse {
         val input = when (action) {
@@ -14,7 +13,7 @@ class GleoActionProcessor(
             is ParsedGleoAction.Valid -> action.input
         }
         return try {
-            when (val result = submitReport(input.content, input.category, receivedElapsedMillis)) {
+            when (val result = submitReport(input, receivedElapsedMillis)) {
                 is SubmissionState.Saved -> GleoResponse(
                     GleoStatus.SUCCESS, "The road report was saved successfully.",
                     report = input, noteId = result.note.noteId,

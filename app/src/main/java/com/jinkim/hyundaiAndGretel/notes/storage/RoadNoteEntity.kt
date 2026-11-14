@@ -23,10 +23,11 @@ internal data class RoadNoteEntity(
     val direction: Int? = null,
     val progressMeters: Double? = null,
     val scenarioId: String? = null,
+    val receiverGuidance: String? = null,
 ) {
 
     fun toNote() = RoadNote(
-        noteId = noteId, authorId = authorId, content = content,
+        noteId = noteId, authorId = authorId, content = content, receiverGuidance = receiverGuidance,
         category = NoteCategory.valueOf(category), latitude = latitude, longitude = longitude,
         anchorOffsetMillis = anchorOffsetMillis, createdAtUtcMillis = createdAtUtcMillis,
         expiresAtUtcMillis = expiresAtUtcMillis,
@@ -40,7 +41,7 @@ internal data class RoadNoteEntity(
 }
 
 internal fun RoadNote.toEntity(h3CellId: String) = RoadNoteEntity(
-    noteId = noteId, authorId = authorId, content = content,
+    noteId = noteId, authorId = authorId, content = content, receiverGuidance = receiverGuidance,
     category = category.name, latitude = latitude, longitude = longitude,
     anchorOffsetMillis = anchorOffsetMillis, createdAtUtcMillis = createdAtUtcMillis,
     expiresAtUtcMillis = expiresAtUtcMillis, h3CellId = h3CellId,

@@ -123,11 +123,11 @@ class ReceiptAnnouncement(
 /** 본문을 새로 추론하지 않는다. 긴 본문은 의미가 바뀔 수 있어 중간을 잘라 읽지 않는다. */
 internal fun announcementText(note: RoadNote, readBody: Boolean): String {
     val kind = if (note.category == NoteCategory.WARNING) "도로 경고" else "도로 안내"
-    val content = note.content.trim().replace(Regex("\\s+"), " ")
+    val content = note.receiverMessage.trim().replace(Regex("\\s+"), " ")
     if (!readBody || content.isBlank() || content.codePointCount(0, content.length) > MAX_SPOKEN_CODE_POINTS) {
         return "${kind} 쪽지가 도착했습니다. 자세한 내용은 안전한 곳에서 확인해 주세요."
     }
-    return "${kind}입니다. $content"
+    return if (note.receiverGuidance != null) content else "${kind}입니다. $content"
 }
 
 private const val MAX_SPOKEN_CODE_POINTS = 120

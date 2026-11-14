@@ -8,6 +8,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -25,7 +27,13 @@ internal interface RoadNoteDao {
     suspend fun findById(noteId: String): RoadNoteEntity?
 }
 
-@Database(entities = [RoadNoteEntity::class, ReceiptEntity::class, DemoStateEntity::class], version = 1, exportSchema = true)
+internal val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE road_notes ADD COLUMN receiverGuidance TEXT")
+    }
+}
+
+@Database(entities = [RoadNoteEntity::class, ReceiptEntity::class, DemoStateEntity::class], version = 2, exportSchema = true)
 internal abstract class NoteDatabase : RoomDatabase() {
     abstract fun notes(): RoadNoteDao
     abstract fun receipts(): ReceiptDao
@@ -37,7 +45,7 @@ internal abstract class NoteDatabase : RoomDatabase() {
         fun getInstance(context: Context): NoteDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext, NoteDatabase::class.java, "road-notes.db",
-            ).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2).build().also { instance = it }
         }
     }
 }

@@ -34,17 +34,31 @@ class GleoActionTest {
             assertTrue(validateGleoParameters(values) is ParsedGleoAction.Rejected)
     }
 
+    @Test fun optionalGuidanceIsIndependentAndInvalidValuesFallBack() {
+        val guidance = "공사 중은 아니며 도로에 물체가 있는 것 같습니다."
+        val valid = validateGleoParameters(basic + ("receiverGuidance" to " $guidance ")) as ParsedGleoAction.Valid
+        assertEquals(basic["content"], valid.input.content)
+        assertEquals(guidance, valid.input.receiverGuidance)
+        for (invalid in listOf(null, " ", 42, listOf(guidance), "🚀".repeat(501))) {
+            val legacy = validateGleoParameters(basic + ("receiverGuidance" to invalid)) as ParsedGleoAction.Valid
+            assertNull(legacy.input.receiverGuidance)
+        }
+    }
+
     @Test fun callbackSuccessWaitsForCommittedResultAndReturnsSavedId() = runTest {
         val completion = CompletableDeferred<SubmissionState>()
         var calls = 0
-        val processor = GleoActionProcessor { content, category, receivedAt ->
+        val guidance = "도로에 구덩이가 있습니다."
+        val processor = GleoActionProcessor { input, receivedAt ->
             calls++
-            assertEquals(basic["content"], content)
-            assertEquals(NoteCategory.WARNING, category)
+            assertEquals(basic["content"], input.content)
+            assertEquals(NoteCategory.WARNING, input.category)
+            assertEquals(guidance, input.receiverGuidance)
             assertEquals(38_000L, receivedAt)
             completion.await()
         }
-        val response = async { processor.process(validateGleoParameters(basic), 38_000) }
+        val action = validateGleoParameters(basic + ("receiverGuidance" to guidance))
+        val response = async { processor.process(action, 38_000) }
         runCurrent()
         assertFalse(response.isCompleted)
         completion.complete(SubmissionState.Saved(note)); runCurrent()
@@ -55,25 +69,25 @@ class GleoActionTest {
     }
 
     @Test fun rejectedInputNeverCallsSubmission() = runTest {
-        val processor = GleoActionProcessor { _, _, _ -> error("must not submit") }
+        val processor = GleoActionProcessor { _, _ -> error("must not submit") }
         assertEquals(GleoStatus.FAIL, processor.process(validateGleoParameters(emptyMap()), 0).status)
     }
 
     @Test fun failedPendingAndThrownStorageResultsNeverClaimSuccess() = runTest {
         for (result in SubmissionFailure.entries.map { SubmissionState.Failed(it) } + SubmissionState.Submitting) {
-            val processor = GleoActionProcessor { _, _, _ -> result }
+            val processor = GleoActionProcessor { _, _ -> result }
             val response = processor.process(validateGleoParameters(basic), 0)
             assertEquals(GleoStatus.FAIL, response.status)
             assertNull(response.noteId)
         }
-        val processor = GleoActionProcessor { _, _, _ -> throw IOException("private details") }
+        val processor = GleoActionProcessor { _, _ -> throw IOException("private details") }
         val response = processor.process(validateGleoParameters(basic), 0)
         assertEquals("SAVE_FAILED", response.reason)
         assertFalse(response.message.contains("private"))
     }
 
     @Test fun cancellationPropagatesWithoutAFakeSuccess() = runTest {
-        val processor = GleoActionProcessor { _, _, _ -> throw CancellationException("cancel") }
+        val processor = GleoActionProcessor { _, _ -> throw CancellationException("cancel") }
         try {
             processor.process(validateGleoParameters(basic), 0)
             fail("must propagate cancellation")

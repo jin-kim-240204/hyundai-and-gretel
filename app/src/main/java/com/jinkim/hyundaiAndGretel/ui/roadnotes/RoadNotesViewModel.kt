@@ -34,7 +34,7 @@ class RoadNotesViewModel(app: Application) : AndroidViewModel(app) {
             service.inboxState.value.confirming == null &&
             pending.note.noteId == input.key.noteId &&
             pending.recipientId == input.key.recipientId &&
-            pending.note.content == input.message
+            pending.note.receiverMessage == input.message
     }
 
     fun confirmReceipt(key: ReceiptKey, screenResumed: Boolean) {

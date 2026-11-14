@@ -71,6 +71,20 @@ class RoadNotesPresentationTest {
     }
 
     @Test
+    fun guidanceControlsDisplayedTextAndStringLimit() {
+        val guidance = "공사 아님"
+        val guided = item.copy(note = note.copy(content = "가".repeat(500), receiverGuidance = guidance))
+        val policy = UiRestrictions(
+            connected = true, optimized = true, flags = Flags.UX_RESTRICTIONS_LIMIT_STRING_LENGTH,
+            stringLimit = guidance.length,
+        )
+        val visible = state.copy(inbox = InboxState(listOf(guided)), restrictions = policy).visibleReceipt()
+        assertEquals(guidance, visible?.message)
+        assertEquals(contentKey, visible?.contentKey)
+        assertEquals(key, visible?.key)
+    }
+
+    @Test
     fun restrictedReceiptHasNoBodyOrConfirmationAction() {
         val policy = UiRestrictions(connected = true, optimized = true)
         assertNull(state.copy(restrictions = policy.copy(flags = Flags.UX_RESTRICTIONS_NO_TEXT_MESSAGE)).visibleReceipt())

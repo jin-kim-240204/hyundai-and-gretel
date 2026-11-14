@@ -15,7 +15,11 @@
           "properties": {
             "content": {
               "type": "string",
-              "description": "A concise, complete sentence in the user's language describing the observed road condition, preserving reported facts, negation, and uncertainty without adding details."
+              "description": "The user's reported road condition in their own wording and language, preserving reported facts, negation, and uncertainty."
+            },
+            "receiverGuidance": {
+              "type": "string",
+              "description": "A short complete sentence in the user's language for the receiving driver, based only on the report and preserving its facts, negation, and uncertainty. Keep it within 120 characters and omit new facts, driving instructions, and inferred directions or timing."
             },
             "locationMode": {
               "type": "string",

@@ -42,10 +42,12 @@ class RoadNotePickupFlowTest {
         val submissions = RoadNoteSubmission(backgroundScope, notes, {
             AnchorSelection.Selected(LocationAnchor(LocationFix(37.5, 127.03, 0), 30_000))
         }, { 1_000 }, {})
-        val processor = GleoActionProcessor { content, category, _ -> submissions.submit(content, category).await() }
+        val processor = GleoActionProcessor { input, _ ->
+            submissions.submit(input.content, input.category, receiverGuidance = input.receiverGuidance).await()
+        }
         val response = async {
             processor.process(validateGleoParameters(mapOf("content" to "구덩이", "category" to "WARNING",
-                "locationMode" to "CURRENT_ROAD")), 0)
+                "locationMode" to "CURRENT_ROAD", "receiverGuidance" to "도로에 구덩이가 있습니다.")), 0)
         }
         runCurrent()
         assertEquals(GleoStatus.SUCCESS, response.await().status)
@@ -83,6 +85,8 @@ class RoadNotePickupFlowTest {
         enterCallback!!("note"); runCurrent()
         assertEquals(1, received.value.size)
         assertEquals(1, removes)
+        assertEquals("구덩이", received.value.single().note.content)
+        assertEquals("도로에 구덩이가 있습니다.", received.value.single().note.receiverGuidance)
         assertNull(received.value.single().displayedAtUtcMillis)
         receipts.confirm(ReceiptKey(note.noteId, "B"), true); runCurrent()
         assertEquals(2_000L, received.value.single().displayedAtUtcMillis)
