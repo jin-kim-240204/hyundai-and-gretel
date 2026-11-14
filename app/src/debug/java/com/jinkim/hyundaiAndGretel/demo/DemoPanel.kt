@@ -1,8 +1,5 @@
 package com.jinkim.hyundaiAndGretel.demo
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,13 +8,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import com.jinkim.hyundaiAndGretel.R
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.jinkim.hyundaiAndGretel.R
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import com.jinkim.hyundaiAndGretel.ui.roadnotes.*
@@ -32,21 +34,44 @@ fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop:
     val tools = runtime ?: return
     val ui by productViewModel.uiState.collectAsStateWithLifecycle()
     var open by remember { mutableStateOf(false) }
-    BackHandler(open) { open = false }
-    Box(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
         if (open) {
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)).clickable { })
-            Surface(Modifier.align(Alignment.CenterEnd).widthIn(max = 480.dp).fillMaxHeight(), tonalElevation = 8.dp) {
-                DemoPanelContents(productViewModel, demoViewModel, tools, ui, onStart, onStop, onClose = { open = false })
+            val dialogMaxWidth = minOf(maxWidth * 0.9f, 480.dp)
+            val dialogMaxHeight = maxHeight * 0.9f
+            val close = { open = false }
+            Dialog(
+                onDismissRequest = close,
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+                Surface(
+                    modifier = Modifier.width(dialogMaxWidth).heightIn(max = dialogMaxHeight),
+                    shape = MaterialTheme.shapes.large,
+                    tonalElevation = 8.dp,
+                ) {
+                    DemoPanelContents(productViewModel, demoViewModel, tools, ui, onStart, onStop, onClose = close)
+                }
             }
         } else {
-            Button(onClick = { open = true }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).heightIn(min = 56.dp)) {
-                PolicyText(stringResource(R.string.debug_tools_open), ui.restrictions)
+            val label = ui.restrictions.label(stringResource(R.string.debug_tools_open))
+            SmallFloatingActionButton(
+                onClick = { open = true },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .semantics { contentDescription = label },
+                containerColor = Color(0xFFF5C451),
+                contentColor = Color(0xFF171717),
+            ) {
+                PolicyText(
+                    stringResource(R.string.debug_tools_badge),
+                    ui.restrictions,
+                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
+                    maxLines = 1,
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DemoPanelContents(viewModel: RoadNotesViewModel, demoViewModel: DemoViewModel, tools: DemoRuntime, ui: RoadNotesUiState, onStart: () -> Unit, onStop: () -> Unit, onClose: () -> Unit) {
     val demo by tools.state.collectAsStateWithLifecycle()
@@ -60,7 +85,7 @@ private fun DemoPanelContents(viewModel: RoadNotesViewModel, demoViewModel: Demo
 
     Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         PolicyText(stringResource(R.string.debug_tools_title), policy, style = MaterialTheme.typography.titleLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onClose, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_tools_close), policy) }
             Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_tools_stop), policy) }
         }
@@ -91,9 +116,10 @@ private fun DemoPanelContents(viewModel: RoadNotesViewModel, demoViewModel: Demo
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DemoRoleAndInputControls(viewModel: DemoViewModel, demo: DemoState, allowed: Boolean, canStart: Boolean, onStart: () -> Unit, policy: UiRestrictions) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = { viewModel.selectActor("A") }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_role_author), policy) }
         Button(onClick = { viewModel.selectActor("B") }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_role_recipient), policy) }
     }

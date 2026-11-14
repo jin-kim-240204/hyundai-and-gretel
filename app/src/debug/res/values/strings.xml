@@ -4,7 +4,8 @@
     <string name="debug_buffer_summary">표본 %1$d · 수신 %2$s..%3$sms</string>
     <string name="debug_buffer_waiting">버퍼 연결 대기</string>
     <string name="debug_missing_value">-</string>
-    <string name="debug_tools_open">시연 도구</string>
+    <string name="debug_tools_open">시연 도구 열기</string>
+    <string name="debug_tools_badge">DBG</string>
     <string name="debug_tools_title">시연 도구 · 합성 데이터</string>
     <string name="debug_tools_close">닫기</string>
     <string name="debug_tools_stop">중지 / 취소</string>
