@@ -78,6 +78,11 @@
       "id": "DOC-904663536d42#제목과확인취소",
       "status": "PASS",
       "evidence": "DemoDialog 고정 헤더 및 DemoResetControl 확인/취소 코드 대조"
+    },
+    {
+      "id": "DOC-904663536d42#백드롭터치",
+      "status": "NOT_TESTED",
+      "evidence": "백드롭 형제 레이어와 X/back 경로 정적 검사 통과. 실제 Compose 터치 및 렌더링은 미검증"
     }
   ]
 }

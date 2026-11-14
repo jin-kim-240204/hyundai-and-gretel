@@ -4,6 +4,7 @@ import android.view.WindowManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -99,6 +101,7 @@ fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop:
 
 @Composable
 private fun DemoDialog(policy: UiRestrictions, onClose: () -> Unit, content: @Composable () -> Unit) {
+    val closeBackdrop by rememberUpdatedState(onClose)
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -108,11 +111,17 @@ private fun DemoDialog(policy: UiRestrictions, onClose: () -> Unit, content: @Co
 
         MaterialTheme(colorScheme = demoColors) {
             Box(
-                modifier = Modifier.fillMaxSize().background(Color.White).padding(12.dp),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
+                Box(
+                    Modifier.matchParentSize().background(Color.White).pointerInput(Unit) {
+                        detectTapGestures(onTap = { closeBackdrop() })
+                    },
+                )
+                // Surface blocks hit testing of the lower backdrop sibling, including blank panel areas.
                 Surface(
-                    modifier = Modifier.widthIn(max = demoDialogMaxWidth).fillMaxWidth(),
+                    modifier = Modifier.padding(12.dp).widthIn(max = demoDialogMaxWidth).fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
                     border = BorderStroke(1.dp, demoBorder),
                     shadowElevation = 24.dp,

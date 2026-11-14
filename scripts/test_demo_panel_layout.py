@@ -34,7 +34,7 @@ class DemoPanelLayoutTest(unittest.TestCase):
         self.assertIn("DialogProperties(usePlatformDefaultWidth = false)", dialog)
         self.assertIn("onDismissRequest = onClose", dialog)
         self.assertIn("demoDialogMaxWidth = 780.dp", debug)
-        self.assertIn("widthIn(max = demoDialogMaxWidth).fillMaxWidth()", dialog)
+        self.assertIn("padding(12.dp).widthIn(max = demoDialogMaxWidth).fillMaxWidth()", dialog)
         self.assertIn("shape = RoundedCornerShape(18.dp)", dialog)
         self.assertIn("shadowElevation = 24.dp", dialog)
         self.assertRegex(dialog, r"IconButton\(onClick = onClose, modifier = Modifier.size\(56\.dp\)\)")
@@ -44,9 +44,21 @@ class DemoPanelLayoutTest(unittest.TestCase):
         self.assertIn("val narrow = maxWidth <= 580.dp", debug)
         self.assertIn("maxItemsInEachRow = if (narrow) 1 else 2", debug)
 
-    def test_white_backdrop_and_web_console_only_switch(self):
+    def test_backdrop_taps_are_handled_on_a_sibling_behind_the_panel(self):
         debug = next((SOURCE / "debug").rglob("DemoPanel.kt")).read_text(encoding="utf-8")
-        self.assertIn("Modifier.fillMaxSize().background(Color.White).padding(12.dp)", debug)
+        dialog = debug.split("private fun DemoDialog(", 1)[1].split("private fun DemoPanelContents", 1)[0]
+        self.assertRegex(
+            dialog,
+            r"Box\(\s*Modifier.matchParentSize\(\).background\(Color.White\).pointerInput\(Unit\) \{\s*"
+            r"detectTapGestures\(onTap = \{ closeBackdrop\(\) \}\)\s*\},\s*\)"
+            r"\s*(?://[^\n]*\n\s*)?Surface\(\s*modifier = Modifier.padding\(12.dp\)",
+        )
+        self.assertEqual(dialog.count(".pointerInput("), 1)
+        self.assertNotIn(".clickable(", dialog)
+        self.assertNotIn("dismissOnBackPress = false", dialog)
+
+    def test_web_console_only_switch(self):
+        debug = next((SOURCE / "debug").rglob("DemoPanel.kt")).read_text(encoding="utf-8")
         self.assertIn("window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)", debug)
         self.assertIn("if (demo.mode == DemoMode.EXTERNAL_ADB)", debug)
         self.assertIn("selectMode(DemoMode.WEB_CONSOLE)", debug)
