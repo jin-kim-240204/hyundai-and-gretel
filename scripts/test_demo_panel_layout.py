@@ -49,7 +49,7 @@ class DemoPanelLayoutTest(unittest.TestCase):
         dialog = debug.split("private fun DemoDialog(", 1)[1].split("private fun DemoPanelContents", 1)[0]
         self.assertRegex(
             dialog,
-            r"Box\(\s*Modifier.matchParentSize\(\).background\(Color.White\).pointerInput\(Unit\) \{\s*"
+            r"Box\(\s*Modifier.matchParentSize\(\).background\(Color\.White\.copy\(alpha = 0\.4f\)\).pointerInput\(Unit\) \{\s*"
             r"detectTapGestures\(onTap = \{ closeBackdrop\(\) \}\)\s*\},\s*\)"
             r"\s*(?://[^\n]*\n\s*)?Surface\(\s*modifier = Modifier.padding\(12.dp\)",
         )
