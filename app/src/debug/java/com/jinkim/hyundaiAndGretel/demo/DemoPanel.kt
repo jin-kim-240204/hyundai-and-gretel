@@ -8,7 +8,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -115,7 +114,7 @@ private fun DemoDialog(policy: UiRestrictions, onClose: () -> Unit, content: @Co
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
-                    Modifier.matchParentSize().background(Color.White).pointerInput(Unit) {
+                    Modifier.matchParentSize().background(Color.White.copy(alpha = 0.4f)).pointerInput(Unit) {
                         detectTapGestures(onTap = { closeBackdrop() })
                     },
                 )
@@ -196,20 +195,18 @@ private fun DemoPanelContents(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                Surface(
-                                    Modifier.size(8.dp).align(Alignment.CenterVertically),
-                                    shape = CircleShape,
-                                    color = if (ui.trackingStatus.isCollecting) demoText else demoCardColor,
-                                    border = BorderStroke(1.dp, demoText),
-                                ) {}
-                                PolicyText(
-                                    stringResource(
-                                        if (ui.trackingStatus == TrackingStatus.STOPPED) R.string.debug_tracking_stopped
-                                        else ui.trackingStatus.messageRes,
-                                    ).replace('·', '/'),
-                                    policy, MaterialTheme.typography.titleMedium,
-                                )
-                                PolicyText(stringResource(demoRoleLabel(demo.actor)), policy)
+                                Box(Modifier.align(Alignment.CenterVertically)) {
+                                    PolicyText(
+                                        stringResource(
+                                            if (ui.trackingStatus == TrackingStatus.STOPPED) R.string.debug_tracking_stopped
+                                            else ui.trackingStatus.messageRes,
+                                        ).replace('·', '/'),
+                                        policy, MaterialTheme.typography.titleMedium,
+                                    )
+                                }
+                                Box(Modifier.align(Alignment.CenterVertically)) {
+                                    PolicyText(stringResource(demoRoleLabel(demo.actor)), policy)
+                                }
                             }
                             DemoCaption(stringResource(demoPhaseLabel(demo.phase)), policy)
                             DemoCaption(demo.inputStatus, policy)
