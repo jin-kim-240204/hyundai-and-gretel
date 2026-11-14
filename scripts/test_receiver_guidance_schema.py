@@ -12,13 +12,15 @@ class ReceiverGuidanceSchemaTest(unittest.TestCase):
         report = next(call["function"] for call in schema["actionCalls"]
                       if call["function"]["name"] == "CREATE_ROAD_NOTE")
         parameters = report["parameters"]
+        self.assertIn("multi-sentence", report["description"])
+        self.assertIn("warned or informed", report["description"])
         self.assertCountEqual(
             parameters["required"], ["content", "receiverGuidance", "locationMode", "category"],
         )
         expected_phrases = {
             "content": ("own wording and language", "reported facts, negation, and uncertainty"),
             "receiverGuidance": (
-                "In the user's language", "explicitly attribute the condition to a report",
+                "Written in Korean", "explicitly attribute the condition to a report",
                 "receiving driver", "120 characters", "preserving negation and uncertainty",
                 "without asserting that it occurred or claiming firsthand observation",
                 "A brief general caution is allowed", "do not add unsupported locations, directions, distances",
