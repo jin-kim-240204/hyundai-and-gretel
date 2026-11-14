@@ -1,5 +1,9 @@
 package com.jinkim.hyundaiAndGretel.demo
 
+import android.os.Build
+import android.view.Window
+import android.view.WindowManager
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -8,13 +12,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -24,10 +33,14 @@ import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import com.jinkim.hyundaiAndGretel.ui.roadnotes.*
 import com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions
+import java.util.function.Consumer
 
 private val demoButtonHeight = 56.dp
 private val demoButtonMargin = 8.dp
 internal val demoPanelBottomPadding = demoButtonHeight + demoButtonMargin
+private val demoDialogMaxWidth = 840.dp
+private const val dimWithBlur = 0.32f
+private const val dimWithoutBlur = 0.60f
 
 @Composable
 fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop: () -> Unit) {
@@ -38,22 +51,10 @@ fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop:
     val tools = runtime ?: return
     val ui by productViewModel.uiState.collectAsStateWithLifecycle()
     var open by remember { mutableStateOf(false) }
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize()) {
         if (open) {
-            val dialogMaxWidth = minOf(maxWidth * 0.9f, 480.dp)
-            val dialogMaxHeight = maxHeight * 0.9f
-            val close = { open = false }
-            Dialog(
-                onDismissRequest = close,
-                properties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-                Surface(
-                    modifier = Modifier.width(dialogMaxWidth).heightIn(max = dialogMaxHeight),
-                    shape = MaterialTheme.shapes.large,
-                    tonalElevation = 8.dp,
-                ) {
-                    DemoPanelContents(productViewModel, demoViewModel, tools, ui, onStart, onStop, onClose = close)
-                }
+            DemoDialog(policy = ui.restrictions, onClose = { open = false }) {
+                DemoPanelContents(productViewModel, demoViewModel, tools, ui, onStart, onStop)
             }
         } else {
             val label = ui.restrictions.label(stringResource(R.string.debug_tools_open))
@@ -67,20 +68,98 @@ fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop:
                 containerColor = Color(0xFFF5C451),
                 contentColor = Color(0xFF171717),
             ) {
-                PolicyText(
-                    stringResource(R.string.debug_tools_badge),
-                    ui.restrictions,
-                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
-                    maxLines = 1,
-                )
+                Box(Modifier.padding(horizontal = 12.dp)) {
+                    PolicyText(
+                        stringResource(R.string.debug_tools_badge),
+                        ui.restrictions,
+                        style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DemoPanelContents(viewModel: RoadNotesViewModel, demoViewModel: DemoViewModel, tools: DemoRuntime, ui: RoadNotesUiState, onStart: () -> Unit, onStop: () -> Unit, onClose: () -> Unit) {
+private fun DemoDialog(policy: UiRestrictions, onClose: () -> Unit, content: @Composable () -> Unit) {
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        val window = (LocalView.current.parent as DialogWindowProvider).window
+        val blurRadiusPx = with(LocalDensity.current) { 24.dp.roundToPx() }
+        DisposableEffect(window, blurRadiusPx) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            window.setDimAmount(dimWithoutBlur)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val stopObserving = observeDemoBlur(window, blurRadiusPx)
+                onDispose { stopObserving() }
+            } else {
+                onDispose {}
+            }
+        }
+
+        BoxWithConstraints {
+            Surface(
+                modifier = Modifier.width(minOf(maxWidth * 0.9f, demoDialogMaxWidth))
+                    .heightIn(max = maxHeight * 0.9f),
+                shape = MaterialTheme.shapes.large,
+                tonalElevation = 8.dp,
+                shadowElevation = 8.dp,
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Spacer(Modifier.width(56.dp))
+                        Box(Modifier.weight(1f).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
+                            PolicyText(
+                                stringResource(R.string.debug_tools_title),
+                                policy,
+                                style = MaterialTheme.typography.titleLarge.copy(textAlign = TextAlign.Center),
+                            )
+                        }
+                        IconButton(onClick = onClose, modifier = Modifier.size(56.dp)) {
+                            Icon(
+                                painter = painterResource(R.drawable.debug_close),
+                                contentDescription = policy.label(stringResource(R.string.debug_tools_close)),
+                            )
+                        }
+                    }
+                    Box(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                        content()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+private fun observeDemoBlur(window: Window, blurRadiusPx: Int): () -> Unit {
+    val windowManager = window.windowManager
+    window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+    val listener = Consumer<Boolean> { enabled ->
+        window.attributes = window.attributes.apply {
+            setBlurBehindRadius(if (enabled) blurRadiusPx else 0)
+            dimAmount = if (enabled) dimWithBlur else dimWithoutBlur
+        }
+    }
+    windowManager.addCrossWindowBlurEnabledListener(window.context.mainExecutor, listener)
+    return { windowManager.removeCrossWindowBlurEnabledListener(listener) }
+}
+
+@Composable
+private fun DemoPanelContents(
+    viewModel: RoadNotesViewModel,
+    demoViewModel: DemoViewModel,
+    tools: DemoRuntime,
+    ui: RoadNotesUiState,
+    onStart: () -> Unit,
+    onStop: () -> Unit,
+) {
     val demo by tools.state.collectAsStateWithLifecycle()
     val notes by tools.notes.collectAsStateWithLifecycle()
     var details by remember { mutableStateOf(false) }
@@ -90,11 +169,13 @@ private fun DemoPanelContents(viewModel: RoadNotesViewModel, demoViewModel: Demo
         ui.submission != SubmissionState.Submitting && ui.inbox.confirming == null
     SideEffect { visible.forEach { viewModel.markPresented("debug:$it") } }
 
-    Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        PolicyText(stringResource(R.string.debug_tools_title), policy, style = MaterialTheme.typography.titleLarge)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onClose, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_tools_close), policy) }
-            Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_tools_stop), policy) }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) {
+            PolicyText(stringResource(R.string.debug_tools_stop), policy)
         }
         val role = stringResource(if (demo.actor == "A") R.string.debug_role_author else R.string.debug_role_recipient)
         PolicyText(stringResource(R.string.debug_session_status, role, demo.mode, demo.phase), policy)
@@ -126,7 +207,11 @@ private fun DemoPanelContents(viewModel: RoadNotesViewModel, demoViewModel: Demo
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DemoRoleAndInputControls(viewModel: DemoViewModel, demo: DemoState, allowed: Boolean, canStart: Boolean, onStart: () -> Unit, policy: UiRestrictions) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Button(onClick = { viewModel.selectActor("A") }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_role_author), policy) }
         Button(onClick = { viewModel.selectActor("B") }, enabled = allowed, modifier = Modifier.heightIn(min = 56.dp)) { PolicyText(stringResource(R.string.debug_role_recipient), policy) }
     }
