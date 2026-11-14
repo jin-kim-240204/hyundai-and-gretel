@@ -18,8 +18,11 @@ class ReceiverGuidanceSchemaTest(unittest.TestCase):
         expected_phrases = {
             "content": ("own wording and language", "reported facts, negation, and uncertainty"),
             "receiverGuidance": (
-                "receiving driver", "based only on the report", "facts, negation, and uncertainty",
-                "120 characters", "omit new facts, driving instructions, and inferred directions or timing",
+                "In the user's language", "explicitly attribute the condition to a report",
+                "receiving driver", "120 characters", "preserving negation and uncertainty",
+                "without asserting that it occurred or claiming firsthand observation",
+                "A brief general caution is allowed", "do not add unsupported locations, directions, distances",
+                "timing, or other details", "or give specific driving instructions",
             ),
         }
         for field, phrases in expected_phrases.items():
