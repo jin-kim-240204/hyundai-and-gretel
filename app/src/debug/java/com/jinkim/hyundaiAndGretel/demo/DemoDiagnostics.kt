@@ -58,8 +58,8 @@ internal fun DemoDiagnostics(ui: RoadNotesUiState, demo: DemoState, notes: List<
     rows.filter { it.first in visible }.forEach { (_, text) -> PolicyText(text, ui.restrictions) }
 }
 
-private val demoNoteColor = Color(0xFFED666B)
-private val demoPositionColor = Color(0xFFEDEDED)
+private val demoNoteColor = Color(0xFFB71C1C)
+private val demoPositionColor = Color(0xFF1565C0)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

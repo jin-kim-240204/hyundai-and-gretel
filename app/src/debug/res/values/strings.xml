@@ -42,7 +42,7 @@
     <string name="debug_input_source">위치 입력</string>
     <string name="debug_switch_console">웹콘솔 GPS로 전환</string>
     <string name="debug_reset_title">새 시연을 시작할까요?</string>
-    <string name="debug_route_title">합성 경로</string>
+    <string name="debug_route_title">가상 주행 경로</string>
     <string name="debug_route_caption">합성 축 위치</string>
     <string name="debug_route_current">현재 위치</string>
     <string name="debug_route_note">쪽지 위치</string>
