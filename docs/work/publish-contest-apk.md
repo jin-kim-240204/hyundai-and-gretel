@@ -12,3 +12,9 @@
 - PASS: 기존과 같은 인증서 SHA-256, APK 서명, 패키지명, 비디버그 상태 검사. DEX에서 DemoPanelKt/DemoViewModel/AndroidDemoInputSource 존재 확인. 복사본과 원본 바이트 일치.
 - 파일: 43663257 bytes, SHA-256 `0e9404fd3d56e35fbdda3f9330bb07ee190bbcdd34213301805c19783be53602`.
 - NOT_TESTED: 새 서명 APK 설치·기동·A/B 전환·mock 위치의 실제 동작. 클래스 포함은 실행 성공의 증거가 아니다.
+
+## release Gleo 수정 APK 교체 (2026-11-15)
+
+사용자가 46488e5 수정 후 생성한 APK로 루트 apk/ 제출 파일 교체. 원본 app/release 및 build/outputs 파일 해시 동일. 기존 인증서/패키지/비디버그 서명 검사 PASS. 실제 APK Manifest의 GleoActionReceiver exported=true 확인. 원본과 복사본 바이트 일치.
+
+43663261 bytes, SHA-256 `0626a289e36794af41a09eacae5dbadd1684145e72d03199efcc44d01d97cd2a`. 새 APK 실제 설치 및 음성 Gleo 왕복은 NOT_TESTED. 이번 요청은 로컬 제출 파일 교체이며 커밋·푸시는 실행하지 않음.
