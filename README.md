@@ -47,9 +47,3 @@
 | 공모전 제출용 서명 APK | [`apk/jinkim_hyundai-and-gretel_release.apk`](apk/jinkim_hyundai-and-gretel_release.apk) |
 
 [APK 검증·패키징 절차](apk/README.md) · [출시 제한 및 남은 검증](docs/RELEASE-READINESS.md)
-
-## 제출 전 확인
-
-- 1차 필수 제출물은 공식 접수양식(기획서)입니다. 팀원 전원이 개별 동의 여부와 서명·날짜를 작성하고, 제출 메일에 팀원 전원을 참조합니다. 접수 마감은 2026년 11월 15일 23:59 KST입니다. [공식 지원·제출 방법](https://appdevchallenge.auto-hmg.io/guide/submission) · [접수 추가 공지](https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000007)
-- 시연 영상·GitHub·APK는 선택입니다. GitHub로 제출할 때는 소스와 실행 가능한 release APK를 제공하고 접수 메일에 저장소 주소와 최종 커밋을 적습니다. 비공개 저장소의 공개 기한과 소스·APK 압축 파일 링크 대안은 공식 안내를 확인하세요. [공식 지원·제출 방법](https://appdevchallenge.auto-hmg.io/guide/submission)
-- 공모전 참가팀의 Gleo App Schema는 별도 검토·승인 없이 사용할 수 있습니다. 이 빌드의 스키마 스캔과 기기 런타임은 후속 확인이 필요합니다. 2차 PT 시연 환경은 Pleos Connect 에뮬레이터입니다. [공모전 개발 범위 및 기술 문의 안내](https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000008)
