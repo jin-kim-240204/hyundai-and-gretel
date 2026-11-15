@@ -2,7 +2,7 @@
 
 현재 산출물은 [jinkim_hyundai-and-gretel_release.apk](jinkim_hyundai-and-gretel_release.apk)입니다. 공식 파일명 형식은 `팀명_앱이름_release.apk`입니다. [공식 지원·제출 방법](https://appdevchallenge.auto-hmg.io/guide/submission)
 
-사용자가 생성한 서명 APK를 복사했습니다. SHA-256: `0158efe216a4dc84b80f6e35fa981dc9be70d56bb2aaea5e0de0842de1186004`. 기본 APK ignore를 유지하고 이 파일만 예외로 추적합니다. 서명 검증과 실제 동작 검증은 별개입니다. [기존 출시 제한](../docs/RELEASE-READINESS.md)은 새 APK에서 재검증이 필요합니다.
+사용자가 생성한 서명 APK를 복사했습니다. SHA-256: `0e9404fd3d56e35fbdda3f9330bb07ee190bbcdd34213301805c19783be53602`. 기본 APK ignore를 유지하고 이 파일만 예외로 추적합니다. 서명 검증과 실제 동작 검증은 별개입니다. [기존 출시 제한](../docs/RELEASE-READINESS.md)은 새 APK에서 재검증이 필요합니다.
 
 ## 서명 완료 후 패키징
 
