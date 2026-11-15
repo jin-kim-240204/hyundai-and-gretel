@@ -8,6 +8,12 @@
 
 현재는 한 에뮬레이터에서 제보자 A와 수신자 B를 전환하는 로컬 시연입니다. 웹 콘솔의 속도·기어로 가상 경로를 재생하며, 차량 간 서버 공유는 향후 개발 범위입니다. 수신은 도로·진행 방향·고도 구분 없이 직선거리로 판단합니다.
 
+## 시연 영상
+
+[![현대와 그레텔 시연 영상](https://img.youtube.com/vi/W-aIMG-Quko/hqdefault.jpg)](https://youtu.be/W-aIMG-Quko)
+
+[YouTube에서 시연 영상 보기](https://youtu.be/W-aIMG-Quko)
+
 ## APK 다운로드
 
 [공모전 시연용 release APK 다운로드](https://github.com/jin-kim-240204/hyundai-and-gretel/raw/refs/heads/main/apk/jinkim_hyundai-and-gretel_release.apk)
