@@ -1,0 +1,11 @@
+{
+  "task": "release-gleo-callback-timeout",
+  "selected_rules": ["INT-01", "PRIV-01"],
+  "checks": [
+    {"id":"INT-01","status":"NOT_TESTED","evidence":"debug/release assemble/lint, JVM and Python tests and compiled routing checks PASS; newly signed release voice roundtrip pending"},
+    {"id":"PRIV-01","status":"NOT_TESTED","evidence":"Explicit fixed response package, existing bounded parser and demo write guards retained; no caller authentication added; signed release runtime pending"},
+    {"id":"DOC-f1d260bfb503#service요청","status":"PASS","evidence":"Both merged Manifests export GleoActionReceiver for official service-mode broadcast input"},
+    {"id":"DOC-f1d260bfb503#응답브로드캐스트","status":"PASS","evidence":"Both compiled sendCallback methods target ai.umos.ambientai with APP_ACTION_RESPONSE and unchanged extras"},
+    {"id":"DOC-c6fc94252d66#응답필드","status":"PASS","evidence":"Existing serializer and callback tests preserved; 5-second processing timeout retained"}
+  ]
+}

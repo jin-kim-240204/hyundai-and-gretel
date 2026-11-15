@@ -7,7 +7,7 @@
 | release 빌드 | PASS | `:app:assembleRelease`로 `app/build/outputs/apk/release/app-release-unsigned.apk` 생성. [크기·해시 및 검사 기록](work/contest-submission-prep.md) |
 | 서명·제출 산출물 | FAIL | 현재 release 서명 설정과 제출용 APK/Release 링크가 없음. 제출 경로와 서명을 확정하고 설치 가능한 release를 검증해야 함 |
 | 새 설치에서 제보·수신 | FAIL | release `DemoRuntime`은 비활성이며 시연 생성·A/B 전환을 제공하지 않음. `RoadNoteService`는 활성 시연 Flow를 `RoomRoadNoteStore`에 전달하며, 시연 ID가 없으면 `observeNearby`는 빈 목록을 내보냄. 제보 저장은 활성 시연과 준비된 제보자 상태를 요구하므로 release에서는 `DEMO_REQUIRED`로 차단함 |
-| 외부 Gleo 경로 | FAIL | release 병합 Manifest에서 `GleoActionReceiver`의 `exported=false`. `GleoActionReceiver`의 release Callback은 자기 패키지로 지정됨. 외부 연동을 제공하려면 공식 발신자 신뢰·등록 및 응답 계약부터 확정해야 함 |
+| 외부 Gleo 경로 | NOT_TESTED | 소스 수정 후 debug/release 수신기 `exported=true`, Callback 목적지 `ai.umos.ambientai` 확인. 기존 제출 APK는 수정 전이므로 새 release 서명·설치 및 실제 요청/응답 왕복 검증 필요. [진단·수정 기록](work/release-gleo-callback-timeout.md) |
 | README 실행·테스트 환경 | PASS | 앱 소개, debug 실행·테스트 환경, 이전 개발 AVD 버전과 화면 규격 기재 완료 |
 | README 제출 링크 | FAIL | [제출 경로 안내](../apk/README.md) 추가. 서명·동작이 확인된 APK 링크는 대기 중 |
 | 기기 동작 | NOT_TESTED | 깨끗한 release 설치, Gleo 실음성/Callback, 실제 수신 TTS 청취·AUDIO 정책, 화면 렌더링·기기 주행 규제 및 최신 Figma 대조 미검증 |

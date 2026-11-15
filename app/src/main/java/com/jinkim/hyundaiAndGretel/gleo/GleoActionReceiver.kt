@@ -61,7 +61,7 @@ class GleoActionReceiver : BroadcastReceiver() {
     private fun sendCallback(context: Context, response: GleoResponse, probeId: Long, startedAt: Long) {
         val callback = response.toCallbackJson()
 
-        val destination = if (BuildConfig.DEBUG) "ai.umos.ambientai" else context.packageName
+        val destination = "ai.umos.ambientai"
         val intent = Intent("ai.pleos.playground.intent.action.APP_ACTION_RESPONSE")
             .setPackage(destination)
             .putExtra("packageName", context.packageName)
