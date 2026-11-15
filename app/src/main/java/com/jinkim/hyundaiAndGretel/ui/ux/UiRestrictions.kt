@@ -34,7 +34,7 @@ fun NoteReceiptProcessor.confirmVisibleReceipt(
 ) {
     val pending = inbox.value.pending ?: return
     val id = "receipt:${key.recipientId}/${key.noteId}"
-    if (policy.canShowBody && policy.fits(pending.note.content) && policy.allowsContent(id, visitedContent)) {
+    if (policy.canShowBody && policy.fits(pending.note.receiverMessage) && policy.allowsContent(id, visitedContent)) {
         confirm(key, screenResumed)
     }
 }

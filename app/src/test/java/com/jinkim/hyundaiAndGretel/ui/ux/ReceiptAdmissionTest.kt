@@ -43,6 +43,21 @@ class ReceiptAdmissionTest {
         assertEquals(visited, setOf(contentId))
         assertNotNull(repo.inbox.value.pending)
     }
+    @Test fun acknowledgmentUsesTheSameGuidanceLengthAsDisplay() = runTest {
+        val store = Store()
+        val guidance = "도로에 구덩이가 있습니다."
+        store.rows.value = listOf(InboxItem(note.copy(receiverGuidance = guidance), "B", 1, 1.0, null))
+        val repo = NoteReceiptProcessor(backgroundScope, store, MutableStateFlow("B"), {})
+        val policy = UiRestrictions(true, true, F.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, note.content.length)
+        runCurrent()
+
+        repo.confirmVisibleReceipt(key, true, policy, setOf(contentId))
+        assertFalse(repo.hasPendingWrites)
+        repo.confirmVisibleReceipt(key, true, policy.copy(stringLimit = guidance.length), setOf(contentId))
+        runCurrent()
+        assertEquals(1, store.calls)
+    }
+
     @Test fun currentVisitedBudgetRejectsNewItemButAcceptedAckFinishesAfterRestrictionsChange() = runTest {
         val store = Store(); store.gate = CompletableDeferred()
         var finished = 0

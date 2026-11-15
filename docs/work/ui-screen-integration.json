@@ -1,0 +1,115 @@
+{
+  "task": "ui-screen-integration",
+  "selected_rules": [
+    "DES-01",
+    "DES-02",
+    "DES-03",
+    "DES-04",
+    "DES-05",
+    "DES-06",
+    "DES-07",
+    "DES-08"
+  ],
+  "checks": [
+    {
+      "id": "DES-01",
+      "status": "NOT_TESTED",
+      "evidence": "일부 색상 정적 계산 통과. 화면 전체 대비, 응답시간, 한 손 조작 미측정."
+    },
+    {
+      "id": "DES-02",
+      "status": "NOT_TESTED",
+      "evidence": "본문 3줄 적용. 실제 줄바꿈과 물리 글자 크기 미확인."
+    },
+    {
+      "id": "DES-03",
+      "status": "NOT_TESTED",
+      "evidence": "Theme.kt 주야간 분기. 현재 화면 색상과 Figma 대조 미수행."
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "RoadNotesScreen.kt 창 폭 분기. 가로·세로·분할과 시스템 영역 미검증."
+    },
+    {
+      "id": "DES-05",
+      "status": "N/A",
+      "evidence": "이번 화면에는 키보드 입력이 없다."
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "RoadNoteAction 64dp. 실제 터치와 pressed 상태 미검증."
+    },
+    {
+      "id": "DES-07",
+      "status": "NOT_TESTED",
+      "evidence": "PR #5 경고/정보 벡터 사용. 화면 표시 및 원본 대조 미검증."
+    },
+    {
+      "id": "DES-08",
+      "status": "N/A",
+      "evidence": "이번 변경에서 시스템 알림, 팝업, 토스트를 추가하거나 수정하지 않았다."
+    },
+    {
+      "id": "DOC-9c1fe6a8475c#대비",
+      "status": "NOT_TESTED",
+      "evidence": "비활성 액션 합성 후 대비 6.02:1 및 7.00:1 정적 계산 PASS. 현재 화면 전체 대비 미측정."
+    },
+    {
+      "id": "DOC-9c1fe6a8475c#응답과즉시성",
+      "status": "NOT_TESTED",
+      "evidence": "위치 준비, 제보 저장, 수신 확인 진행 상태 연결. 실제 0.25초 응답시간 및 조작 미측정."
+    },
+    {
+      "id": "DOC-3790286d55ee#주행제한",
+      "status": "NOT_TESTED",
+      "evidence": "차량 표시 제한 및 정책 변경 후 이전 판정 차단 JVM PASS. 실제 CarUxRestrictions 전환 미확인."
+    },
+    {
+      "id": "DOC-9c1fe6a8475c#텍스트",
+      "status": "NOT_TESTED",
+      "evidence": "본문 3줄 상한. Compose 시각적 넘침/ellipsis 검사로 ACK를 제한하며 실제 잘림 및 물리 높이는 미검증."
+    },
+    {
+      "id": "DOC-728dd6fe8092#글자위계",
+      "status": "NOT_TESTED",
+      "evidence": "PR #5 Type.kt 적용. 현재 화면 글자 크기와 가독성 미측정."
+    },
+    {
+      "id": "DOC-94caa75424dd#의미색상",
+      "status": "NOT_TESTED",
+      "evidence": "PR #5 색상과 비활성 액션 보조 텍스트 색상 사용. 화면 대조 미수행."
+    },
+    {
+      "id": "DOC-e12e49cc3efc#시스템영역",
+      "status": "NOT_TESTED",
+      "evidence": "앱 창 내부의 Compose 구조 유지. 실제 영역 배치 미확인."
+    },
+    {
+      "id": "DOC-189d894e8124#분할창",
+      "status": "NOT_TESTED",
+      "evidence": "512dp 기준 분기 적용. 실제 창 모드 미확인."
+    },
+    {
+      "id": "DOC-92bfdd154e9d#화면전환",
+      "status": "NOT_TESTED",
+      "evidence": "요청에 따라 폼 팩터 런타임 검사 미실행."
+    },
+    {
+      "id": "DOC-d771e574367a#버튼상태",
+      "status": "NOT_TESTED",
+      "evidence": "초기/넘침/확인 중/재측정 상태 변환 JVM PASS. 실제 렌더링과 버튼 상태 미검증."
+    },
+    {
+      "id": "DOC-6b1b8763468a#아이콘격자",
+      "status": "PASS",
+      "evidence": "PR #5 VectorDrawable 3종 및 RoadNoteDimensions.icon의 48dp 정적 확인. 화면·원본 검증은 DES-07에 별도 기록."
+    },
+    {
+      "id": "DOC-9faba42791f0#플랫폼규제",
+      "status": "NOT_TESTED",
+      "evidence": "플랫폼 규제 비제한 조합, 전환 시 상태 무효화 및 차단 JVM PASS. 실제 차량 전환과 Pleos 적합성 미검증."
+    }
+  ]
+}

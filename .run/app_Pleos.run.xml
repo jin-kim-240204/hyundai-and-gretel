@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="app Pleos" type="AndroidRunConfigurationType" factoryName="Android App">
+    <module name="hyundai-and-gretel.app" />
+    <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
+    <option name="ALL_USERS" value="false" />
+    <option name="CLEAR_APP_STORAGE" value="false" />
+    <option name="DEPLOY" value="true" />
+    <option name="ALWAYS_INSTALL_WITH_PM" value="true" />
+    <option name="MODE" value="default_activity" />
+    <method v="2">
+      <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>

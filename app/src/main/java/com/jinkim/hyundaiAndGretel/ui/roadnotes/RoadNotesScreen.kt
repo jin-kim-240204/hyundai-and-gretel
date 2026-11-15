@@ -1,100 +1,88 @@
 package com.jinkim.hyundaiAndGretel.ui.roadnotes
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jinkim.hyundaiAndGretel.R
-import com.jinkim.hyundaiAndGretel.location.TrackingStatus
-import com.jinkim.hyundaiAndGretel.notes.pickup.*
+import com.jinkim.hyundaiAndGretel.demo.demoPanelBottomPadding
+import com.jinkim.hyundaiAndGretel.notes.pickup.PickupState
+import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
-import com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions
+import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteAction
+import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteHeader
+import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteStateCard
+import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteStatus
+import com.jinkim.hyundaiAndGretel.ui.theme.PleosSpacing
+import com.jinkim.hyundaiAndGretel.ui.theme.PleosTheme
+import com.jinkim.hyundaiAndGretel.ui.theme.RoadNoteDimensions
 
 @Composable
-fun RoadNotesScreen(
+internal fun RoadNotesScreen(
     state: RoadNotesUiState,
-    startAllowed: Boolean,
-    onStartTracking: () -> Unit,
-    onStopTracking: () -> Unit,
+    trackingPreparation: String?,
     onConfirmReceipt: (ReceiptKey) -> Unit,
+    isReceiptCurrent: (ReceiptLayoutInput) -> Boolean,
     onContentShown: (String) -> Unit,
 ) {
     val policy = state.restrictions
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            Modifier.padding(24.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            PolicyText(stringResource(R.string.app_name), policy, style = MaterialTheme.typography.headlineLarge)
-            TrackingControls(state, startAllowed, onStartTracking, onStopTracking)
-            SubmissionStatus(state.submission, policy)
-            if (state.pickup is PickupState.Failed) PolicyText(stringResource(R.string.pickup_failed), policy)
-            if (state.inbox.error) PolicyText(stringResource(R.string.receipt_failed), policy)
-            state.inbox.pending?.let { item ->
-                ReceivedNoteCard(item, state, onConfirmReceipt, onContentShown)
+    val receipt = state.visibleReceipt()
+    val trackingMessage = policy.label(stringResource(state.trackingStatus.messageRes))
+    Surface(Modifier.fillMaxSize(), color = PleosTheme.colors.background) {
+        BoxWithConstraints {
+            val compact = maxWidth <= 512.dp
+            val windowConstraints = constraints
+            Column(
+                Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                    .padding(horizontal = RoadNoteDimensions.pagePadding, vertical = PleosSpacing.space04)
+                    .padding(bottom = demoPanelBottomPadding),
+                verticalArrangement = Arrangement.spacedBy(PleosSpacing.space04),
+            ) {
+                RoadNoteHeader(policy.label(stringResource(R.string.road_note_title)))
+                if (receipt != null) {
+                    ReceiptCard(
+                        receipt = receipt,
+                        policy = policy,
+                        constraints = windowConstraints,
+                        compact = compact,
+                        trackingMessage = trackingMessage,
+                        isReceiptCurrent = isReceiptCurrent,
+                        onConfirm = onConfirmReceipt,
+                        onContentShown = onContentShown,
+                    )
+                } else {
+                    RoadNoteStateCard(
+                        title = policy.label(stringResource(R.string.road_note_intro)),
+                        description = trackingMessage,
+                    )
+                    if (state.inbox.pending != null) {
+                        RoadNoteStatus(policy.label(stringResource(R.string.receipt_restricted)))
+                    }
+                }
+
+                if (state.startCommandFailed) RoadNoteStatus(policy.label(stringResource(R.string.location_command_failed)))
+                state.submission.statusMessageRes(demoBuild = true)?.let { message ->
+                    RoadNoteStatus(
+                        policy.label(stringResource(message)),
+                        loading = state.submission == SubmissionState.Submitting && !policy.optimized,
+                    )
+                }
+                if (state.pickup is PickupState.Failed) RoadNoteStatus(policy.label(stringResource(R.string.pickup_failed)))
+                if (state.inbox.error) RoadNoteStatus(policy.label(stringResource(R.string.receipt_failed)))
+                if (!state.trackingStatus.isCollecting && trackingPreparation != null) {
+                    RoadNoteStatus(policy.label(trackingPreparation))
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun TrackingControls(state: RoadNotesUiState, startAllowed: Boolean, onStart: () -> Unit, onStop: () -> Unit) {
-    val policy = state.restrictions
-    val message = when (state.trackingStatus) {
-        TrackingStatus.STOPPED -> R.string.location_stopped
-        TrackingStatus.STARTING -> R.string.location_starting
-        TrackingStatus.WAITING -> R.string.location_waiting
-        TrackingStatus.RECEIVING -> R.string.location_receiving
-        TrackingStatus.UNAVAILABLE -> R.string.location_unavailable
-        TrackingStatus.UNSUPPORTED -> R.string.location_unsupported
-        TrackingStatus.FAILED -> R.string.location_failed
-    }
-    PolicyText(stringResource(message), policy)
-    if (state.startCommandFailed) PolicyText(stringResource(R.string.location_command_failed), policy)
-    Button(onClick = onStart, enabled = state.canStart && startAllowed, modifier = Modifier.heightIn(min = 56.dp)) {
-        PolicyText(stringResource(R.string.location_start), policy)
-    }
-    Button(onClick = onStop, modifier = Modifier.heightIn(min = 56.dp)) {
-        PolicyText(stringResource(R.string.location_stop), policy)
-    }
-}
-
-@Composable
-private fun SubmissionStatus(submission: SubmissionState?, policy: UiRestrictions) {
-    val message = when (submission) {
-        is SubmissionState.Saved -> "도로 쪽지를 남겼습니다"
-        SubmissionState.Submitting -> "제보를 저장하고 있습니다"
-        is SubmissionState.Failed -> "제보를 저장하지 못했습니다"
-        else -> return
-    }
-    PolicyText(message, policy)
-}
-
-@Composable
-private fun ReceivedNoteCard(item: InboxItem, state: RoadNotesUiState, onConfirm: (ReceiptKey) -> Unit, onContentShown: (String) -> Unit) {
-    val policy = state.restrictions
-    val contentKey = "receipt:${item.recipientId}/${item.note.noteId}"
-    if (!policy.canShowBody || !policy.fits(item.note.content) || !policy.allowsContent(contentKey, state.visitedContent)) {
-        PolicyText("수신한 쪽지가 있습니다 · 현재 표시 제한", policy)
-        return
-    }
-    SideEffect { onContentShown(contentKey) }
-    PolicyText(stringResource(R.string.receipt_title), policy)
-    PolicyText(item.note.content, policy)
-    Button(
-        onClick = { onConfirm(ReceiptKey(item.note.noteId, item.recipientId)) },
-        enabled = state.inbox.confirming == null,
-        modifier = Modifier.heightIn(min = 56.dp),
-    ) {
-        PolicyText(stringResource(if (state.inbox.confirming == null) R.string.receipt_confirm else R.string.receipt_confirming), policy)
     }
 }

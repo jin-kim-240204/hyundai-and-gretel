@@ -1,0 +1,132 @@
+{
+  "task": "통합 도로 쪽지 고도화",
+  "initial_head": "6fc61ffd5782fc6f7320cdf3429e131b88186ebb",
+  "selected_rules": [
+    "ENV-01",
+    "ENV-02",
+    "SAF-01",
+    "AUDIO-02",
+    "INT-01",
+    "REL-01",
+    "REL-02"
+  ],
+  "checks": [
+    {
+      "id": "ENV-01",
+      "status": "NOT_TESTED",
+      "evidence": "Kotlin, minSdk 28, API 35 빌드와 기존 AVD 규격 확인. 이번 기기 실행 미실행. 공유 실행 구성 IDE 로드·설치 사용자·Activity 실행 미확인."
+    },
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "verify_harness.py --build의 Automotive Manifest 검사 및 기존 ComponentActivity 구성 대조."
+    },
+    {
+      "id": "SAF-01",
+      "status": "NOT_TESTED",
+      "evidence": "RoadNotesDemoFlowTest의 NO_SETUP과 명시 ACK는 JVM PASS. 실제 기기 CarUxRestrictions/렌더링/최신 Figma 대조 미실행."
+    },
+    {
+      "id": "AUDIO-02",
+      "status": "NOT_TESTED",
+      "evidence": "RoadNotesDemoFlowTest의 신규 수신 콜백 1회는 PASS. AUDIO 전원, 실제 발화 및 첫 음절은 미검증."
+    },
+    {
+      "id": "INT-01",
+      "status": "FAIL",
+      "evidence": "release 병합 Manifest 수신기 exported=false와 release Callback 자기 패키지 확인. Gleo 실음성·공급자 등록 미검증."
+    },
+    {
+      "id": "REL-01",
+      "status": "FAIL",
+      "evidence": "공모전 선택 제출용 실행 가능한 서명 APK와 공개 경로가 없음. assembleRelease 출력은 app-release-unsigned.apk."
+    },
+    {
+      "id": "REL-02",
+      "status": "FAIL",
+      "evidence": "RoadNoteService와 RoomRoadNoteStore 소스 대조. 새 release의 활성 시연 부재에서 observeNearby는 빈 목록. 실제 심사 검증 미실행."
+    },
+    {
+      "id": "DOC-3240d46da07b#콘솔포트",
+      "status": "NOT_TESTED",
+      "evidence": "공식 Virtual Console 실행 절의 최소 v2.1.0·호스트 8088을 PLEOS-DEMO.md에 반영. Fake runner PASS. 기기 내부 HTTP 미검증."
+    },
+    {
+      "id": "DOC-532942c7b49f#콜드부팅",
+      "status": "NOT_TESTED",
+      "evidence": "Cold boot 절의 VHAL 요건을 PLEOS-DEMO.md에 기록. AVD 설정 변경·실행 미수행."
+    },
+    {
+      "id": "DOC-036572f580ac#심사기능접근",
+      "status": "FAIL",
+      "evidence": "앱 심사 제출 전 준비 사항의 기능 접근 기준. release DemoRuntime과 GleoActionReceiver에서 새 설치 시연·외부 입출력 차단 확인."
+    },
+    {
+      "id": "DOC-92b6c689bf7f#기능성능안정성",
+      "status": "NOT_TESTED",
+      "evidence": "JVM 133개 PASS. 기기 신규 설치와 성능 측정 미실행."
+    },
+    {
+      "id": "DOC-8c0c3eb8c426#콘텐츠안전성",
+      "status": "NOT_TESTED",
+      "evidence": "실제 Gleo 생성 문장·표시 콘텐츠 미확인."
+    },
+    {
+      "id": "DOC-84d98c64854c#운전자주의분산",
+      "status": "NOT_TESTED",
+      "evidence": "기기 주행 중 화면 및 출력 미확인."
+    },
+    {
+      "id": "DOC-54d5176dbdab#등록정보",
+      "status": "NOT_TESTED",
+      "evidence": "App Market 등록 메타데이터와 최종 산출물 대조 미수행."
+    },
+    {
+      "id": "DOC-4036191ed19c#개인정보보안",
+      "status": "NOT_TESTED",
+      "evidence": "제출 버전 개인정보 및 보안 심사 증거 미확인."
+    },
+    {
+      "id": "DOC-a243773e232d#전원복귀",
+      "status": "NOT_TESTED",
+      "evidence": "실제 AUDIO disable 및 복구 동작 미실행."
+    },
+    {
+      "id": "DOC-2cbe51f12c43#선행묵음",
+      "status": "NOT_TESTED",
+      "evidence": "첫 음절 보존 실청취 미실행."
+    }
+  ],
+  "changes": [
+    "R1 좌표 생성과 투영 공식 공용화",
+    "동일 셀 집합 구독·수신 알림·ACK JVM 회귀 검증",
+    "시연 helper·공유 실행 구성·제출 점검표"
+  ],
+  "verification": [
+    {
+      "command": "./gradlew --offline :app:testDebugUnitTest :app:assembleDebug :app:lintDebug :app:assembleRelease",
+      "status": "PASS",
+      "evidence": "JVM 133개, 실패·오류·스킵 0. debug 및 미서명 release 빌드, debug lint 성공."
+    },
+    {
+      "command": "python3 scripts/verify_harness.py --build",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts -v",
+      "status": "PASS",
+      "evidence": "Fake runner 5개"
+    },
+    {
+      "command": "python3 scripts/verify_harness.py --report docs/work/integrated-hardening.json",
+      "status": "FAIL",
+      "evidence": "보고서 구조 통과, 제출 차단 항목으로 종료코드 1."
+    }
+  ],
+  "independent_review": {
+    "url": "https://github.com/jin-kim-240204/hyundai-and-gretel/pull/10#pullrequestreview-5895737346",
+    "commit": "2d0c50cc43778e2f9b27a9e2976243788738b3a3",
+    "finding": "신규 확정 코드 결함 없음. Python fake runner 5개와 diff 검사 PASS.",
+    "follow_up": "런북에 공유 구성 범위, 현재 사용자 CLI 진단과 수동 설치, IDE 로드 및 실제 설치 NOT_TESTED를 명시."
+  }
+}

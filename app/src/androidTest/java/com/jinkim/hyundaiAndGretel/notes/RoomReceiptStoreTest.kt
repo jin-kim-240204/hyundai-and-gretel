@@ -25,10 +25,15 @@ class RoomReceiptStoreTest {
         val setup = SyntheticSession("B")
         val position = LocationFix(37.5, 127.03, 0)
         val note = RoadNote("00000000-0000-0000-0000-000000000001", "A", "구덩이", NoteCategory.WARNING,
-            position.latitude, position.longitude, 0, 0, 600_000, SyntheticRoute.project(37.5, 127.03, setup))
+            37.501, 127.029, 0, 0, 600_000)
         try {
             assertTrue(store.create(note) is CreateNoteResult.Created)
             val request = ReceiptRequest(note.noteId, setup, position)
+            assertEquals(ReceiveResult.INELIGIBLE, receipts.receive(request.copy(
+                position = position.copy(longitude = 127.04),
+            )))
+            assertEquals(ReceiveResult.INELIGIBLE, receipts.receive(request.copy(scenarioId = note.noteId)))
+            assertTrue(receipts.observeInbox("B").first().isEmpty())
             val results = coroutineScope { List(2) { async { receipts.receive(request) } }.awaitAll() }
             assertEquals(1, results.count { it == ReceiveResult.RECEIVED })
             assertEquals(1, results.count { it == ReceiveResult.ALREADY_RECEIVED })

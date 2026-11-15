@@ -19,20 +19,20 @@ fun RoadNotesRoute(
     viewModel: RoadNotesViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val preparation by viewModel.trackingPreparation.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     KeepScreenOnWhileTracking(window, state.trackingStatus.isCollecting)
 
     HyundaiAndGretelTheme {
-        LocationPermissionGate(state.restrictions, onStopTracking = viewModel::stopTracking) {
+        LocationPermissionGate(state.restrictions, onStopTracking = viewModel::stopTracking, onPermissionsReady = viewModel::ensureTracking, onPermissionsLost = viewModel::onPermissionsLost) {
             Box(Modifier.fillMaxSize()) {
                 RoadNotesScreen(
                     state = state,
-                    startAllowed = viewModel.canStartTracking,
-                    onStartTracking = viewModel::startTracking,
-                    onStopTracking = viewModel::stopTracking,
+                    trackingPreparation = preparation,
                     onConfirmReceipt = { key ->
                         viewModel.confirmReceipt(key, lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
                     },
+                    isReceiptCurrent = viewModel::isReceiptCurrent,
                     onContentShown = viewModel::markPresented,
                 )
 

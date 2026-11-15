@@ -28,7 +28,9 @@ class RoomScenarioStoreTest {
             assertEquals(ReceiveResult.RECEIVED, receipts.receive(ReceiptRequest(unscoped.noteId, SyntheticSession("B"), LocationFix(37.5,127.03,0))))
             assertNull(scenarios.observeActive().first())
             assertEquals(unscoped.noteId, receipts.observeInbox("B").first().single().note.noteId)
-            val active = scenarios.reset()
+            val active = scenarios.ensureActive()
+            assertEquals(active, scenarios.ensureActive())
+            assertNotNull(notes.findById(unscoped.noteId))
             val own = note(2).copy(scenarioId = active)
             val other = note(3).copy(scenarioId = "00000000-0000-0000-0000-000000000099")
             assertTrue(notes.create(own) is CreateNoteResult.Created)
@@ -36,6 +38,8 @@ class RoomScenarioStoreTest {
             for (n in listOf(own, other)) {
                 assertEquals(ReceiveResult.RECEIVED, receipts.receive(ReceiptRequest(n.noteId, SyntheticSession("B"), LocationFix(37.5,127.03,0), n.scenarioId)))
             }
+            assertEquals(active, scenarios.ensureActive())
+            assertNotNull(notes.findById(own.noteId))
             scenarios.reset()
             assertNull(notes.findById(own.noteId))
             assertNotNull(notes.findById(other.noteId))

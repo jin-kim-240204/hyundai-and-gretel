@@ -11,6 +11,17 @@ class RoadNoteTest {
         createdAtUtcMillis = 1_000, expiresAtUtcMillis = 601_000,
     )
 
+    @Test fun koreanGuidanceOrOriginalIsUsedWithoutInventingATranslation() {
+        val english = "There is an obstruction on the road."
+        assertEquals(note().content, note().copy(receiverGuidance = english).receiverMessage)
+        val guidance = "도로에 구덩이가 있다는 제보가 있습니다."
+        assertEquals(guidance, note().copy(receiverGuidance = guidance).receiverMessage)
+        val fallback = note().copy(content = english, receiverGuidance = english).receiverMessage
+        assertTrue(fallback.contains("제보가 접수"))
+        assertFalse(fallback.contains("obstruction"))
+        assertNull(note().copy(receiverGuidance = english).validationError())
+    }
+
     @Test fun unicodeLengthUsesCodePointsWithoutTruncating() {
         val emoji = "\uD83D\uDE80"
         for (content in listOf("가".repeat(500), emoji.repeat(500), "👩‍🚀".repeat(166) + "가나")) {

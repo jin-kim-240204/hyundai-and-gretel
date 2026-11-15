@@ -1,0 +1,13 @@
+{
+  "task": "방향 무관 반경 수신",
+  "selected_rules": ["INT-01"],
+  "checks": [
+    {"id":"INT-01","status":"NOT_TESTED","evidence":"호스트 스키마 검사 PASS. 실제 Gleo 등록과 Action/Callback은 사용자 지정 비기기 범위 밖."},
+    {"id":"DOC-2bec764daf11#스키마전달","status":"PASS","evidence":"App Schema를 Gleo에 전달하기 절. app/src/main/assets/schema.json 및 Manifest의 CREATE_ROAD_NOTE 필터 확인. test_receiver_guidance_schema.py PASS."},
+    {"id":"DOC-fa1de2cb7c79#등록과콜백","status":"NOT_TESTED","evidence":"Core Concepts 절의 등록·Action·Callback. 실제 등록 및 실행 미검증."},
+    {"id":"DOC-9844e9eaad3c#위치콜백해제","status":"PASS","evidence":"위치 업데이트 수신/중지 절. PleosLocationSource의 nullable onChanged, onError, 동일 리스너 해제 코드 정적 확인."},
+    {"id":"DOC-402de45b9f3d#권한선언","status":"PASS","evidence":"권한 선언 절. main AndroidManifest.xml에 pleos.car.permission.FUSED_LOCATION 존재 확인."},
+    {"id":"DOC-1ba06876919b#초기화와해제","status":"PASS","evidence":"SDK 생명주기 절. PleosLocationSource의 지원 확인·초기화와 리스너 해제 뒤 SDK release를 코드로 확인."},
+    {"id":"DOC-9844e9eaad3c#위치SDK실행","status":"NOT_TESTED","evidence":"기기·에뮬레이터·앱 실행은 사용자 지정 범위 밖. 위치 SDK 및 proximity 동작 미확인."}
+  ]
+}

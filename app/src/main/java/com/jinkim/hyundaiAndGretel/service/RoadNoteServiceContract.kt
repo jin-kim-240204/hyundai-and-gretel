@@ -7,6 +7,7 @@ import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import kotlinx.coroutines.flow.StateFlow
 
 interface RoadNoteServiceContract {
+    val automaticStartBlockReason: String? get() = null
     val canStartTracking: Boolean get() = true
     val uiRestrictions: StateFlow<com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions>
     val status: StateFlow<TrackingStatus>

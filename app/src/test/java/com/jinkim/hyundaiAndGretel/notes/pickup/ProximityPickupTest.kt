@@ -54,6 +54,7 @@ class ProximityPickupTest {
         val signals = MutableStateFlow<CandidateState>(CandidateState.Loading)
         var notes = listOf(note())
         val store = Store()
+        val received = mutableListOf<ReceiptRequest>()
         val receipts = NoteReceiptProcessor(scope, store, MutableStateFlow("B"), {})
         val pickup = ProximityPickup(scope, positions, signals, {
             val p = positions.value
@@ -61,9 +62,30 @@ class ProximityPickupTest {
                 .filter { it.isActiveAt(utc) }
                 .map { NearbyCandidate(it, distanceMeters(p.fix.latitude, p.fix.longitude, it.latitude, it.longitude)) }
                 .filter { it.distanceMeters <= CandidateArea.RADIUS_METERS }
-        }, receipts, { sourceActive && it === source }, { elapsed }, { utc })
+        }, receipts, { sourceActive && it === source }, { elapsed }, { utc }, onReceived = { received += it })
         fun start(session: Long = 1) = pickup.start(session, source, SyntheticSession("B"))
         fun signal() { signals.value = if (signals.value == CandidateState.Loading) CandidateState.WaitingForLocation else CandidateState.Loading }
+    }
+
+    @Test fun onlyNewCommittedReceiptNotifiesAndOldSessionCommitIsIgnored() = runTest {
+        for (result in ReceiveResult.entries) {
+            val h = Harness(backgroundScope)
+            h.store.result = result
+            h.start(); runCurrent()
+            h.source.requests.single().registered("receipt"); runCurrent()
+            assertEquals(if (result == ReceiveResult.RECEIVED) 1 else 0, h.received.size)
+            h.pickup.stop()
+        }
+        val h = Harness(backgroundScope)
+        val gate = CompletableDeferred<Unit>()
+        h.store.gate = gate
+        h.start(); runCurrent()
+        h.source.requests.single().registered("old"); runCurrent()
+        h.pickup.stop()
+        h.positions.value = h.positions.value!!.copy(session = 2)
+        h.start(2); runCurrent()
+        gate.complete(Unit); runCurrent()
+        assertTrue(h.received.isEmpty())
     }
 
     @Test fun observationsBelongToExplicitStartStopAndLateEnterCannotWriteAfterStop() = runTest {
@@ -214,7 +236,7 @@ class ProximityPickupTest {
         assertEquals(1, h.store.inputs.size)
     }
 
-    @Test fun receiptClockBoundaryAndLegacySelfDirectionFiltersAreNotSdkMeasurements() = runTest {
+    @Test fun receiptClockBoundary() = runTest {
         for ((elapsed, expected) in listOf(2_000L to 1, 2_001L to 0)) {
             val h = Harness(backgroundScope)
             h.elapsed = elapsed
@@ -222,11 +244,19 @@ class ProximityPickupTest {
             h.source.requests.single().registered("boundary"); runCurrent()
             assertEquals(expected, h.store.inputs.size)
         }
+    }
+
+    @Test fun registersAndReceivesBehindAndOffTheDemoLineWithoutRouteMetadata() = runTest {
         val h = Harness(backgroundScope)
-        h.notes = listOf(note().copy(route = null), note(2).copy(authorId = "B"),
-            note(3).copy(route = note(3).route!!.copy(direction = -1)))
+        val behind = note(longitude = 127.029)
+        val adjacent = note(2).copy(latitude = 37.501, route = null)
+        h.notes = listOf(behind, adjacent, note(3).copy(authorId = "B"),
+            note(4).copy(latitude = 37.5101, route = null), note(5).copy(scenarioId = note().noteId))
         h.start(); runCurrent()
-        assertTrue(h.source.requests.isEmpty())
+        assertEquals(listOf(behind.longitude, adjacent.longitude), h.source.requests.map { it.longitude })
+        h.source.requests.forEachIndexed { index, request -> request.registered("radius-$index") }
+        runCurrent()
+        assertEquals(listOf(behind.noteId, adjacent.noteId), h.store.inputs.map { it.noteId })
     }
 
     @Test fun invalidationBeforeRegistrationRemovesLateIdWithoutReceiving() = runTest {

@@ -18,7 +18,11 @@ import com.jinkim.hyundaiAndGretel.notes.spatial.H3SpatialIndex
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomReceiptStore
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomRoadNoteStore
 import com.jinkim.hyundaiAndGretel.notes.storage.RoomScenarioStore
-import kotlinx.coroutines.CompletableDeferred
+import com.jinkim.hyundaiAndGretel.speech.AnnouncementOwner
+import com.jinkim.hyundaiAndGretel.speech.CarAudioPower
+import com.jinkim.hyundaiAndGretel.speech.PleosNoteSpeaker
+import com.jinkim.hyundaiAndGretel.speech.ReceiptAnnouncement
+import com.jinkim.hyundaiAndGretel.speech.speechFailureCode
 import kotlinx.coroutines.Deferred
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionFailure
@@ -30,6 +34,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -37,14 +44,20 @@ class RoadNoteService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> requestStart()
-            ACTION_STOP -> { demo.stop(); stopTracking() }
+            ACTION_START -> { automaticTrackingPaused = false; requestStart() }
+            ACTION_STOP -> {
+                automaticTrackingPaused = intent.getBooleanExtra(EXTRA_PAUSE_AUTOMATIC, true)
+                demo.stop()
+                stopTracking()
+            }
             ACTION_STORAGE_HOLD -> finishWhenStorageIsIdle()
 
             else -> { demo.stop(); stopTracking() }
         }
         return START_NOT_STICKY
     }
+
+    private var automaticTrackingPaused = false
 
     private fun requestStart() {
         if (!demo.enabled) { startTracking(); return }
@@ -81,6 +94,10 @@ class RoadNoteService : Service() {
     }
 
     private fun stopNotePickup() {
+        if (announcementsDelegate.isInitialized()) {
+            logSpeech("RESET_TRACKING")
+            announcements.reset()
+        }
         if (pickupDelegate.isInitialized()) pickup.stop()
     }
 
@@ -134,7 +151,15 @@ class RoadNoteService : Service() {
         stopSelf()
     }
 
+    private fun logSpeech(event: String) {
+        if (BuildConfig.DEBUG) Log.d("RoadSpeech", event)
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val audioPower: CarAudioPower = CarAudioPower(scope, ::logSpeech) {
+        logSpeech("RESET_POWER")
+        if (announcementsDelegate.isInitialized()) announcements.reset()
+    }
     private val activeScenario = MutableStateFlow<String?>(null)
     private val scenarioStore by lazy { RoomScenarioStore(this) }
     private val restrictions = CarRestrictionsSource(scope)
@@ -172,12 +197,35 @@ class RoadNoteService : Service() {
     private var setup = SyntheticSession()
     private val recipient = MutableStateFlow(setup.actorId)
 
+    private val receiptStore by lazy {
+        RoomReceiptStore(this, onError = { error ->
+            if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
+        })
+    }
+    private val announcementsDelegate: Lazy<ReceiptAnnouncement> = lazy {
+        ReceiptAnnouncement(
+            scope = scope,
+            store = receiptStore,
+            speaker = PleosNoteSpeaker(this, ::logSpeech),
+            currentOwner = {
+                if (isTracking && audioPower.enabled && !demo.blocksNewWrites) {
+                    AnnouncementOwner(recipient.value, activeScenario.value, tracking.sessionId)
+                } else null
+            },
+            utcMillis = System::currentTimeMillis,
+            canReadBody = { restrictions.state.value.connected && restrictions.state.value.canShowBody },
+            onFailure = { error ->
+                logSpeech("ANNOUNCEMENT_FAILED ${speechFailureCode(error)}")
+            },
+            log = ::logSpeech,
+        )
+    }
+    private val announcements: ReceiptAnnouncement by announcementsDelegate
+
     private val receipts: NoteReceiptProcessor by lazy {
         NoteReceiptProcessor(
             scope = scope,
-            store = RoomReceiptStore(this, onError = { error ->
-                if (BuildConfig.DEBUG) Log.d("RoadNote", "RECEIPT_INSERT ${error.javaClass.simpleName}")
-            }),
+            store = receiptStore,
             recipient = recipient,
             onFinished = ::finishWhenStorageIsIdle,
             onWriteAccepted = {
@@ -197,7 +245,11 @@ class RoadNoteService : Service() {
             utcMillis = System::currentTimeMillis,
             onError = { operation, error ->
                 if (BuildConfig.DEBUG) Log.d("RoadNote", "$operation ${error.javaClass.simpleName}")
-            }, scenarioId = { activeScenario.value })
+            }, scenarioId = { activeScenario.value },
+            onReceived = { request ->
+                logSpeech("RECEIPT_COMMITTED tracking=$isTracking audio=${audioPower.enabled} transition=${demo.blocksNewWrites}")
+                announcements.enqueue(request)
+            })
     }
     private val pickup by pickupDelegate
 
@@ -222,6 +274,7 @@ class RoadNoteService : Service() {
             override fun startTracking() = this@RoadNoteService.startTracking()
             override fun stopTracking() = this@RoadNoteService.stopTracking()
             override fun changeActor(actor: String) {
+                if (announcementsDelegate.isInitialized()) announcements.reset()
                 setup = SyntheticSession(actor)
                 recipient.value = actor
                 receipts.refreshObservation()
@@ -237,8 +290,25 @@ class RoadNoteService : Service() {
     override fun onCreate() {
         super.onCreate()
         restrictions.start(this)
+        audioPower.start(this)
         scope.launch {
-            try { scenarioStore.observeActive().collect { activeScenario.value = it } }
+            restrictions.state.map { it.connected && it.canShowBody }.distinctUntilChanged().collect {
+                if (announcementsDelegate.isInitialized()) {
+                    logSpeech("RESET_BODY_POLICY")
+                    announcements.reset()
+                }
+            }
+        }
+        scope.launch {
+            try {
+                if (demo.enabled) {
+                    restrictions.state.first { it.canSetup }
+                    scenarioStore.ensureActive()
+                }
+                scenarioStore.observeActive().collect {
+                if (activeScenario.value != it && announcementsDelegate.isInitialized()) announcements.reset()
+                activeScenario.value = it
+            } }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "SCENARIO_READ ${error.javaClass.simpleName}") }
         }
@@ -254,6 +324,8 @@ class RoadNoteService : Service() {
         override val inboxState get() = receipts.inbox
         override val pickupState get() = pickup.state
         override val uiRestrictions get() = restrictions.state
+        override val automaticStartBlockReason get() =
+            if (automaticTrackingPaused) "사용자가 위치 수집을 중지했습니다" else demo.automaticStartBlockReason
         override val canStartTracking get() = !demo.enabled || (restrictions.state.value.canSetup && !demo.transitioning)
         val demoRuntime get() = demo
         fun bufferSnapshot() = tracking.bufferSnapshot()
@@ -265,11 +337,22 @@ class RoadNoteService : Service() {
             submitRoadNoteWithResult(content, category, SystemClock.elapsedRealtime())
         }
 
-        fun submitRoadNoteWithResult(content: String, category: NoteCategory, receivedElapsedMillis: Long): Deferred<SubmissionState> {
-            if (submissions.isSubmitting) return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.BUSY))
-            if (!isTracking || (demo.enabled && (!demo.canSubmit || demo.blocksNewWrites)))
-                return CompletableDeferred(SubmissionState.Failed(SubmissionFailure.LOCATION_UNAVAILABLE))
-            return submissions.submit(content, category, tracking.selectAnchorAt(receivedElapsedMillis))
+        fun submitRoadNoteWithResult(
+            content: String,
+            category: NoteCategory,
+            receivedElapsedMillis: Long,
+            receiverGuidance: String? = null,
+        ): Deferred<SubmissionState> {
+            val rejection = submissionRejection(
+                busy = submissions.isSubmitting,
+                demoEnabled = demo.enabled,
+                scenarioId = activeScenario.value,
+                canSubmit = demo.canSubmit,
+                blocksNewWrites = demo.blocksNewWrites,
+                tracking = isTracking,
+            )
+            if (rejection != null) return submissions.reject(rejection)
+            return submissions.submit(content, category, tracking.selectAnchorAt(receivedElapsedMillis), receiverGuidance)
         }
     }
 
@@ -281,6 +364,8 @@ class RoadNoteService : Service() {
             catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "DEMO_CLEANUP ${error.javaClass.simpleName}") }
             try { restrictions.close() }
             catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadNote", "UX_CLEANUP ${error.javaClass.simpleName}") }
+            try { audioPower.close() }
+            catch (error: Exception) { if (BuildConfig.DEBUG) Log.d("RoadSpeech", "POWER_CLEANUP ${error.javaClass.simpleName}") }
             stopNotePickup()
         } finally {
             try { tracking.stop() }
@@ -292,8 +377,23 @@ class RoadNoteService : Service() {
     }
 
     companion object {
+        const val EXTRA_PAUSE_AUTOMATIC = "pauseAutomaticTracking"
         const val ACTION_START = "com.jinkim.hyundaiAndGretel.START_LOCATION"
         const val ACTION_STOP = "com.jinkim.hyundaiAndGretel.STOP_LOCATION"
         private const val ACTION_STORAGE_HOLD = "com.jinkim.hyundaiAndGretel.HOLD_NOTE_WRITES"
     }
+}
+
+internal fun submissionRejection(
+    busy: Boolean,
+    demoEnabled: Boolean,
+    scenarioId: String?,
+    canSubmit: Boolean,
+    blocksNewWrites: Boolean,
+    tracking: Boolean,
+): SubmissionFailure? = when {
+    busy -> SubmissionFailure.BUSY
+    !demoEnabled || scenarioId.isNullOrBlank() || !canSubmit || blocksNewWrites -> SubmissionFailure.DEMO_REQUIRED
+    !tracking -> SubmissionFailure.LOCATION_UNAVAILABLE
+    else -> null
 }

@@ -121,15 +121,14 @@ class NoteReceiptProcessorTest {
         assertEquals(1, store.confirmCalls)
     }
 
-    @Test fun distanceAndReverseProgressUseMetersAroundThe500mBoundary() {
+    @Test fun distanceUsesThe500mBoundaryOnBothSides() {
         val scale = 6_371_000.0 * kotlin.math.cos(Math.toRadians(37.5))
         fun at(meters: Double) = 127.03 - Math.toDegrees(meters / scale)
         val setup = SyntheticSession("B")
-        assertNotNull(eligibleDistance(note, setup, LocationFix(37.5, at(499.99), 0), 1))
-        assertNull(eligibleDistance(note, setup, LocationFix(37.5, at(500.01), 0), 1))
-        val reverse = note.copy(route = note.route!!.copy(direction = -1))
-        assertNotNull(eligibleDistance(reverse, setup.copy(direction = -1), LocationFix(37.5, at(-499.99), 0), 1))
-        assertNull(eligibleDistance(reverse, setup.copy(direction = -1), LocationFix(37.5, at(1.0), 0), 1))
+        for (side in listOf(-1, 1)) {
+            assertNotNull(eligibleDistance(note, setup, LocationFix(37.5, at(side * 499.99), 0), 1))
+            assertNull(eligibleDistance(note, setup, LocationFix(37.5, at(side * 500.01), 0), 1))
+        }
     }
 
     @Test fun reusedActorObservationRejectsOldAckUiResultsButKeepsLockWriteAndDatabaseUpdates() = runTest {
@@ -209,14 +208,16 @@ class NoteReceiptProcessorTest {
         }
     }
 
-    @Test fun eligibilityPreservesExpirySelfDirectionAndLegacyBoundaries() {
+    @Test fun eligibilityUsesCoordinatesWithoutRouteMetadataAndPreservesExpirySelfAndArea() {
         val p = LocationFix(37.5, 127.03, 0)
         assertEquals(0.0, eligibleDistance(note, SyntheticSession("B"), p, 1)!!, 0.0)
         assertNull(eligibleDistance(note, SyntheticSession(), p, 1))
         assertNull(eligibleDistance(note, SyntheticSession("B"), p, 600_000))
-        assertNull(eligibleDistance(note.copy(route = null), SyntheticSession("B"), p, 1))
-        assertNull(eligibleDistance(note, SyntheticSession("B", direction = -1), p, 1))
-        assertNull(eligibleDistance(note, SyntheticSession("B"), p.copy(longitude = 127.031), 1))
-        assertNull(eligibleDistance(note, SyntheticSession("B"), p.copy(latitude = 37.501), 1))
+        assertNotNull(eligibleDistance(note.copy(route = null), SyntheticSession("B"), p, 1))
+        assertNotNull(eligibleDistance(note, SyntheticSession("B"), p.copy(longitude = 127.031), 1))
+        assertNotNull(eligibleDistance(note, SyntheticSession("B"), p.copy(latitude = 37.501), 1))
+        val areaEdge = note.copy(latitude = 37.51, route = null)
+        assertNull(eligibleDistance(areaEdge, SyntheticSession("B"), p.copy(latitude = 37.5101), 1))
+        assertNull(eligibleDistance(areaEdge.copy(latitude = 37.5101), SyntheticSession("B"), p.copy(latitude = 37.51), 1))
     }
 }

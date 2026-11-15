@@ -1,6 +1,8 @@
 package com.jinkim.hyundaiAndGretel.gleo
 
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
+import com.jinkim.hyundaiAndGretel.notes.isValidReceiverGuidance
+import com.jinkim.hyundaiAndGretel.notes.containsKorean
 import org.json.JSONException
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -8,7 +10,11 @@ import org.json.JSONTokener
 const val CREATE_ROAD_NOTE = "CREATE_ROAD_NOTE"
 const val GLEO_INTENT_ACTION = "com.jinkim.hyundaiAndGretel.CREATE_ROAD_NOTE"
 
-data class GleoRoadNoteInput(val content: String, val category: NoteCategory)
+data class GleoRoadNoteInput(
+    val content: String,
+    val category: NoteCategory,
+    val receiverGuidance: String? = null,
+)
 
 sealed interface ParsedGleoAction {
     data class Valid(val input: GleoRoadNoteInput) : ParsedGleoAction
@@ -46,6 +52,8 @@ fun validateGleoParameters(values: Map<String, Any?>): ParsedGleoAction {
     val input = GleoRoadNoteInput(
         content = strings.getValue("content"),
         category = NoteCategory.valueOf(strings.getValue("category")),
+        receiverGuidance = (values["receiverGuidance"] as? String)
+            ?.takeIf { it.isValidReceiverGuidance() && it.containsKorean() }?.trim(),
     )
     return ParsedGleoAction.Valid(input)
 }

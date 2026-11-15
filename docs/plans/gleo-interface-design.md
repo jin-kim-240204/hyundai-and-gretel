@@ -1,3 +1,5 @@
+> 2026-11-14 후속 결정: 이 문서의 선제 음성/TTS 제외는 기존 제보 단계 범위다. 수신 쪽지의 자동 안내는 [TTS 계획](gleo-tts.md)에서 추가하며, Gleo가 문장형 content를 생성하고 앱은 별도 LLM 호출 없이 Pleos TTS로 읽는다.
+
 > 현재 E2E 구현 정본은 [즉시 도로 제보 프로토타입 테크스펙](implementation-plan.md)이다. 수신 30초 전 위치 버퍼·Room A/B 심기/줍기·단발 3필드 스키마는 해당 문서를 따른다. 이 문서의 이후 상세 예시 중 정본과 다른 지명·후속 대화·목격 시각 정책은 과거 설계 기록이다.
 
 > 현행 단발 계약: 입력은 content/locationMode/category. draftId·asking·후속 대화 문맥 없음. 아래 추가 정보/지명/보류 예시는 과거 설계다.
@@ -340,10 +342,10 @@ S3의 Gleo 취소 기한은 7초다. 프로젝트 내부 목표는 수신 후 �
 
 ## 8. 등록·구현 순서와 영향 범위
 
-1. 실제 Gleo 가용성·Schema 검토/활성화·Intent 형식·발신자 인증·Callback 대상 제한과 후속 draftId 전달을 확인한다.
+1. 실제 Gleo 가용성·Schema 활성화·Intent 형식·발신자 인증·Callback 대상 제한과 후속 draftId 전달을 확인한다.
 2. assets/schema.json·Manifest Action 필터·Receiver·로컬 초안 저장/응답을 최소 구현한다. 일반 ComponentActivity/Compose를 유지하고 applicationId를 com.jinkim.hyundaiAndGretel과 일치시켰다. service는 sendBroadcast 경로이며 상주 Service를 뜻하지 않는다.
 3. 초안 목록·삭제·위치 지정 진입을 제공하고 앱 재시작 후 복구를 확인한다. 실제 지도 선택 UI는 위치 단계에서 연결한다. 주행 중 지도 조작 가능 여부를 별도 Pleos 디자인/규제 검토 없이 허용하지 않는다.
-4. Schema 승인·실제 스캔/갱신과 음성 → Action → 저장 → Callback → 음성 안내를 확인한다. 파일 생성/ADB 설치만으로 활성화 완료를 주장하지 않는다.
+4. Schema 실제 스캔/갱신과 음성 → Action → 저장 → Callback → 음성 안내를 확인한다. 스키마 활성화는 스캔 및 런타임 결과로 확인한다. 공모전 참가팀의 별도 스키마 검토·승인은 면제된다. [공모전 개발 범위 및 기술 문의 안내](https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000008)
 5. 다음 단계에서 현도로 주변 구역/지명 검색·UI 배치·서버 게시·수신 필터를 연결한다.
 
 예정 파일은 assets/schema.json, AndroidManifest.xml, gleo/GleoActionReceiver.kt와 최소 초안 저장/응답 코드, MainActivity.kt의 초안 UI, 핵심 검증 테스트다. 저장은 기존 의존성과 플랫폼 기능을 확인한 뒤 최소 수단을 고른다. STT/TTS·녹음·별도 LLM·불필요한 SDK는 추가하지 않는다. Sprint 1의 로컬 구현을 연결했으며 실제 외부 Gleo 활성화·위치/게시·실환경 검증은 미완료다.

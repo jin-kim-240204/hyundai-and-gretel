@@ -1,0 +1,88 @@
+{
+  "task": "reference-debug-panel",
+  "selected_rules": [
+    "DES-01",
+    "DES-02",
+    "DES-03",
+    "DES-04",
+    "DES-06",
+    "DES-08"
+  ],
+  "checks": [
+    {
+      "id": "DES-01",
+      "status": "NOT_TESTED",
+      "evidence": "팔레트 대비는 정적 통과. 실제 응답 및 조작은 미검증"
+    },
+    {
+      "id": "DES-02",
+      "status": "NOT_TESTED",
+      "evidence": "PolicyText와 최대 3줄 적용. 물리 글자 크기 미측정"
+    },
+    {
+      "id": "DES-03",
+      "status": "NOT_TESTED",
+      "evidence": "색상 소스 확인. 주야간 렌더링 미검증"
+    },
+    {
+      "id": "DES-04",
+      "status": "NOT_TESTED",
+      "evidence": "너비·스크롤·닫기 정적 테스트 통과. 분할 창 및 시스템 영역 미검증"
+    },
+    {
+      "id": "DES-06",
+      "status": "NOT_TESTED",
+      "evidence": "56dp 및 실제 상태 바인딩 소스 확인. 터치·포커스 미검증"
+    },
+    {
+      "id": "DES-08",
+      "status": "PASS",
+      "evidence": "DemoPanel.kt에서 사용자 클릭으로만 모달 표시. 광고·자동 노출 경로 없음"
+    },
+    {
+      "id": "DOC-9c1fe6a8475c#대비",
+      "status": "PASS",
+      "evidence": "정적 색상 대비 계산 및 reference-debug-panel.md"
+    },
+    {
+      "id": "DOC-94caa75424dd#그레이스케일",
+      "status": "PASS",
+      "evidence": "DemoPanel.kt 및 DemoDiagnostics.kt 색 정의 대조"
+    },
+    {
+      "id": "DOC-728dd6fe8092#글자높이",
+      "status": "NOT_TESTED",
+      "evidence": "물리 글자 높이 및 자동 줄바꿈 미측정"
+    },
+    {
+      "id": "DOC-e12e49cc3efc#가로세로",
+      "status": "NOT_TESTED",
+      "evidence": "제약 및 열 전환 소스 확인. 실제 창 렌더링 미검증"
+    },
+    {
+      "id": "DOC-189d894e8124#분할창",
+      "status": "NOT_TESTED",
+      "evidence": "실제 시스템 영역과 분할 창 미검증"
+    },
+    {
+      "id": "DOC-d771e574367a#버튼상태",
+      "status": "PASS",
+      "evidence": "DemoAction과 settingsAllowed의 기존 상태 바인딩 정적 확인"
+    },
+    {
+      "id": "DOC-3a266a228ea1#닫기버튼",
+      "status": "PASS",
+      "evidence": "56dp IconButton 및 정책 적용 설명 정적 검사"
+    },
+    {
+      "id": "DOC-904663536d42#제목과확인취소",
+      "status": "PASS",
+      "evidence": "DemoDialog 고정 헤더 및 DemoResetControl 확인/취소 코드 대조"
+    },
+    {
+      "id": "DOC-904663536d42#백드롭터치",
+      "status": "NOT_TESTED",
+      "evidence": "백드롭 형제 레이어와 X/back 경로 정적 검사 통과. 실제 Compose 터치 및 렌더링은 미검증"
+    }
+  ]
+}

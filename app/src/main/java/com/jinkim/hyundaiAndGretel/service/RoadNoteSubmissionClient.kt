@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import com.jinkim.hyundaiAndGretel.notes.NoteCategory
+import com.jinkim.hyundaiAndGretel.gleo.GleoRoadNoteInput
 import com.jinkim.hyundaiAndGretel.notes.submit.SubmissionState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class RoadNoteSubmissionClient @Inject constructor(@ApplicationContext private val context: Context) {
-    suspend fun submitReport(content: String, category: NoteCategory, receivedElapsedMillis: Long): SubmissionState =
+    suspend fun submitReport(input: GleoRoadNoteInput, receivedElapsedMillis: Long): SubmissionState =
         withContext(Dispatchers.Main.immediate) {
             val connected = CompletableDeferred<RoadNoteService.LocalBinder>()
             var closed = false
@@ -35,7 +35,9 @@ class RoadNoteSubmissionClient @Inject constructor(@ApplicationContext private v
             val bound = context.bindService(Intent(context, RoadNoteService::class.java), connection, Context.BIND_AUTO_CREATE)
             try {
                 check(bound) { "Service binding failed" }
-                connected.await().submitRoadNoteWithResult(content, category, receivedElapsedMillis).await()
+                connected.await().submitRoadNoteWithResult(
+                    input.content, input.category, receivedElapsedMillis, input.receiverGuidance,
+                ).await()
             } finally {
                 closed = true
                 connected.cancel()
