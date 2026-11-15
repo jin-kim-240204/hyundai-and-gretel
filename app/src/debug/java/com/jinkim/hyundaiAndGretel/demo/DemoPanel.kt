@@ -47,15 +47,15 @@ private val demoButtonHeight = 56.dp
 private val demoButtonMargin = 8.dp
 internal val demoPanelBottomPadding = demoButtonHeight + demoButtonMargin
 private val demoDialogMaxWidth = 780.dp
-private val demoPanelColor = Color(0xFF181818)
-private val demoCardColor = Color(0xFF212121)
-private val demoBorder = Color(0xFF535353)
-private val demoMuted = Color(0xFFB8B8B8)
-private val demoText = Color(0xFFF5F5F5)
-private val demoColors = darkColorScheme(
-    primary = Color(0xFFF1F1F1), onPrimary = Color(0xFF171717),
+private val demoPanelColor = Color.White
+private val demoCardColor = Color(0xFFF5F5F5)
+private val demoBorder = Color(0xFFBDBDBD)
+private val demoMuted = Color(0xFF595959)
+private val demoText = Color.Black
+private val demoColors = lightColorScheme(
+    primary = Color.Black, onPrimary = Color.White,
     surface = demoPanelColor, onSurface = demoText, onSurfaceVariant = demoMuted,
-    outline = demoBorder, secondaryContainer = Color(0xFF303030),
+    outline = demoBorder, secondaryContainer = Color(0xFFE8E8E8),
     onSecondaryContainer = demoText,
 )
 
@@ -82,7 +82,7 @@ fun DemoPanel(productViewModel: RoadNotesViewModel, onStart: () -> Unit, onStop:
                     .height(demoButtonHeight)
                     .widthIn(min = demoButtonHeight)
                     .semantics { contentDescription = label },
-                containerColor = demoText,
+                containerColor = demoPanelColor,
                 contentColor = Color(0xFF171717),
             ) {
                 Box(Modifier.padding(horizontal = 12.dp)) {
@@ -114,20 +114,20 @@ private fun DemoDialog(policy: UiRestrictions, onClose: () -> Unit, content: @Co
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
-                    Modifier.matchParentSize().background(Color.White.copy(alpha = 0.4f)).pointerInput(Unit) {
+                    Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.7f)).pointerInput(Unit) {
                         detectTapGestures(onTap = { closeBackdrop() })
                     },
                 )
                 // Surface blocks hit testing of the lower backdrop sibling, including blank panel areas.
                 Surface(
-                    modifier = Modifier.padding(12.dp).widthIn(max = demoDialogMaxWidth).fillMaxWidth(),
+                    modifier = Modifier.padding(48.dp).widthIn(max = demoDialogMaxWidth).fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
                     border = BorderStroke(1.dp, demoBorder),
                     shadowElevation = 24.dp,
                 ) {
                     Column {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 12.dp),
+                            modifier = Modifier.fillMaxWidth().padding(start = 32.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
@@ -175,10 +175,10 @@ private fun DemoPanelContents(
 
     BoxWithConstraints {
         val narrow = maxWidth <= 580.dp
-        val inset = if (narrow) 14.dp else 24.dp
+        val inset = 32.dp
         Column(Modifier.fillMaxWidth()) {
             Column(
-                Modifier.padding(horizontal = inset, vertical = 18.dp),
+                Modifier.padding(horizontal = inset, vertical = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 DemoCard {
@@ -291,7 +291,7 @@ private fun DemoPanelContents(
 
             if ("settings" in visible) {
                 HorizontalDivider(color = demoBorder)
-                DemoResetControl(demoViewModel, demo, settingsAllowed, policy, Modifier.padding(horizontal = inset, vertical = 12.dp))
+                DemoResetControl(demoViewModel, demo, settingsAllowed, policy, Modifier.padding(horizontal = inset, vertical = 24.dp))
             }
         }
     }
@@ -320,9 +320,9 @@ private fun DemoRoles(actor: String, allowed: Boolean, policy: UiRestrictions, s
                 Surface(
                     modifier = Modifier.weight(1f),
                     shape = shape,
-                    color = if (selected) Color(0xFF414141) else demoPanelColor,
+                    color = if (selected) Color(0xFFDDDDDD) else demoPanelColor,
                     contentColor = if (allowed) demoText else demoMuted,
-                    border = if (selected) BorderStroke(1.dp, Color(0xFF777777)) else null,
+                    border = if (selected) BorderStroke(1.dp, Color(0xFF666666)) else null,
                 ) {
                     Box(
                         Modifier.selectable(selected, enabled = allowed, role = Role.RadioButton) {
@@ -417,8 +417,8 @@ private fun DemoAction(
         colors = ButtonDefaults.buttonColors(
             containerColor = if (primary) demoColors.primary else demoColors.secondaryContainer,
             contentColor = if (primary) demoColors.onPrimary else demoText,
-            disabledContainerColor = Color(0xFF252525),
-            disabledContentColor = Color(0xFFA0A0A0),
+            disabledContainerColor = Color(0xFFE5E5E5),
+            disabledContentColor = Color(0xFF686868),
         ),
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
     ) {
