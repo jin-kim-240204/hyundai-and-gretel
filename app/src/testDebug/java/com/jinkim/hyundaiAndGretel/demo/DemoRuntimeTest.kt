@@ -71,6 +71,25 @@ class DemoRuntimeTest {
         }
     }
 
+    @Test fun automaticReadinessFollowsPermissionModePolicyAndScenarioWithoutStartingSdk() = runTest {
+        val h = Harness(this)
+        var permitted = false
+        val runtime = DemoRuntime(backgroundScope, h.host, h.store, h.store.active, h.ux,
+            { testScheduler.currentTime }, { 1_000 }, h.input, { permitted })
+        assertEquals("개발자 옵션에서 모의 위치 앱을 선택해주세요", runtime.automaticStartBlockReason)
+        permitted = true
+        assertNull(runtime.automaticStartBlockReason)
+        h.ux.value = UiRestrictions()
+        assertNotNull(runtime.automaticStartBlockReason)
+        h.ux.value = UiRestrictions(connected = true)
+        runtime.mode(DemoMode.EXTERNAL_ADB); runCurrent()
+        permitted = false
+        assertNull(runtime.automaticStartBlockReason)
+        h.store.active.value = null
+        assertEquals("시연 준비 중", runtime.automaticStartBlockReason)
+        assertEquals(0, h.host.starts)
+    }
+
     @Test fun onlyOrderedSdkProbeAndTargetOpenGateAndConsoleDoesNotDirectlyChangeCurrent() = runTest {
         val h = Harness(this); h.ready()
         advanceTimeBy(1_000); runCurrent()

@@ -1,7 +1,7 @@
 {
   "packageName": "com.jinkim.hyundaiAndGretel",
   "invokeWord": "제보",
-  "appDescription": "An app for reporting road conditions and sharing them with other drivers.",
+  "appDescription": "An app for reporting observed road hazards, traffic disruptions, and other road conditions and sharing Korean-language road guidance with other drivers.",
   "version": "1.0",
   "actionCalls": [
     {
@@ -9,7 +9,7 @@
       "function": {
         "component": "service",
         "name": "CREATE_ROAD_NOTE",
-        "description": "Report a road condition the user has just observed on the current road.",
+        "description": "Record and share road conditions observed by the user, including detailed multi-sentence descriptions of hazards, accidents, obstructions, roadworks, closures, traffic, and weather-related conditions. Reports may describe the observation directly or request that other drivers be warned or informed.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -19,7 +19,7 @@
             },
             "receiverGuidance": {
               "type": "string",
-              "description": "In the user's language, explicitly attribute the condition to a report for the receiving driver within 120 characters, preserving negation and uncertainty without asserting that it occurred or claiming firsthand observation. A brief general caution is allowed, but do not add unsupported locations, directions, distances, timing, or other details, or give specific driving instructions."
+              "description": "Written in Korean, explicitly attribute the condition to a report for the receiving driver within 120 characters, preserving negation and uncertainty without asserting that it occurred or claiming firsthand observation. A brief general caution is allowed, but do not add unsupported locations, directions, distances, timing, or other details, or give specific driving instructions."
             },
             "locationMode": {
               "type": "string",

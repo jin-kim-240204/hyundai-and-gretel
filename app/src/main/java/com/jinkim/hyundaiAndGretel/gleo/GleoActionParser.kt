@@ -2,6 +2,7 @@ package com.jinkim.hyundaiAndGretel.gleo
 
 import com.jinkim.hyundaiAndGretel.notes.NoteCategory
 import com.jinkim.hyundaiAndGretel.notes.isValidReceiverGuidance
+import com.jinkim.hyundaiAndGretel.notes.containsKorean
 import org.json.JSONException
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -52,7 +53,7 @@ fun validateGleoParameters(values: Map<String, Any?>): ParsedGleoAction {
         content = strings.getValue("content"),
         category = NoteCategory.valueOf(strings.getValue("category")),
         receiverGuidance = (values["receiverGuidance"] as? String)
-            ?.takeIf { it.isValidReceiverGuidance() }?.trim(),
+            ?.takeIf { it.isValidReceiverGuidance() && it.containsKorean() }?.trim(),
     )
     return ParsedGleoAction.Valid(input)
 }

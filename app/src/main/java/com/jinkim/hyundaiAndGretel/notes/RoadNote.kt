@@ -21,7 +21,9 @@ data class RoadNote(
     val scenarioId: String? = null,
     val receiverGuidance: String? = null,
 ) {
-    val receiverMessage: String get() = receiverGuidance ?: content
+    val receiverMessage: String get() = receiverGuidance?.takeIf { it.containsKorean() }
+        ?: content.takeIf { it.containsKorean() }
+        ?: "도로 상황 제보가 접수되었습니다. 자세한 내용은 안전한 곳에서 확인해 주세요."
 
     fun isActiveAt(nowUtcMillis: Long): Boolean = nowUtcMillis < expiresAtUtcMillis
 
@@ -60,3 +62,7 @@ internal fun String.isValidReceiverGuidance(): Boolean =
 
 private const val MAX_CONTENT_CODE_POINTS = 500
 private val MAX_ANCHOR_OFFSET_MILLIS = TimeUnit.SECONDS.toMillis(35)
+
+internal fun String.containsKorean(): Boolean = any {
+    it in '\uAC00'..'\uD7A3' || it in '\u1100'..'\u11FF' || it in '\u3131'..'\u318E'
+}

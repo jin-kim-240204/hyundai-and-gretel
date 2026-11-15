@@ -24,9 +24,7 @@ class AndroidDemoInputSource(context: Context) : DemoInputSource {
 
     override suspend fun prepare() {
         check(Build.HARDWARE in setOf("ranchu", "goldfish") || Build.FINGERPRINT.contains("crp_avd")) { "에뮬레이터 전용 입력입니다" }
-        val allowed = context.getSystemService(AppOpsManager::class.java)
-            .checkOpNoThrow("android:mock_location", Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED
-        check(allowed) { "mock 위치 권한이 없습니다" }
+        check(mockLocationAllowed(context)) { "mock 위치 권한이 없습니다" }
         readMotion()
     }
 
@@ -85,3 +83,7 @@ class AndroidDemoInputSource(context: Context) : DemoInputSource {
         }
     }
 }
+
+internal fun mockLocationAllowed(context: Context): Boolean =
+    context.getSystemService(AppOpsManager::class.java)
+        .checkOpNoThrow("android:mock_location", Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED

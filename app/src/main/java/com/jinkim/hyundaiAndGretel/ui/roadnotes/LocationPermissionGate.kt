@@ -23,7 +23,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jinkim.hyundaiAndGretel.R
 import com.jinkim.hyundaiAndGretel.ui.components.RoadNoteAction
@@ -38,7 +39,7 @@ import com.jinkim.hyundaiAndGretel.ui.ux.UiRestrictions
 private val locationPermissions = listOf("pleos.car.permission.FUSED_LOCATION", Manifest.permission.ACCESS_COARSE_LOCATION)
 
 @Composable
-internal fun LocationPermissionGate(policy: UiRestrictions, onStopTracking: () -> Unit, content: @Composable () -> Unit) {
+internal fun LocationPermissionGate(policy: UiRestrictions, onStopTracking: () -> Unit, onPermissionsReady: () -> Unit, onPermissionsLost: () -> Unit, content: @Composable () -> Unit) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     fun hasPermissions() = locationPermissions.all {
@@ -46,16 +47,33 @@ internal fun LocationPermissionGate(policy: UiRestrictions, onStopTracking: () -
     }
     var granted by remember { mutableStateOf(hasPermissions()) }
     var denied by rememberSaveable { mutableStateOf(false) }
+    var requested by rememberSaveable { mutableStateOf(false) }
+    val currentReady by rememberUpdatedState(onPermissionsReady)
+    val currentStop by rememberUpdatedState(onPermissionsLost)
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         granted = hasPermissions()
         denied = !granted
     }
-    DisposableEffect(lifecycle, context) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) granted = hasPermissions()
+    LaunchedEffect(policy.canSetup) {
+        if (policy.canSetup && !requested) {
+            requested = true
+            val optional = if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
+            val missing = (locationPermissions + optional).filter {
+                ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+            }
+            if (missing.isNotEmpty()) launcher.launch(missing.toTypedArray())
         }
-        lifecycle.addObserver(observer)
-        onDispose { lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(lifecycle, context) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                val allowed = hasPermissions()
+                if (granted && !allowed) currentStop()
+                granted = allowed
+                if (allowed) currentReady()
+                delay(2_000)
+            }
+        }
     }
     if (granted) {
         content()

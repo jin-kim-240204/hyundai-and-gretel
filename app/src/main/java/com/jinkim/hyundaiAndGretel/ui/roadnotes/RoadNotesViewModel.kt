@@ -9,6 +9,7 @@ import com.jinkim.hyundaiAndGretel.notes.pickup.ReceiptKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -24,8 +25,25 @@ class RoadNotesViewModel(app: Application) : AndroidViewModel(app) {
     val canStartTracking get() = serviceClient.canStartTracking
 
     fun markPresented(key: String) { visited.value += key }
-    fun startTracking() = serviceClient.startTracking()
-    fun stopTracking() = serviceClient.stopTracking()
+    private val automaticTrackingMessage = MutableStateFlow<String?>(null)
+    val trackingPreparation = automaticTrackingMessage.asStateFlow()
+
+    fun onPermissionsLost() = serviceClient.stopTracking(pauseAutomatic = false)
+
+    fun ensureTracking() {
+        val service = serviceClient.service.value ?: return
+        val reason = service.automaticStartBlockReason
+        automaticTrackingMessage.value = reason
+        if (reason == null && serviceClient.state.value.canStart && serviceClient.canStartTracking) {
+            serviceClient.startTracking()
+        }
+    }
+    fun startTracking() {
+        serviceClient.startTracking()
+    }
+    fun stopTracking() {
+        serviceClient.stopTracking()
+    }
     fun submitRoadNote(content: String, category: NoteCategory) = serviceClient.submitRoadNote(content, category)
     internal fun isReceiptCurrent(input: ReceiptLayoutInput): Boolean {
         val service = serviceClient.service.value ?: return false

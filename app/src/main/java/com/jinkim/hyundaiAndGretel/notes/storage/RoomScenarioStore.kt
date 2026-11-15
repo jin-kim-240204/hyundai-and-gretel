@@ -32,6 +32,12 @@ class RoomScenarioStore internal constructor(private val db: NoteDatabase) : Sce
         rows.map { it.toNote().also { note -> require(note.validationError() == null) } }
     }
 
+    suspend fun ensureActive(): String = db.withTransaction {
+        db.scenarios().active() ?: UUID.randomUUID().toString().also {
+            db.scenarios().select(DemoStateEntity(activeScenarioId = it))
+        }
+    }
+
     override suspend fun reset(): String = db.withTransaction {
         val dao = db.scenarios()
         val next = UUID.randomUUID().toString()
