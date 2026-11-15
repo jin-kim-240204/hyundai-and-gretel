@@ -44,4 +44,4 @@
 - NOT_TESTED: 실제 Gleo schema 갱신→문장 생성→A 저장→B 접근→가청 출력 E2E, 첫 음절·실차 음색, 통화/음악/Gleo/긴급음 포커스 거절·상실·복구, Suspend/Resume, 권한 거절/서비스 끊김 실제 계측. 자동 검사 통과와 구현 반영을 전체 기능 검증 완료로 해석하지 않는다.
 - N/A: 서버 공유·새 UI/Room 필드·음성 ACK 영속화·커밋/푸시·제출 APK 업로드. 현재 합성 A/B와 로컬 Room 시연의 범위다.
 
-- PASS: 최종 수정 후 단위121개/계측3개 재통과, 하네스 --build/Studio 빌드 재통과. 규칙 JSON 12개 검사 결과 exit=2는 위 필수 실환경 NOT_TESTED를 보존한 결과이며 자동 빌드 실패가 아니다. `git diff --check` 통과. 검사 로그는 `/private/tmp/gleo-tts-final-tests.log`, `/private/tmp/gleo-tts-final-harness.log`에 있다.
+- PASS: 최종 수정 후 단위121개/계측3개 재통과, 하네스 --build/Studio 빌드 재통과. 규칙 JSON 12개 검사 결과 exit=2는 위 필수 실환경 NOT_TESTED를 보존한 결과이며 자동 빌드 실패가 아니다. `git diff --check` 통과. 검사 로그는 당시 로컬에 기록했다.

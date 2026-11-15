@@ -2,10 +2,12 @@
 .gradle/
 .kotlin/
 **/build/
+/app/release/
 .externalNativeBuild/
 .cxx/
 captures/
 *.apk
+!/apk/jinkim_hyundai-and-gretel_release.apk
 *.aab
 *.apks
 *.hprof

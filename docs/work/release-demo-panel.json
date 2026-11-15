@@ -1,0 +1,24 @@
+{
+  "task": "release-demo-panel",
+  "selected_rules": [
+    "ENV-02",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "ENV-02",
+      "status": "PASS",
+      "evidence": "Activity/Compose structure unchanged; debug/release assemble and lint, Studio build successful"
+    },
+    {
+      "id": "PRIV-01",
+      "status": "NOT_TESTED",
+      "evidence": "Existing emulator/mock guards and loopback-only HTTP policy preserved; signed release device validation pending; release-demo-panel.md"
+    },
+    {
+      "id": "DOC-27ac8605961f#최소권한",
+      "status": "PASS",
+      "evidence": "Only existing INTERNET/ACCESS_MOCK_LOCATION moved to main for requested demo input; loopback-only cleartext exception preserved"
+    }
+  ]
+}

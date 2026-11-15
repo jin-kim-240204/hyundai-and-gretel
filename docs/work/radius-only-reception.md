@@ -21,7 +21,7 @@
 | 상태 | 범위 | 증거 |
 |---|---|---|
 | PASS | JVM 142개 | `./gradlew --offline :app:testDebugUnitTest`. 실패·오류·스킵 0. 뒤쪽/인접 위치, 경로 정보 없는 제보, 양쪽 499.99m/500.01m, 영역 이탈, 만료·수신자 분리·ACK 회귀를 확인했다. |
-| PASS | Debug/release 빌드·린트 및 instrumentation 소스 컴파일 | JDK 21, SDK 35. `./gradlew --offline :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease :app:compileDebugAndroidTestKotlin`. 출력은 `/tmp/gretel-radius-gradle.log`. |
+| PASS | Debug/release 빌드·린트 및 instrumentation 소스 컴파일 | JDK 21, SDK 35. `./gradlew --offline :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease :app:compileDebugAndroidTestKotlin`. 출력은 로컬 임시 디렉터리. |
 | PASS | 호스트 SQL | `python3 scripts/test_receiver_guidance_migration.py`. SQLite 3.50.1, FK 활성 트랜잭션에서 1→2, 1→2→3, 2→3. Room export와 열·FK·인덱스를 비교했다. 제보 원문·안내문(NULL 포함), PENDING/ACK, 시나리오, 실제 후보 SQL 및 FK cascade를 확인했다. |
 | PASS | Gleo 스키마 회귀 | `python3 scripts/test_receiver_guidance_schema.py`. 제보 텍스트와 수신 안내문 선언 확인. |
 | PASS | 하네스 | `python3 scripts/verify_harness.py`, `python3 scripts/verify_harness.py --build`. 최초 Gradle wrapper 캐시 잠금 쓰기가 샌드박스에서 거부됐고 권한이 허용된 빌드 재실행에서 통과했다. |

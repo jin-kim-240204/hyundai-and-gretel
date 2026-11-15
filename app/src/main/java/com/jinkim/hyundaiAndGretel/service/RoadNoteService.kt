@@ -301,7 +301,7 @@ class RoadNoteService : Service() {
         }
         scope.launch {
             try {
-                if (BuildConfig.DEBUG) {
+                if (demo.enabled) {
                     restrictions.state.first { it.canSetup }
                     scenarioStore.ensureActive()
                 }

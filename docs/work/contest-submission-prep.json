@@ -1,0 +1,30 @@
+{
+  "task": "contest-submission-prep",
+  "selected_rules": [
+    "REL-01",
+    "INT-01",
+    "PRIV-01"
+  ],
+  "checks": [
+    {
+      "id": "REL-01",
+      "status": "FAIL",
+      "evidence": "assembleRelease 성공. apksigner 검증 exit 1. 서명과 새 설치 검증 필요."
+    },
+    {
+      "id": "INT-01",
+      "status": "FAIL",
+      "evidence": "release APK의 Gleo 수신기 exported=false, 소스의 자기 패키지 Callback과 debug 전용 시연."
+    },
+    {
+      "id": "PRIV-01",
+      "status": "NOT_TESTED",
+      "evidence": "저장·권한 변경 없음. JVM 테스트는 통과했고 Pleos 런타임은 미실행."
+    },
+    {
+      "id": "DOC-036572f580ac#AppMarket심사",
+      "status": "N/A",
+      "evidence": "이번 범위는 공모전 1차 제출 준비이며 App Market 심사는 별도."
+    }
+  ]
+}
